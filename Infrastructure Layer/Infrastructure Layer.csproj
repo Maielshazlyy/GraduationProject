@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>Infrastructure_Layer</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="AI\Implementations\" />
+    <Folder Include="AI\Interfaces\" />
+    <Folder Include="AI\Models\" />
+    <Folder Include="Configuration\" />
+    <Folder Include="ExternalAPIs\Implementations\" />
+    <Folder Include="ExternalAPIs\Interfaces\" />
+    <Folder Include="ExternalAPIs\Models\" />
+    <Folder Include="Notifications\Implementations\" />
+    <Folder Include="Notifications\Interfaces\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Domain layer\Domain layer.csproj" />
+  </ItemGroup>
+
+</Project>
