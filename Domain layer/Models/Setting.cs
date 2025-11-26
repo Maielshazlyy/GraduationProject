@@ -8,5 +8,14 @@ namespace Domain_layer.Models
 {
   public  class Setting
     {
+
+
+
+
+
+        //business relations
+        public int BusinessIdFk { get; set; }
+        public Business Business { get; set; }
+
     }
 }

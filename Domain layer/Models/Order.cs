@@ -8,5 +8,16 @@ namespace Domain_layer.Models
 {
     public class Order
     {
+
+
+
+
+
+
+
+        //business relations
+        public int BusinessIdFk { get; set; }
+        public Business Business { get; set; }
+
     }
 }

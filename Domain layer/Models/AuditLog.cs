@@ -8,5 +8,10 @@ namespace Domain_layer.Models
 {
    public class AuditLog
     {
+
+
+
+        public int UserIdFk { get; set; }
+        public User User { get; set; }
     }
 }

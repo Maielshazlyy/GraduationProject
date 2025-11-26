@@ -8,5 +8,20 @@ namespace Domain_layer.Models
 {
    public class Interaction
     {
+
+
+
+
+
+
+
+
+        //business relations
+        public int BusinessIdFk { get; set; }
+        public Business Business { get; set; }
+        //user realtions
+        public int? HandledByUserId { get; set; }
+        public User? HandledByUser { get; set; }
+
     }
 }
