@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,8 +38,8 @@ namespace Domain_layer.Models
         public ICollection<Report> Reports { get; set; } = new List<Report>();
         public Setting? Settings { get; set; }
         public Subscription? Subscriptions { get; set; }
-
-
-
+        
+        public ICollection<Integeration> Integrations { get; set; }
+        public ICollection<AuditLog> AuditLogs { get; set; }
     }
 }

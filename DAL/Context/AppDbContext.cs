@@ -173,6 +173,44 @@ namespace DAL.Context
                 .HasForeignKey(n => n.UserIdFk)
                 .OnDelete(DeleteBehavior.Cascade);
 
+
+
+            //Order → OrderItem (One-to-Many)
+            modelBuilder.Entity<Order>()
+                 .HasMany(o => o.OrderItems)
+                 .WithOne(oi => oi.Order)
+                 .HasForeignKey(oi => oi.OrderId);
+
+            //OrderItem → MenuItem (Many-to-One)
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.MenuItem)
+                .WithMany(mi => mi.OrderItems)
+                .HasForeignKey(oi => oi.MenuItemId);
+
+            //Subscription → PaymentTransaction (One-to-Many)
+            modelBuilder.Entity<Subscription>()
+              .HasMany(s => s.PaymentTransactions)
+              .WithOne(p => p.Subscription)
+              .HasForeignKey(p => p.SubscriptionId);
+
+            //Customer → Order (One-to-Many)
+            modelBuilder.Entity<Customer>()
+              .HasMany(c => c.Orders)
+              .WithOne(o => o.Customer)
+              .HasForeignKey(o => o.CustomerId);
+
+            // Business → Integrations
+            modelBuilder.Entity<Business>()
+                .HasMany(b => b.Integrations)
+                .WithOne(i => i.Business)
+                .HasForeignKey(i => i.BusinessId);
+
+            // Business → AuditLogs
+            modelBuilder.Entity<Business>()
+                .HasMany(b => b.AuditLogs)
+                .WithOne(a => a.Business)
+                .HasForeignKey(a => a.BusinessId);
+
         }
     }
 }

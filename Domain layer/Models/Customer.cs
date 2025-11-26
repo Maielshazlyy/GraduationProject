@@ -15,7 +15,7 @@ namespace Domain_layer.Models
 
 
 
-
+        public ICollection<Order> Orders { get; set; }
         //business relations
         public int BusinessIdFk { get; set; }
         public Business Business { get; set; }

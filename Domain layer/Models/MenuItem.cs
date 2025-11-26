@@ -9,14 +9,22 @@ namespace Domain_layer.Models
    public class MenuItem
     {
 
+        public int MenuItemId { get; set; }
 
+        public string Name { get; set; }
 
+        public string Description { get; set; }
 
+        public decimal Price { get; set; }
 
+        public string Category { get; set; }
 
-        //business relations
+        public bool IsAvailable { get; set; }
+
         public int BusinessIdFk { get; set; }
         public Business Business { get; set; }
+
+        public ICollection<OrderItem> OrderItems { get; set; }
 
     }
 }

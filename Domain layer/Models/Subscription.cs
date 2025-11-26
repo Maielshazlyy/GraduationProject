@@ -16,7 +16,7 @@ namespace Domain_layer.Models
 
 
 
-
+        public ICollection<PaymentTransaction> PaymentTransactions { get; set; }
         //business relations
         public int BusinessIdFk { get; set; }
         public Business Business { get; set; }
