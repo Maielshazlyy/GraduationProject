@@ -36,142 +36,163 @@ namespace DAL.Context
         {
             base.OnModelCreating(modelBuilder);
 
-            // Business → Users (1:M)
-            // ------------------------
+            // ---------------------------
+            // Business relationships (1 : M or 1:1)
+            // ---------------------------
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Business)
                 .WithMany(b => b.Users)
-                .HasForeignKey(u => u.BusinessIdFk)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(u => u.BusinessId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-
-            // ------------------------
-            // Business → Customers (1:M)
-            // ------------------------
             modelBuilder.Entity<Customer>()
                 .HasOne(c => c.Business)
                 .WithMany(b => b.Customers)
-                .HasForeignKey(c => c.BusinessIdFk)
+                .HasForeignKey(c => c.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-            // ------------------------
-            // Business → MenuItems (1:M)
-            // ------------------------
             modelBuilder.Entity<MenuItem>()
                 .HasOne(m => m.Business)
                 .WithMany(b => b.MenuItems)
-                .HasForeignKey(m => m.BusinessIdFk)
+                .HasForeignKey(m => m.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-            // ------------------------
-            // Business → Orders (1:M)
-            // ------------------------
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Business)
                 .WithMany(b => b.Orders)
-                .HasForeignKey(o => o.BusinessIdFk)
+                .HasForeignKey(o => o.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-            // ------------------------
-            // Business → Tickets (1:M)
-            // ------------------------
             modelBuilder.Entity<Ticket>()
                 .HasOne(t => t.Business)
                 .WithMany(b => b.Tickets)
-                .HasForeignKey(t => t.BusinessIdFk)
+                .HasForeignKey(t => t.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-            // ------------------------
-            // Business → Interactions (1:M)
-            // ------------------------
             modelBuilder.Entity<Interaction>()
                 .HasOne(i => i.Business)
                 .WithMany(b => b.Interactions)
-                .HasForeignKey(i => i.BusinessIdFk)
+                .HasForeignKey(i => i.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-            // ------------------------
-            // Business → Notifications (1:M)
-            // ------------------------
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.Business)
                 .WithMany(b => b.Notifications)
-                .HasForeignKey(n => n.BusinessIdFk)
+                .HasForeignKey(n => n.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-            // ------------------------
-            // Business → Reports (1:M)
-            // ------------------------
             modelBuilder.Entity<Report>()
                 .HasOne(r => r.Business)
                 .WithMany(b => b.Reports)
-                .HasForeignKey(r => r.BusinessIdFk)
+                .HasForeignKey(r => r.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-            // ------------------------
-            // Business → Settings (1:1)
-            // ------------------------
+            // 1:1 Business - Setting
             modelBuilder.Entity<Business>()
-                .HasOne(b => b.Settings)
+                .HasOne(b => b.Setting)
                 .WithOne(s => s.Business)
-                .HasForeignKey<Setting>(s => s.BusinessIdFk)
+                .HasForeignKey<Setting>(s => s.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-            // ------------------------
-            // Business → Subscription (1:1)
-            // ------------------------
-            modelBuilder.Entity<Business>()
-                .HasOne(b => b.Subscriptions)
-                .WithOne(s => s.Business)
-                .HasForeignKey<Subscription>(s => s.BusinessIdFk)
+            // Business -> Subscriptions (1 : M)
+            modelBuilder.Entity<Subscription>()
+                .HasOne(s => s.Business)
+                .WithMany(b => b.Subscriptions)
+                .HasForeignKey(s => s.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // USER RELATIONSHIPS
-            // ==============================
+            // Business -> Integrations (1 : M)
+            modelBuilder.Entity<Integration>()
+                .HasOne(i => i.Business)
+                .WithMany(b => b.Integrations)
+                .HasForeignKey(i => i.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // 1) User → Business  (Many-to-One)
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Business)
-                .WithMany(b => b.Users)
-                .HasForeignKey(u => u.BusinessIdFk)
-                .OnDelete(DeleteBehavior.Restrict);
-            // 2 ) User ↔ InteractionsHandled (One-to-Many)
-            // -----------------------------
+            // Business -> AuditLogs
+            modelBuilder.Entity<AuditLog>()
+                .HasOne(a => a.Business)
+                .WithMany(b => b.AuditLogs)
+                .HasForeignKey(a => a.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ---------------------------
+            // User relationships
+            // ---------------------------
+            // Interaction handled by User (Agent) — optional
             modelBuilder.Entity<Interaction>()
-                .HasOne(i => i.HandledByUser)          
+                .HasOne(i => i.HandledByUser)
                 .WithMany(u => u.InteractionsHandled)
                 .HasForeignKey(i => i.HandledByUserId)
-                .OnDelete(DeleteBehavior.NoAction);
-            // 3 ) User ↔ TicketsAssigned (One-to-Many)
-            // -----------------------------
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Ticket assigned to User (optional)
             modelBuilder.Entity<Ticket>()
-                .HasOne(t => t.AssignedToUser)          
+                .HasOne(t => t.AssignedToUser)
                 .WithMany(u => u.TicketsAssigned)
                 .HasForeignKey(t => t.AssignedToUserId)
-                .OnDelete(DeleteBehavior.NoAction);
-            //4)User ↔ AuditLogs (One-to-Many)
-            // -----------------------------
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // AuditLog -> User (optional, system logs may have null user)
             modelBuilder.Entity<AuditLog>()
                 .HasOne(a => a.User)
                 .WithMany(u => u.AuditLogs)
-                .HasForeignKey(a => a.UserIdFk)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
 
-            // 5) // User ↔ Notifications (One-to-Many)
-            // -----------------------------
+            // Notifications to User (optional)
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.User)
                 .WithMany(u => u.Notifications)
-                .HasForeignKey(n => n.UserIdFk)
+                .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // ---------------------------
+            // Customer relationships
+            // ---------------------------
+            modelBuilder.Entity<Ticket>()
+                .HasOne(t => t.Customer)
+                .WithMany(c => c.Tickets)
+                .HasForeignKey(t => t.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.Customer)
+                .WithMany(c => c.Orders)
+                .HasForeignKey(o => o.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Interaction>()
+                .HasOne(i => i.Customer)
+                .WithMany(c => c.Interactions)
+                .HasForeignKey(i => i.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ---------------------------
+            // Orders & Items
+            // ---------------------------
+            modelBuilder.Entity<Order>()
+                .HasMany(o => o.OrderItems)
+                .WithOne(oi => oi.Order)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.MenuItem)
+                .WithMany(mi => mi.OrderItems)
+                .HasForeignKey(oi => oi.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+            // ---------------------------
+            // Subscription Relationships
+            // ---------------------------
+
+            // Subscription -> PaymentTransactions
+            // ---------------------------
+            modelBuilder.Entity<PaymentTransaction>()
+                .HasOne(pt => pt.Subscription)
+                .WithMany(s => s.PaymentTransactions)
+                .HasForeignKey(pt => pt.SubscriptionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
 
 
 
@@ -187,30 +208,8 @@ namespace DAL.Context
                 .WithMany(mi => mi.OrderItems)
                 .HasForeignKey(oi => oi.MenuItemId);
 
-            //Subscription → PaymentTransaction (One-to-Many)
-            modelBuilder.Entity<Subscription>()
-              .HasMany(s => s.PaymentTransactions)
-              .WithOne(p => p.Subscription)
-              .HasForeignKey(p => p.SubscriptionId);
-
-            //Customer → Order (One-to-Many)
-            modelBuilder.Entity<Customer>()
-              .HasMany(c => c.Orders)
-              .WithOne(o => o.Customer)
-              .HasForeignKey(o => o.CustomerId);
-
-            // Business → Integrations
-            modelBuilder.Entity<Business>()
-                .HasMany(b => b.Integrations)
-                .WithOne(i => i.Business)
-                .HasForeignKey(i => i.BusinessId);
-
-            // Business → AuditLogs
-            modelBuilder.Entity<Business>()
-                .HasMany(b => b.AuditLogs)
-                .WithOne(a => a.Business)
-                .HasForeignKey(a => a.BusinessId);
-
+          
+          
         }
     }
 }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Domain_layer.Models
 {
-  public  class Integeration
+  public  class Integration
     {
         public int IntegrationId { get; set; }
 

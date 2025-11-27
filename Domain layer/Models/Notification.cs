@@ -12,11 +12,11 @@ namespace Domain_layer.Models
 
 
         //business relations
-        public int BusinessIdFk { get; set; }
+        public int BusinessId { get; set; }
         public Business Business { get; set; }
 
         //user relations
-        public int UserIdFk { get; set; }
+        public int UserId { get; set; }
         public User User { get; set; }
 
     }

@@ -21,10 +21,10 @@ namespace Domain_layer.Models
 
         public bool IsAvailable { get; set; }
 
-        public int BusinessIdFk { get; set; }
+        public int BusinessId { get; set; }
         public Business Business { get; set; }
 
-        public ICollection<OrderItem> OrderItems { get; set; }
+        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
     }
 }

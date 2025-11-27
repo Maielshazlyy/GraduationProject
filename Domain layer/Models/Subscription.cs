@@ -8,18 +8,17 @@ namespace Domain_layer.Models
 {
    public class Subscription
     {
+        public int SubscriptionId { get; set; }
 
-
-
-
-
-
-
-
-        public ICollection<PaymentTransaction> PaymentTransactions { get; set; }
+        public string PlanName { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public bool IsActive { get; set; }
         //business relations
-        public int BusinessIdFk { get; set; }
+        public int BusinessId { get; set; }
         public Business Business { get; set; }
+        public ICollection<PaymentTransaction> PaymentTransactions { get; set; } = new List<PaymentTransaction>();
 
     }
 }

@@ -36,10 +36,13 @@ namespace Domain_layer.Models
         public ICollection<Interaction> Interactions { get; set; } = new List<Interaction>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
         public ICollection<Report> Reports { get; set; } = new List<Report>();
-        public Setting? Settings { get; set; }
-        public Subscription? Subscriptions { get; set; }
-        
-        public ICollection<Integeration> Integrations { get; set; }
-        public ICollection<AuditLog> AuditLogs { get; set; }
+        public ICollection<KnowledgeBase> KnowledgeBases { get; set; } = new List<KnowledgeBase>();
+
+        public Setting? Setting { get; set; }
+        public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
+
+
+        public ICollection<Integration> Integrations  { get; set; } = new List<Integration>();
+        public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
     }
 }

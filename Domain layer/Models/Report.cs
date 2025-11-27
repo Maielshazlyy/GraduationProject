@@ -19,7 +19,7 @@ namespace Domain_layer.Models
 
         public string FilePath { get; set; }
 
-        public int BusinessIdFk { get; set; }
+        public int BusinessId { get; set; }
         public Business Business { get; set; }
 
     }

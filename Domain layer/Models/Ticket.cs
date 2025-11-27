@@ -6,19 +6,25 @@ using System.Threading.Tasks;
 
 namespace Domain_layer.Models
 {
-  public  class Ticket
+    public class Ticket
     {
 
 
 
 
+
+
         //business relations
-        public int BusinessIdFk { get; set; }
+        public int BusinessId { get; set; }
         public Business Business { get; set; }
 
         //user relations
         public int? AssignedToUserId { get; set; }
         public User? AssignedToUser { get; set; }
+
+        //customer relations
+        public int CustomerId { get; set; }
+        public Customer Customer { get; set; }
 
     }
 }
