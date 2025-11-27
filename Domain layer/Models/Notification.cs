@@ -18,6 +18,6 @@ namespace Domain_layer.Models
         //user relations
         public int UserId { get; set; }
         public User User { get; set; }
-
+        
     }
 }
