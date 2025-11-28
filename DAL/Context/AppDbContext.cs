@@ -31,7 +31,8 @@ namespace DAL.Context
         public DbSet<Sentiment> Sentiments { get; set; }
         public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
-
+        public DbSet<KnowledgeBase> KnowledgeBases { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -208,8 +209,43 @@ namespace DAL.Context
                 .WithMany(mi => mi.OrderItems)
                 .HasForeignKey(oi => oi.MenuItemId);
 
-          
-          
+
+            // Feedback -> Tikects 
+             modelBuilder.Entity<Feedback>()
+                .HasOne(f => f.Ticket)
+                .WithMany(t => t.Feedbacks)
+                .HasForeignKey(f => f.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Message -> Interaction 
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Interaction)
+                .WithMany(i => i.Messages)
+                .HasForeignKey(m => m.InteractionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
+            // Message -> Sentiment 
+            modelBuilder.Entity<Message>()
+            .HasOne(m => m.Sentiment)
+            .WithOne(s => s.Message)
+            .HasForeignKey<Sentiment>(s => s.MessageId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            // Business -> KnowledgrBases
+            modelBuilder.Entity<Business>()
+            .HasOne(b => b.KnowledgeBases)
+            .WithOne(k => k.Business)
+            .HasForeignKey<KnowledgeBase>(k => k.BusinessId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            // Bussiness -> Settings 
+            modelBuilder.Entity<Business>()
+                .HasOne(b => b.Setting)
+                .WithOne(s => s.Business)
+                .HasForeignKey<Setting>(o => o.SettingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }

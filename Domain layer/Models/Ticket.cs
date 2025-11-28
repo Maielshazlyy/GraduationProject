@@ -9,9 +9,18 @@ namespace Domain_layer.Models
     public class Ticket
     {
 
+        public int Id { get; set; }
+        public string TicketId {  get; set; } = Guid.NewGuid().ToString();
+        public string Subject { get; set; }
+        public string Status { get; set; }
+        public bool IsEnded { get; set; }
 
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime ClosedAt {  get; set; }
 
-
+        //Feedbackes
+        public int FeedbackId { get; set; }
+        public List<Feedback> Feedbacks { get; set; }
 
 
         //business relations
@@ -25,6 +34,8 @@ namespace Domain_layer.Models
         //customer relations
         public int CustomerId { get; set; }
         public Customer Customer { get; set; }
+
+        
 
     }
 }

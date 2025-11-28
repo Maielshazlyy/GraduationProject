@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Domain_layer.Models;
 
-namespace Domain_layer.Models
+public class Sentiment
 {
-    public class Sentiment
-    {
-    }
+    public int SentimentId { get; set; }
+
+   
+    public string MessageId { get; set; }
+    public Message Message { get; set; }
+
+    public string Score { get; set; }
+    public string Label { get; set; }
 }

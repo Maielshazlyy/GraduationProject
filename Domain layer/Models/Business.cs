@@ -36,8 +36,7 @@ namespace Domain_layer.Models
         public ICollection<Interaction> Interactions { get; set; } = new List<Interaction>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
         public ICollection<Report> Reports { get; set; } = new List<Report>();
-        public ICollection<KnowledgeBase> KnowledgeBases { get; set; } = new List<KnowledgeBase>();
-
+        public KnowledgeBase KnowledgeBases { get; set; } 
         public Setting? Setting { get; set; }
         public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
 
