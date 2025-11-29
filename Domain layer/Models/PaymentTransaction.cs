@@ -9,7 +9,8 @@ namespace Domain_layer.Models
 {
    public class PaymentTransaction
     {
-        public int PaymentId { get; set; }
+        public int Id { get; set; }
+        public string PaymentId { get; set; } = Guid.NewGuid().ToString();
 
         public int SubscriptionId { get; set; }
 

@@ -22,6 +22,8 @@ namespace Domain_layer.Models
         public ICollection<Ticket> TicketsAssigned { get; set; } = new List<Ticket>();
         public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+        public ICollection<Message> Messages { get; set; } = new List<Message>();
+
 
 
 

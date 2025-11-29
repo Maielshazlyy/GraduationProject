@@ -9,30 +9,25 @@ namespace Domain_layer.Models
     public class Interaction
     {
         public int InteractionId { get; set; }
+        public string Channel { get; set; } = string.Empty; // e.g. WhatsApp, Voice, Web
 
-        //Customer realtions 
-        public int CustomerId { get; set; }
-        public Customer Customer { get; set; }
-
-
-
-        //business relations
-        public int BusinessId { get; set; }
-        public Business Business { get; set; }
-        //user realtions
-        public int? HandledByUserId { get; set; }
-        public User? HandledByUser { get; set; }
-
-
-        public string Channel { get; set; }
+        public string Status { get; set; } = "Open"; //open,in progress, closed
 
         public bool? IsEnded { get; set; }
 
-        public DateTime StartedAt { get; set; }
-        public DateTime EndedAt { get; set; }
+        public DateTime StartedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? EndedAt { get; set; }
 
+        public int BusinessId { get; set; }
+        public Business Business { get; set; }
+
+        public int? HandledByUserId { get; set; }
+        public User? HandledByUser { get; set; }
+
+        public int CustomerId { get; set; }
+        public Customer Customer { get; set; }
 
         public ICollection<Message> Messages { get; set; } = new List<Message>();
-       
-        }
+
+    }
     }

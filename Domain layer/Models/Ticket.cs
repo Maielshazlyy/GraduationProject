@@ -11,16 +11,15 @@ namespace Domain_layer.Models
 
         public int Id { get; set; }
         public string TicketId {  get; set; } = Guid.NewGuid().ToString();
-        public string Subject { get; set; }
-        public string Status { get; set; }
+        public string Subject { get; set; } = string.Empty;
+        public string Status { get; set; } = "Open"; //open,in progress ,closed
         public bool IsEnded { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime ClosedAt {  get; set; }
+        public DateTime? ClosedAt {  get; set; }
 
         //Feedbackes
-        public int FeedbackId { get; set; }
-        public List<Feedback> Feedbacks { get; set; }
+        public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
 
         //business relations

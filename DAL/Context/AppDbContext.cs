@@ -32,13 +32,14 @@ namespace DAL.Context
         public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<KnowledgeBase> KnowledgeBases { get; set; }
-        
+        public DbSet<Integration> Integrations { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             // ---------------------------
-            // Business relationships (1 : M or 1:1)
+            // Business relations (1:M / 1:1)
             // ---------------------------
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Business)
@@ -88,6 +89,12 @@ namespace DAL.Context
                 .HasForeignKey(r => r.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<KnowledgeBase>()
+                .HasOne(k => k.Business)
+                .WithMany(b => b.KnowledgeBases)
+                .HasForeignKey(k => k.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // 1:1 Business - Setting
             modelBuilder.Entity<Business>()
                 .HasOne(b => b.Setting)
@@ -117,38 +124,40 @@ namespace DAL.Context
                 .OnDelete(DeleteBehavior.Cascade);
 
             // ---------------------------
-            // User relationships
+            // User relations (agent)
             // ---------------------------
-            // Interaction handled by User (Agent) — optional
             modelBuilder.Entity<Interaction>()
                 .HasOne(i => i.HandledByUser)
                 .WithMany(u => u.InteractionsHandled)
                 .HasForeignKey(i => i.HandledByUserId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Ticket assigned to User (optional)
             modelBuilder.Entity<Ticket>()
                 .HasOne(t => t.AssignedToUser)
                 .WithMany(u => u.TicketsAssigned)
                 .HasForeignKey(t => t.AssignedToUserId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // AuditLog -> User (optional, system logs may have null user)
             modelBuilder.Entity<AuditLog>()
                 .HasOne(a => a.User)
                 .WithMany(u => u.AuditLogs)
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Notifications to User (optional)
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.User)
                 .WithMany(u => u.Notifications)
                 .HasForeignKey(n => n.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.User)
+                .WithMany(u => u.Messages)
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // ---------------------------
-            // Customer relationships
+            // Customer relations
             // ---------------------------
             modelBuilder.Entity<Ticket>()
                 .HasOne(t => t.Customer)
@@ -168,8 +177,14 @@ namespace DAL.Context
                 .HasForeignKey(i => i.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Feedback>()
+                .HasOne(f => f.Customer)
+                .WithMany(c => c.Feedbacks)
+                .HasForeignKey(f => f.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // ---------------------------
-            // Orders & Items
+            // Order / OrderItem relations
             // ---------------------------
             modelBuilder.Entity<Order>()
                 .HasMany(o => o.OrderItems)
@@ -182,70 +197,42 @@ namespace DAL.Context
                 .WithMany(mi => mi.OrderItems)
                 .HasForeignKey(oi => oi.MenuItemId)
                 .OnDelete(DeleteBehavior.Restrict);
+
             // ---------------------------
-            // Subscription Relationships
+            // Ticket / Feedback
             // ---------------------------
-
-            // Subscription -> PaymentTransactions
-            // ---------------------------
-            modelBuilder.Entity<PaymentTransaction>()
-                .HasOne(pt => pt.Subscription)
-                .WithMany(s => s.PaymentTransactions)
-                .HasForeignKey(pt => pt.SubscriptionId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-
-
-
-            //Order → OrderItem (One-to-Many)
-            modelBuilder.Entity<Order>()
-                 .HasMany(o => o.OrderItems)
-                 .WithOne(oi => oi.Order)
-                 .HasForeignKey(oi => oi.OrderId);
-
-            //OrderItem → MenuItem (Many-to-One)
-            modelBuilder.Entity<OrderItem>()
-                .HasOne(oi => oi.MenuItem)
-                .WithMany(mi => mi.OrderItems)
-                .HasForeignKey(oi => oi.MenuItemId);
-
-
-            // Feedback -> Tikects 
-             modelBuilder.Entity<Feedback>()
+            modelBuilder.Entity<Feedback>()
                 .HasOne(f => f.Ticket)
                 .WithMany(t => t.Feedbacks)
                 .HasForeignKey(f => f.TicketId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Message -> Interaction 
+            // ---------------------------
+            // Message / Interaction
+            // ---------------------------
             modelBuilder.Entity<Message>()
                 .HasOne(m => m.Interaction)
                 .WithMany(i => i.Messages)
                 .HasForeignKey(m => m.InteractionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-            // Message -> Sentiment 
-            modelBuilder.Entity<Message>()
-            .HasOne(m => m.Sentiment)
-            .WithOne(s => s.Message)
-            .HasForeignKey<Sentiment>(s => s.MessageId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-            // Business -> KnowledgrBases
-            modelBuilder.Entity<Business>()
-            .HasOne(b => b.KnowledgeBases)
-            .WithOne(k => k.Business)
-            .HasForeignKey<KnowledgeBase>(k => k.BusinessId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-            // Bussiness -> Settings 
-            modelBuilder.Entity<Business>()
-                .HasOne(b => b.Setting)
-                .WithOne(s => s.Business)
-                .HasForeignKey<Setting>(o => o.SettingId)
+            // ---------------------------
+            // Message <-> Sentiment (1:1)
+            // ---------------------------
+            modelBuilder.Entity<Sentiment>()
+                .HasOne(s => s.Message)
+                .WithOne(m => m.Sentiment)
+                .HasForeignKey<Sentiment>(s => s.MessageId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // ---------------------------
+            // PaymentTransaction -> Subscription
+            // ---------------------------
+            modelBuilder.Entity<PaymentTransaction>()
+                .HasOne(pt => pt.Subscription)
+                .WithMany(s => s.PaymentTransactions)
+                .HasForeignKey(pt => pt.SubscriptionId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

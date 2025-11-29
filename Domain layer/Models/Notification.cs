@@ -11,11 +11,10 @@ namespace Domain_layer.Models
 
         public int NotificationId { get; set; }
 
-        public string Message { get; set; }
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
         public bool IsRead { get; set; }
-
-
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         //business relations
         public int BusinessId { get; set; }
         public Business Business { get; set; }
@@ -25,7 +24,6 @@ namespace Domain_layer.Models
         public User User { get; set; }
 
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
         
     }
 }

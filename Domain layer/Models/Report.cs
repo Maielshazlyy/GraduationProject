@@ -9,7 +9,8 @@ namespace Domain_layer.Models
 {
    public class Report
     {
-        public int ReportId { get; set; }
+        public int Id { get; set; }
+        public string ReportId { get; set; } = Guid.NewGuid().ToString();
 
         public string Title { get; set; }
 

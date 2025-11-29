@@ -20,6 +20,8 @@ namespace Domain_layer.Models
         public ICollection<Order> Orders { get; set; }
         public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
         public ICollection<Interaction> Interactions { get; set; } = new List<Interaction>();
+        public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
+
 
     }
 }

@@ -9,7 +9,8 @@ namespace Domain_layer.Models
 {
   public  class Integration
     {
-        public int IntegrationId { get; set; }
+        public int Id { get; set; }
+        public string IntegrationId { get; set; } = Guid.NewGuid().ToString();
 
         public int BusinessId { get; set; }
 

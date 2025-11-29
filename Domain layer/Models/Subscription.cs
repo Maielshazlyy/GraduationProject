@@ -8,8 +8,8 @@ namespace Domain_layer.Models
 {
    public class Subscription
     {
-        public int SubscriptionId { get; set; }
-
+        public int Id { get; set; }
+        public string SubscriptionId { get; set; } = Guid.NewGuid().ToString();
         public string PlanName { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public DateTime StartDate { get; set; }

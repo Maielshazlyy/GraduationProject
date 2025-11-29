@@ -3,11 +3,14 @@
 public class Sentiment
 {
     public int SentimentId { get; set; }
+    public string SourceText { get; set; } = string.Empty;
+    public DateTime AnalyzedAt { get; set; } = DateTime.UtcNow;
 
-   
-    public string MessageId { get; set; }
+    // Link to message (required)
+    public int MessageId { get; set; }
     public Message Message { get; set; }
 
-    public string Score { get; set; }
-    public string Label { get; set; }
+    // Results
+    public double Score { get; set; }     // numeric score if you have one
+    public string Label { get; set; } = string.Empty; // e.g. Positive/Neutral/Negative
 }

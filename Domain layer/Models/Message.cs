@@ -9,19 +9,21 @@ namespace Domain_layer.Models
     public class Message
     {
         public int MessageId { get; set; }
+        public string SenderType { get; set; } = string.Empty; // "Customer", "Agent", "AI"
+        public string Content { get; set; } = string.Empty;
+        public DateTime SentAt { get; set; } = DateTime.UtcNow;
 
-        //InterAction Relationship 
-        public string InteractionId { get; set; }
+        // Interaction relation (required)
+        public int InteractionId { get; set; }
         public Interaction Interaction { get; set; }
 
-        //Sentimen 
-        public string SentimentId { get; set; }
-        public Sentiment Sentiment { get; set; }
+        // Optional sender user (if sender is an agent)
+        public int? UserId { get; set; }
+        public User? User { get; set; }
 
-        public string SenderType { get; set; }
-        public string ContentType { get; set; }
+        // Optional sentiment navigation (1:1)
+        public Sentiment? Sentiment { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     }
 }

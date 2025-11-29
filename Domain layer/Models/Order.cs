@@ -11,6 +11,7 @@ namespace Domain_layer.Models
     {
 
         public int OrderId { get; set; }
+        
         public int CustomerId { get; set; }
         public decimal TotalPrice { get; set; }
         public OrderStatus Status { get; set; }
