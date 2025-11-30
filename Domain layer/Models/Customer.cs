@@ -17,7 +17,7 @@ namespace Domain_layer.Models
         public int BusinessId { get; set; }
         public Business Business { get; set; }
 
-        public ICollection<Order> Orders { get; set; }
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
         public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
         public ICollection<Interaction> Interactions { get; set; } = new List<Interaction>();
         public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();

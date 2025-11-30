@@ -13,7 +13,7 @@ namespace Domain_layer.Models
         public int Rating { get; set; } //1 : 5
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
      
-        public int TicketId { get; set; }
+        public int? TicketId { get; set; }
         public Ticket Ticket { get; set; }
 
         public int CustomerId { get; set; }

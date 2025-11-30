@@ -13,7 +13,7 @@ namespace Domain_layer.Models
         public string Content { get; set; } = string.Empty;
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
 
-        // Interaction relation (required)
+        // Interaction relation 
         public int InteractionId { get; set; }
         public Interaction Interaction { get; set; }
 

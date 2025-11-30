@@ -202,10 +202,10 @@ namespace DAL.Context
             // Ticket / Feedback
             // ---------------------------
             modelBuilder.Entity<Feedback>()
-                .HasOne(f => f.Ticket)
-                .WithMany(t => t.Feedbacks)
-                .HasForeignKey(f => f.TicketId)
-                .OnDelete(DeleteBehavior.Cascade);
+           .HasOne(f => f.Ticket)
+          .WithMany(t => t.Feedbacks)
+          .HasForeignKey(f => f.TicketId)
+          .OnDelete(DeleteBehavior.ClientSetNull); // تعديل هنا بدلاً من Cascade
 
             // ---------------------------
             // Message / Interaction
@@ -233,6 +233,17 @@ namespace DAL.Context
                 .WithMany(s => s.PaymentTransactions)
                 .HasForeignKey(pt => pt.SubscriptionId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            var decimalProps = modelBuilder.Model
+                .GetEntityTypes()
+                .SelectMany(t => t.GetProperties())
+                .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?));
+
+            foreach (var property in decimalProps)
+            {
+                property.SetPrecision(18);
+                property.SetScale(2);
+            }
         }
     }
 }
