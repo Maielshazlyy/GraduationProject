@@ -163,25 +163,25 @@ namespace DAL.Context
                 .HasOne(t => t.Customer)
                 .WithMany(c => c.Tickets)
                 .HasForeignKey(t => t.CustomerId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Customer)
                 .WithMany(c => c.Orders)
                 .HasForeignKey(o => o.CustomerId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Interaction>()
                 .HasOne(i => i.Customer)
                 .WithMany(c => c.Interactions)
                 .HasForeignKey(i => i.CustomerId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Feedback>()
                 .HasOne(f => f.Customer)
                 .WithMany(c => c.Feedbacks)
                 .HasForeignKey(f => f.CustomerId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             // ---------------------------
             // Order / OrderItem relations
@@ -205,7 +205,7 @@ namespace DAL.Context
            .HasOne(f => f.Ticket)
           .WithMany(t => t.Feedbacks)
           .HasForeignKey(f => f.TicketId)
-          .OnDelete(DeleteBehavior.ClientSetNull); // تعديل هنا بدلاً من Cascade
+          .OnDelete(DeleteBehavior.Restrict); // تعديل هنا بدلاً من Cascade
 
             // ---------------------------
             // Message / Interaction
@@ -214,7 +214,7 @@ namespace DAL.Context
                 .HasOne(m => m.Interaction)
                 .WithMany(i => i.Messages)
                 .HasForeignKey(m => m.InteractionId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             // ---------------------------
             // Message <-> Sentiment (1:1)

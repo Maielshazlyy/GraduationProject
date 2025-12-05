@@ -9,7 +9,7 @@ namespace Domain_layer.Models
    public class AuditLog
     {
 
-        public int LogId { get; set; }
+        public int AuditLogId { get; set; }
 
         public int BusinessId { get; set; }
         public string Action { get; set; }
