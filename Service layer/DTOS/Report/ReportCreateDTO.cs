@@ -1,0 +1,14 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Service_layer.DTOS.Reports
+{
+    public class ReportCreateDTO
+    {
+        public string Title { get; set; }
+        public int BusinessId { get; set; }
+    }
+}
