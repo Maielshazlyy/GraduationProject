@@ -18,7 +18,7 @@ namespace DAL.Repositories
         {
             _context = context;
         }
-        public async Task<Business?> GetBusinessWithDetails(int id)
+        public async Task<Business?> GetBusinessWithDetails(string id)
         {
             return await _context.Businesses
                 .FirstOrDefaultAsync(b => b.Id == id);

@@ -13,7 +13,7 @@ namespace Service_layer.Validators.Subscription
         public SubscriptionRenewDTOValidator()
         {
             RuleFor(x => x.SubscriptionId)
-                .GreaterThan(0)
+                .NotEmpty()
                 .WithMessage("SubscriptionId is required");
 
             RuleFor(x => x.NewStartDate)

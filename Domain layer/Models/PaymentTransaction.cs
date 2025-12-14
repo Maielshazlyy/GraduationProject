@@ -12,7 +12,7 @@ namespace Domain_layer.Models
         public string Id { get; set; }
         public string PaymentId { get; set; } = Guid.NewGuid().ToString();
 
-        public int SubscriptionId { get; set; }
+        public string SubscriptionId { get; set; }
 
         public decimal Amount { get; set; }
 

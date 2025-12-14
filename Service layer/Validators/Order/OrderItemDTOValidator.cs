@@ -13,7 +13,7 @@ namespace Service_layer.Validators.Order
         public OrderItemDTOValidator()
         {
             RuleFor(x => x.MenuItemId)
-                .GreaterThan(0);
+                .NotEmpty();
 
             RuleFor(x => x.Quantity)
                 .GreaterThan(0)

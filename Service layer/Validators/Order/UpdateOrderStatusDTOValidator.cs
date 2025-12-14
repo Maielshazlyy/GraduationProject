@@ -13,7 +13,7 @@ namespace Service_layer.Validators.Order
         public UpdateOrderStatusDTOValidator()
         {
             RuleFor(x => x.OrderId)
-                .GreaterThan(0);
+                .NotEmpty();
 
             RuleFor(x => x.Status)
                 .Must(s => s == "Pending" || s == "InProgress" || s == "Completed" || s == "Cancelled")

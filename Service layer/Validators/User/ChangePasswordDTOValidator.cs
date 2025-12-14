@@ -13,7 +13,7 @@ namespace Service_layer.Validators.User
         public ChangePasswordDTOValidator()
         {
             RuleFor(x => x.UserId)
-                .GreaterThan(0);
+                .NotEmpty();
 
             RuleFor(x => x.CurrentPassword)
                 .NotEmpty();

@@ -12,7 +12,7 @@ namespace Service_layer.Validators.Integration
     {
         public IntegrationSyncDTOValidator()
         {
-            RuleFor(x => x.IntegrationId).GreaterThan(0);
+            RuleFor(x => x.IntegrationId).NotEmpty();
             RuleFor(x => x.SyncType).NotEmpty();
         }
     }

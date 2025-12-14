@@ -13,10 +13,10 @@ namespace Service_layer.Validators.Ticket
         public CloseTicketDTOValidator()
         {
             RuleFor(x => x.TicketId)
-                .GreaterThan(0);
+                .NotEmpty();
 
             RuleFor(x => x.ClosedByUserId)
-                .GreaterThan(0);
+                .NotEmpty();
         }
     }
 }

@@ -13,11 +13,11 @@ namespace Service_layer.Validators.Feedback
         public FeedbackCreateDTOValidator()
         {
             RuleFor(x => x.TicketId)
-                .GreaterThan(0)
+                .NotEmpty()
                 .WithMessage("TicketId is required");
 
             RuleFor(x => x.CustomerId)
-                .GreaterThan(0)
+                .NotEmpty()
                 .WithMessage("CustomerId is required");
 
             RuleFor(x => x.Rating)

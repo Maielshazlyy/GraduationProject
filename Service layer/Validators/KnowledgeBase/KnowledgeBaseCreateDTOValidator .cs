@@ -14,7 +14,7 @@ namespace Service_layer.Validators.KnowledgeBase
         {
             RuleFor(x => x.Question).NotEmpty();
             RuleFor(x => x.Answer).NotEmpty();
-            RuleFor(x => x.BusinessId).GreaterThan(0);
+            RuleFor(x => x.BusinessId).NotEmpty();
         }
     }
 }

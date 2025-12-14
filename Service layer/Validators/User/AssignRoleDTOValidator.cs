@@ -13,7 +13,7 @@ namespace Service_layer.Validators.User
         public AssignRoleDTOValidator()
         {
             RuleFor(x => x.UserId)
-                .GreaterThan(0);
+                .NotEmpty();
 
             RuleFor(x => x.NewRole)
                 .NotEmpty()

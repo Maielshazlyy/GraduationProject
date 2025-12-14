@@ -14,7 +14,7 @@ namespace Service_layer.Validators.Notification
         {
             RuleFor(x => x.Title).NotEmpty();
             RuleFor(x => x.Message).NotEmpty();
-            RuleFor(x => x.UserId).GreaterThan(0);
+            RuleFor(x => x.UserId).NotEmpty();
         }
     }
 }

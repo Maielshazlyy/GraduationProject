@@ -10,9 +10,9 @@ namespace Service_layer.Services_Interfaces
    public interface IBusinessService
     {
         Task<IEnumerable<Business>> GetAllAsync();
-        Task<Business?> GetByIdAsync(int id);
+        Task<Business?> GetByIdAsync(string id);
         Task<Business> CreateAsync(Business business);
-        Task<Business?> UpdateAsync(int id, Business business);
-        Task<bool> DeleteAsync(int id);
+        Task<Business?> UpdateAsync(string id, Business business);
+        Task<bool> DeleteAsync(string id);
     }
 }

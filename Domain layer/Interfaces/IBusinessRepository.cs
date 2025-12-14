@@ -9,6 +9,6 @@ namespace Domain_layer.Interfaces
 {
   public  interface IBusinessRepository:IRepository<Business>
     {
-        Task<Business?> GetBusinessWithDetails(int id);
+        Task<Business?> GetBusinessWithDetails(string id);
     }
 }

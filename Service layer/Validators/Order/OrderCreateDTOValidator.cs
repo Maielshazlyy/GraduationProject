@@ -13,10 +13,10 @@ namespace Service_layer.Validators.Order
         public OrderCreateDTOValidator()
         {
             RuleFor(x => x.CustomerId)
-                .GreaterThan(0);
+                .NotEmpty();
 
             RuleFor(x => x.BusinessId)
-                .GreaterThan(0);
+                .NotEmpty();
 
             RuleFor(x => x.Items)
                 .NotEmpty().WithMessage("Order must contain at least 1 item");

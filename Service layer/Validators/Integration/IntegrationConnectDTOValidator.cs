@@ -12,7 +12,7 @@ namespace Service_layer.Validators.Integration
     {
         public IntegrationConnectDTOValidator()
         {
-            RuleFor(x => x.BusinessId).GreaterThan(0);
+            RuleFor(x => x.BusinessId).NotEmpty();
             RuleFor(x => x.PlatformName).NotEmpty();
             RuleFor(x => x.ApiKeyOrConfig).NotEmpty();
         }

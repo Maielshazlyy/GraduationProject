@@ -17,10 +17,10 @@ namespace Service_layer.Validators.Ticket
                 .MaximumLength(200);
 
             RuleFor(x => x.CustomerId)
-                .GreaterThan(0).WithMessage("CustomerId is required");
+                .NotEmpty().WithMessage("CustomerId is required");
 
             RuleFor(x => x.BusinessId)
-                .GreaterThan(0).WithMessage("BusinessId is required");
+                .NotEmpty().WithMessage("BusinessId is required");
         }
     }
 }

@@ -21,7 +21,7 @@ namespace Service_layer.Services
             return await _unitOfWork.Businesses.GetAllAsync();
         }
 
-        public async Task<Business?> GetByIdAsync(int id)
+        public async Task<Business?> GetByIdAsync(string id)
         {
             return await _unitOfWork.Businesses.GetByIdAsync(id);
         }
@@ -33,7 +33,7 @@ namespace Service_layer.Services
             return business;
         }
 
-        public async Task<Business?> UpdateAsync(int id, Business business)
+        public async Task<Business?> UpdateAsync(string id, Business business)
         {
             var existing = await _unitOfWork.Businesses.GetByIdAsync(id);
             if (existing == null) return null;
@@ -51,7 +51,7 @@ namespace Service_layer.Services
             return existing;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(string id)
         {
             var business = await _unitOfWork.Businesses.GetByIdAsync(id);
             if (business == null) return false;

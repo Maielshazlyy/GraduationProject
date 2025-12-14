@@ -13,7 +13,7 @@ namespace Service_layer.Validators.Message
         public SendMessageDTOValidator()
         {
             RuleFor(x => x.InteractionId)
-                .GreaterThan(0);
+                .NotEmpty();
 
             RuleFor(x => x.SenderType)
                 .NotEmpty()
@@ -28,7 +28,7 @@ namespace Service_layer.Validators.Message
             {
                 RuleFor(x => x.UserId)
                     .NotNull()
-                    .GreaterThan(0);
+                    .NotEmpty();
             });
         }
         }

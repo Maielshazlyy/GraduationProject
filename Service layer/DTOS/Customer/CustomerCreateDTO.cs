@@ -11,7 +11,7 @@ namespace Service_layer.DTOS.Customer
         public string FullName { get; set; }
         public string Email { get; set; }     // optional
         public string Phone { get; set; }     // optional
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
 
     }
 }

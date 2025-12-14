@@ -13,7 +13,7 @@ namespace Service_layer.Validators.Interaction
         public EndInteractionDTOValidator()
         {
             RuleFor(x => x.InteractionId)
-                .GreaterThan(0);
+                .NotEmpty();
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Service_layer.Validators.Subscription
         {
             RuleFor(x => x.PlanName).NotEmpty();
             RuleFor(x => x.Price).GreaterThan(0);
-            RuleFor(x => x.BusinessId).GreaterThan(0);
+            RuleFor(x => x.BusinessId).NotEmpty();
         }
     }
 }

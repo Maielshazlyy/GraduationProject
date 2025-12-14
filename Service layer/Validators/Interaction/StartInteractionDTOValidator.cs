@@ -13,10 +13,10 @@ namespace Service_layer.Validators.Interaction
         public StartInteractionDTOValidator()
         {
             RuleFor(x => x.CustomerId)
-                .GreaterThan(0);
+                .NotEmpty();
 
             RuleFor(x => x.BusinessId)
-                .GreaterThan(0);
+                .NotEmpty();
 
             RuleFor(x => x.Channel)
                 .NotEmpty()

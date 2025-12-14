@@ -25,7 +25,7 @@ namespace Service_layer.Validators.User
                 .MinimumLength(6).WithMessage("Password must be at least 6 characters.");
 
             RuleFor(x => x.BusinessId)
-                .GreaterThan(0).WithMessage("BusinessId is required.");
+                .NotEmpty().WithMessage("BusinessId is required.");
 
             RuleFor(x => x.Role)
                 .NotEmpty()
