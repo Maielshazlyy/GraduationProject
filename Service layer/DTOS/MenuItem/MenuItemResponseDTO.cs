@@ -8,14 +8,14 @@ namespace Service_layer.DTOS.menuItem
 {
     public class MenuItemResponseDTO
     {
-        public int MenuItemId { get; set; }
+        public string MenuItemId { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public decimal Price { get; set; }
         public string Category { get; set; }
         public bool IsAvailable { get; set; }
 
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
         public string BusinessName { get; set; }
     }
 }

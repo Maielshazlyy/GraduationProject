@@ -8,10 +8,10 @@ namespace Service_layer.DTOS.Feedback
 {
     public class FeedbackResponseDTO
     {
-        public int FeedbackId { get; set; }
-        public int? TicketId { get; set; }
+        public string FeedbackId { get; set; }
+        public string? TicketId { get; set; }
         public string TickerSubject { get; set; }
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
 
         public string CustomerName { get; set; }
 

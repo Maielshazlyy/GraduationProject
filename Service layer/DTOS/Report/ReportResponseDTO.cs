@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.Report
 {
     public class ReportResponseDTO
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string ReportId { get; set; }          // GUID for tracking externally
         public string Title { get; set; }
 
@@ -20,7 +20,7 @@ namespace Service_layer.DTOS.Report
         public string FileUrl { get; set; }            // Optional (API → Signed URL, Cloud)
 
         // Business relation summary
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
         public string BusinessName { get; set; }
 
         // Optional insights

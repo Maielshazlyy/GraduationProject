@@ -9,7 +9,7 @@ namespace Domain_layer.Models
    public class MenuItem
     {
 
-        public int MenuItemId { get; set; }
+        public string MenuItemId { get; set; }
 
         public string Name { get; set; }
 
@@ -21,7 +21,7 @@ namespace Domain_layer.Models
 
         public bool IsAvailable { get; set; }
 
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
         public Business Business { get; set; }
 
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

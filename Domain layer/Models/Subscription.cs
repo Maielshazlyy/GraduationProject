@@ -8,7 +8,7 @@ namespace Domain_layer.Models
 {
    public class Subscription
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string SubscriptionId { get; set; } = Guid.NewGuid().ToString();
         public string PlanName { get; set; } = string.Empty;
         public decimal Price { get; set; }
@@ -16,7 +16,7 @@ namespace Domain_layer.Models
         public DateTime? EndDate { get; set; }
         public bool IsActive { get; set; }
         //business relations
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
         public Business Business { get; set; }
         public ICollection<PaymentTransaction> PaymentTransactions { get; set; } = new List<PaymentTransaction>();
 

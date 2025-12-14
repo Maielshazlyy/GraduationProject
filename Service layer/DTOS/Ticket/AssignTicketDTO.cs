@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.Ticket
 {
    public class AssignTicketDTO
     {
-        public int TicketId { get; set; }
-        public int UserId { get; set; }
+        public string TicketId { get; set; }
+        public string UserId { get; set; }
     }
 }

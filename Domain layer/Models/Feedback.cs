@@ -8,15 +8,15 @@ namespace Domain_layer.Models
 {
   public class Feedback
     {
-        public int FeedbackId { get; set; } 
+        public string FeedbackId { get; set; } 
         public string Comment { get; set; } = string.Empty;
         public int Rating { get; set; } //1 : 5
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
      
-        public int? TicketId { get; set; }
+        public string? TicketId { get; set; }
         public Ticket Ticket { get; set; }
 
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
         public Customer Customer { get; set; }
 
 

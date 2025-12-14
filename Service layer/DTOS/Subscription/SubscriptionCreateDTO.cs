@@ -10,6 +10,6 @@ namespace Service_layer.DTOS.Subscription
     {
         public string PlanName { get; set; }
         public decimal Price { get; set; }
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
     }
 }

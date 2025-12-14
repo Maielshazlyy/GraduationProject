@@ -8,12 +8,12 @@ namespace Service_layer.DTOS.Subscription
 {
     public class SubscriptionResponseDTO
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string SubscriptionId { get; set; }
         public string PlanName { get; set; }
         public decimal Price { get; set; }
         public bool IsActive { get; set; }
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
         public string BusinessName { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }

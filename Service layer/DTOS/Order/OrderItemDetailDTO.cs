@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.Order
 {
     public class OrderItemDetailDTO
     {
-        public int MenuItemId { get; set; }
+        public string MenuItemId { get; set; }
         public string MenuItemName { get; set; }
         public decimal UnitPrice { get; set; }
         public int Quantity { get; set; }

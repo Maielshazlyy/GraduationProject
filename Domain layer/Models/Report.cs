@@ -9,7 +9,7 @@ namespace Domain_layer.Models
 {
    public class Report
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string ReportId { get; set; } = Guid.NewGuid().ToString();
 
         public string Title { get; set; }
@@ -20,7 +20,7 @@ namespace Domain_layer.Models
 
         public string FilePath { get; set; }
 
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
         public Business Business { get; set; }
 
     }

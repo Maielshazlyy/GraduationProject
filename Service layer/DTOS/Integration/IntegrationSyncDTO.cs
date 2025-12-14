@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.Integration
 {
     public class IntegrationSyncDTO
     {
-        public int IntegrationId { get; set; }
+        public string IntegrationId { get; set; }
         public string SyncType { get; set; } = "Full";
         // Full, OrdersOnly, MenuItemsOnly, MessagesOnly, etc.
     }

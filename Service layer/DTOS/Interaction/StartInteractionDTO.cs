@@ -8,8 +8,8 @@ namespace Service_layer.DTOS.Interaction
 {
     public class StartInteractionDTO
     {
-        public int CustomerId { get; set; }
-        public int BusinessId { get; set; }
+        public string CustomerId { get; set; }
+        public string BusinessId { get; set; }
         public string Channel { get; set; } // WhatsApp, Voice, Web
     }
 }

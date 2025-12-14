@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.User
 {
    public class AssignRoleDTO
     {
-        public int UserId { get; set; }
+        public string UserId { get; set; }
         public string NewRole { get; set; } // "Admin", "Owner", "Agent"
     }
 }

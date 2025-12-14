@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.Customer
 {
   public  class CustomerResponseDTO
     {
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
         public string FullName { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
@@ -16,7 +16,7 @@ namespace Service_layer.DTOS.Customer
         public int TotalOrders { get; set; }
         public int TotalTickets { get; set; }
 
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
         public string BusinessName { get; set; }
     }
 }

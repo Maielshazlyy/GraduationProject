@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.Payment
 {
     public class PaymentTransactionCreateDTO
     {
-        public int SubscriptionId { get; set; }
+        public string SubscriptionId { get; set; }
         public decimal Amount { get; set; }
         public string PaymentMethod { get; set; }
     }

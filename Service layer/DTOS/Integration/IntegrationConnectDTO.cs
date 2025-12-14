@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.Integration
 {
     public class IntegrationConnectDTO
     {
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
         public string PlatformName { get; set; }       // WhatsApp, Foodics, Talabat, Shopify...
         public string ApiKeyOrConfig { get; set; }     // Token, API key, JSON config
     }

@@ -9,12 +9,12 @@ namespace Service_layer.DTOS.Message
 {
     public class MessageResponseDTO
     {
-        public int MessageId { get; set; }
+        public string MessageId { get; set; }
         public string SenderType { get; set; }
         public string Content { get; set; }
         public DateTime SentAt { get; set; }
-        public int InteractionId { get; set; }
-        public int? AgentId { get; set; }
+        public string InteractionId { get; set; }
+        public string? AgentId { get; set; }
         public string AgentName { get; set; }
 
         public SentimentResponseDTO Sentiment { get; set; }

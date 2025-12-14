@@ -12,6 +12,6 @@ namespace Service_layer.DTOS.menuItem
         public string Description { get; set; }
         public decimal Price { get; set; }
         public string Category { get; set; }
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
     }
 }

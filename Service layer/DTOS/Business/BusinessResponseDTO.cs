@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.Business
 {
     public class BusinessResponseDTO
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string BusinessId { get; set; }
 
         public string Name { get; set; }

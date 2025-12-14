@@ -9,7 +9,7 @@ namespace Domain_layer.Models
     public class Ticket
     {
 
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string TicketId {  get; set; } = Guid.NewGuid().ToString();
         public string Subject { get; set; } = string.Empty;
         public string Status { get; set; } = "Open"; //open,in progress ,closed
@@ -23,15 +23,15 @@ namespace Domain_layer.Models
 
 
         //business relations
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
         public Business Business { get; set; }
 
         //user relations
-        public int? AssignedToUserId { get; set; }
+        public string? AssignedToUserId { get; set; }
         public User? AssignedToUser { get; set; }
 
         //customer relations
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
         public Customer Customer { get; set; }
 
         

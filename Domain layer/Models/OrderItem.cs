@@ -8,10 +8,10 @@ namespace Domain_layer.Models
 {
   public class OrderItem
     {
-        public int OrderItemId { get; set; }
+        public string OrderItemId { get; set; }
 
-        public int OrderId { get; set; }
-        public int MenuItemId { get; set; }
+        public string OrderId { get; set; }
+        public string MenuItemId { get; set; }
 
         public int Quantity { get; set; }
 

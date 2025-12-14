@@ -8,10 +8,10 @@ namespace Service_layer.DTOS.PaymentTranscation
 {
     public class PaymentTransacationResponseDTO
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string PaymentId { get; set; }
 
-        public int SubscriptionId { get; set; }
+        public string SubscriptionId { get; set; }
         public string SubscriptionPlanName { get; set; }
 
         public decimal Amount { get; set; }

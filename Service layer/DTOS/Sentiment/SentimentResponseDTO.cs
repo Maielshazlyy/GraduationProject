@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.Sentiment
 {
     public class SentimentResponseDTO
     {
-        public int SentimentId { get; set; }
+        public string SentimentId { get; set; }
         public string SourceText { get; set; }
         public double Score { get; set; }
         public string Label { get; set; } // Positive / Neutral / Negative

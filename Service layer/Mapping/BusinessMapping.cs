@@ -25,6 +25,7 @@ namespace Service_layer.Mapping
                 TotalUsers = b.Users?.Count ?? 0,
                 TotalCustomers = b.Customers?.Count ?? 0,
                 TotalTickets = b.Tickets?.Count ?? 0
+                
             };
         }
         public static IEnumerable<BusinessResponseDTO> ToDtoList(this IEnumerable<Business> list)

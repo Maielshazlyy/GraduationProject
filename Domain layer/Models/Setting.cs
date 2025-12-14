@@ -9,7 +9,7 @@ namespace Domain_layer.Models
   public  class Setting
     {
 
-        public int SettingId { get; set; }
+        public string SettingId { get; set; }
 
         // General
         public bool AutoAssignTickets { get; set; } = true;
@@ -28,7 +28,7 @@ namespace Domain_layer.Models
         public bool PushNotifications { get; set; } = true;
 
         // Business relation (1:1)
-        public int BusinessId { get; set; }
+        public string BusinessId { get; set; }
         public Business Business { get; set; }
 
     }

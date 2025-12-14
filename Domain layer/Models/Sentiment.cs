@@ -2,12 +2,12 @@
 
 public class Sentiment
 {
-    public int SentimentId { get; set; }
+    public string SentimentId { get; set; }
     public string SourceText { get; set; } = string.Empty;
     public DateTime AnalyzedAt { get; set; } = DateTime.UtcNow;
 
     // Link to message (required)
-    public int MessageId { get; set; }
+    public string MessageId { get; set; }
     public Message Message { get; set; }
 
     // Results

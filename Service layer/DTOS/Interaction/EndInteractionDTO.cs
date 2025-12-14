@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.Interaction
 {
     public class EndInteractionDTO
     {
-        public int InteractionId { get; set; }
+        public string InteractionId { get; set; }
         public int? HandledByUserId { get; set; } // ممكن يكون Agent أو Null لو AI
     }
 }

@@ -8,7 +8,7 @@ namespace Service_layer.DTOS.Subscription
 {
     public class SubscriptionRenewDTO
     {
-        public int SubscriptionId { get; set; }          // Required
+        public string SubscriptionId { get; set; }          // Required
         public DateTime NewStartDate { get; set; }       // Usually = Today
         public DateTime? NewEndDate { get; set; }        // Optional (monthly / yearly)
 
