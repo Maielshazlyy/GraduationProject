@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace Domain_layer.Models
 {
-   public class User
+   public class User: IdentityUser
     {
-        public string UserId { get; set; }
+       // public string UserId { get; set; }
         public string FullName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string PasswordHash { get; set; } = string.Empty;
+        //public string Email { get; set; } = string.Empty;
+       // public string PasswordHash { get; set; } = string.Empty;
         public string Role { get; set; } = "User"; // Admin, Agent, business owner
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         //business relations

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentValidation;
-using Service_layer.DTOS.User;
+using Service_layer.DTOS.Auth;
 
-namespace Service_layer.Validators.User
+namespace Service_layer.Validators.Auth
 {
     public class ChangePasswordDTOValidator: AbstractValidator<ChangePasswordDTO>
     {

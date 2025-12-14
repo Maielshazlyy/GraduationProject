@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Service_layer.DTOS.User
+namespace Service_layer.DTOS.Auth
 {
-   public class ChangePasswordDTO
+    public class ChangePasswordDTO
     {
         public string UserId { get; set; }
         public string CurrentPassword { get; set; }

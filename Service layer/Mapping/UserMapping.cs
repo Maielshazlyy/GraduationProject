@@ -14,7 +14,7 @@ namespace Service_layer.Mapping
         {
             return new UserResponseDTO
             {
-                UserId = u.UserId,
+                UserId = u.Id,
                 FullName = u.FullName,
                 Email = u.Email,
                 Role = u.Role,

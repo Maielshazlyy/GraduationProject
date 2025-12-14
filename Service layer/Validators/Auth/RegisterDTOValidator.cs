@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentValidation;
-using Service_layer.DTOS.User;
+using Service_layer.DTOS.Auth;
 
-namespace Service_layer.Validators.User
+namespace Service_layer.Validators.Auth
 {
-    public class UserCreateDTOValidator : AbstractValidator<UserCreateDTO>
+    public class RegisterDTOValidator: AbstractValidator<RegisterDTO>
     {
-        public UserCreateDTOValidator()
+        public RegisterDTOValidator()
         {
             RuleFor(x => x.FullName)
                 .NotEmpty().WithMessage("Full name is required.")
@@ -18,15 +18,17 @@ namespace Service_layer.Validators.User
 
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage("Email is required.")
-                .EmailAddress().WithMessage("Email format is invalid.");
+                .EmailAddress().WithMessage("Invalid email format.");
 
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("Password is required.")
                 .MinimumLength(6).WithMessage("Password must be at least 6 characters.");
 
+            // التحقق من أن الـ BusinessId ليس فارغاً (لأنه string)
             RuleFor(x => x.BusinessId)
                 .NotEmpty().WithMessage("BusinessId is required.");
 
+            // التحقق من الأدوار المسموحة
             RuleFor(x => x.Role)
                 .NotEmpty()
                 .Must(r => r == "Owner" || r == "Admin" || r == "Agent")

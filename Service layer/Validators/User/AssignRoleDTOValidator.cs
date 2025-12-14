@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain_layer.Constants;
 using FluentValidation;
 using Service_layer.DTOS.User;
 
@@ -16,9 +17,8 @@ namespace Service_layer.Validators.User
                 .NotEmpty();
 
             RuleFor(x => x.NewRole)
-                .NotEmpty()
-                .Must(r => r == "Owner" || r == "Admin" || r == "Agent")
-                .WithMessage("Invalid role.");
+        .Must(r => r == Roles.Owner || r == Roles.Admin || r == Roles.Agent) // ✅ كود نظيف وآمن
+         .WithMessage("Invalid role selected.");
         }
     }
 }

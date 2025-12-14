@@ -4,20 +4,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentValidation;
-using Service_layer.DTOS.User;
+using Service_layer.DTOS.Auth;
 
-namespace Service_layer.Validators.User
+namespace Service_layer.Validators.Auth
 {
     public class LoginDTOValidator: AbstractValidator<LoginDTO>
     {
         public LoginDTOValidator()
         {
             RuleFor(x => x.Email)
-                .NotEmpty()
-                .EmailAddress();
+                .NotEmpty().WithMessage("Email is required.")
+                .EmailAddress().WithMessage("Invalid email format.");
 
             RuleFor(x => x.Password)
-                .NotEmpty();
+                .NotEmpty().WithMessage("Password is required.");
         }
-        }
+    }
 }
+
