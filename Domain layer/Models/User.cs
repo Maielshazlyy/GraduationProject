@@ -16,7 +16,7 @@ namespace Domain_layer.Models
         public string Role { get; set; } = "User"; // Admin, Agent, business owner
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         //business relations
-        public string BusinessId { get; set; }
+        public string? BusinessId { get; set; }
         public Business Business { get; set; }
         
         public ICollection<Interaction> InteractionsHandled { get; set; } = new List<Interaction>();

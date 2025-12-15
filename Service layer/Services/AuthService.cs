@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Domain_layer.Models;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -97,6 +98,42 @@ namespace Service_layer.Services
                 Role = user.Role,
                 BusinessId = user.BusinessId
             };
+        }
+        public async Task<AuthResponseDTO> GoogleLoginAsync(string googleToken)
+        {
+            // 1. التحقق من التوكن
+            GoogleJsonWebSignature.Payload payload;
+            try
+            {
+                var settings = new GoogleJsonWebSignature.ValidationSettings()
+                {
+                    Audience = new List<string>() { _configuration["Google:ClientId"] }
+                };
+                payload = await GoogleJsonWebSignature.ValidateAsync(googleToken, settings);
+            }
+            catch
+            {
+                throw new Exception("Invalid Google Token");
+            }
+
+            // 2. البحث عن المستخدم أو إنشاؤه
+            var user = await _userManager.FindByEmailAsync(payload.Email);
+            if (user == null)
+            {
+                user = new User
+                {
+                    Email = payload.Email,
+                    UserName = payload.Email,
+                    FullName = payload.Name,
+                    Role = "Owner",
+                    BusinessId = "1", // قيمة مؤقتة
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _userManager.CreateAsync(user, "GooglePass_123!");
+            }
+
+            // 3. إصدار التوكن الخاص بنا
+            return GenerateJwtToken(user);
         }
     }
 

@@ -47,6 +47,19 @@ namespace digital_employee.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDTO model)
+        {
+            try
+            {
+                var result = await _authService.GoogleLoginAsync(model.IdToken);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
     }
 }
 

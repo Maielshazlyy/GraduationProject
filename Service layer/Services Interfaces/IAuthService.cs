@@ -11,5 +11,6 @@ namespace Service_layer.ServicesInterfaces
     {
         Task<AuthResponseDTO> RegisterAsync(RegisterDTO model);
         Task<AuthResponseDTO> LoginAsync(LoginDTO model);
+        Task<AuthResponseDTO> GoogleLoginAsync(string googleToken);
     }
 }
