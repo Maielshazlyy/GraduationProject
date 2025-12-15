@@ -14,9 +14,23 @@ namespace Service_layer.Services
    public class BusinessService:IBusinessService
     {
         private readonly IUnitOfWork _unitOfWork;
-        public BusinessService(IUnitOfWork unitOfWork)
+        private readonly IRepository<Setting> _settingsRepository;
+        private readonly IRepository<KnowledgeBase> _knowledgeBaseRepository;
+        private readonly IRepository<Subscription> _subscriptionRepository;
+        private readonly IRepository<PaymentTransaction> _paymentRepository;
+
+        public BusinessService(
+            IUnitOfWork unitOfWork,
+            IRepository<Setting> settingsRepository,
+            IRepository<KnowledgeBase> knowledgeBaseRepository,
+            IRepository<Subscription> subscriptionRepository,
+            IRepository<PaymentTransaction> paymentRepository)
         {
             _unitOfWork = unitOfWork;
+            _settingsRepository = settingsRepository;
+            _knowledgeBaseRepository = knowledgeBaseRepository;
+            _subscriptionRepository = subscriptionRepository;
+            _paymentRepository = paymentRepository;
         }
         public async Task<IEnumerable<Business>> GetAllAsync()
         {
@@ -62,9 +76,9 @@ namespace Service_layer.Services
             return true;
         }
 
-        /// <summary>
-        /// Full onboarding for a new restaurant business.
-        /// </summary>
+       
+        // Full onboarding for a new restaurant business.
+       
         public async Task<Business> OnboardRestaurantAsync(BusinessOnboardingDTO dto)
         {
             // 1) Create Business (BusinessId is Guid by default in entity)
@@ -73,24 +87,24 @@ namespace Service_layer.Services
 
             // 2) Create Setting (agent configuration)
             var setting = dto.ToSetting(business.Id);
-            await _unitOfWork.Repository<Setting>().AddAsync(setting);
+            await _settingsRepository.AddAsync(setting);
 
             // 3) Seed Knowledge Base
             var kbEntities = dto.ToKnowledgeBaseEntities(business.Id);
             foreach (var kb in kbEntities)
             {
-                await _unitOfWork.Repository<KnowledgeBase>().AddAsync(kb);
+                await _knowledgeBaseRepository.AddAsync(kb);
             }
 
             // 4) Create Subscription
             var subscription = dto.ToSubscription(business.Id);
-            await _unitOfWork.Repository<Subscription>().AddAsync(subscription);
+            await _subscriptionRepository.AddAsync(subscription);
 
             // 5) Create initial PaymentTransaction (status set to Success for now)
             var payment = dto.ToPaymentTransaction(subscription.Id);
 
             // NOTE: Card details from dto are not stored for security reasons in this simple example.
-            await _unitOfWork.Repository<PaymentTransaction>().AddAsync(payment);
+            await _paymentRepository.AddAsync(payment);
 
             // 6) Commit everything
             await _unitOfWork.CompleteAsync();
