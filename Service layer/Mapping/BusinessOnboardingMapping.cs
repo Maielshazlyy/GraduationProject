@@ -16,6 +16,7 @@ namespace Service_layer.Mapping
         {
             return new Business
             {
+                Id = Guid.NewGuid().ToString(), // Generate Id manually since it's not auto-generated
                 Name = dto.Name,
                 Type = string.IsNullOrWhiteSpace(dto.Type) ? "Restaurant" : dto.Type,
                 Address = dto.Address,
