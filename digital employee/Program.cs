@@ -4,6 +4,7 @@ using Service_layer;
 using DAL.Context;
 using Microsoft.AspNetCore.Mvc;
 using Domain_layer.Models;
+using Domain_layer.Constants;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -79,9 +80,19 @@ namespace digital_employee
             // -------------------------
             // 4) Identity Configuration (نظام الهوية)
             // -------------------------
-            builder.Services.AddIdentity<User, IdentityRole>()
-                .AddEntityFrameworkStores<AppDbContext>()
-                .AddDefaultTokenProviders();
+            builder.Services.AddIdentity<User, IdentityRole>(options =>
+            {
+                
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 6;
+
+                options.User.RequireUniqueEmail = true;
+            })
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
             // -------------------------
             // 5) JWT Authentication (إعدادات التوكن - جديد)
             // -------------------------
@@ -94,18 +105,38 @@ namespace digital_employee
             .AddJwtBearer(options =>
             {
                 options.SaveToken = true;
-                options.RequireHttpsMetadata = false;
+                options.RequireHttpsMetadata = false; // خليها true في الإنتاج مع HTTPS
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero,
                     ValidAudience = builder.Configuration["JWT:Audience"],
                     ValidIssuer = builder.Configuration["JWT:Issuer"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
                 };
             });
+
             // -------------------------
-            // 6) Dependency Injection (تسجيل الخدمات - جديد)
+            // 6) Authorization Policies (صلاحيات حسب الدور)
+            // -------------------------
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminOnly", policy =>
+                    policy.RequireRole(Roles.Admin));
+
+                options.AddPolicy("OwnerOrAdmin", policy =>
+                    policy.RequireRole(Roles.Owner, Roles.Admin));
+
+                options.AddPolicy("AgentOrOwnerOrAdmin", policy =>
+                    policy.RequireRole(Roles.Agent, Roles.Owner, Roles.Admin));
+            });
+
+            // -------------------------
+            // 7) Dependency Injection (تسجيل الخدمات - جديد)
             // -------------------------
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
@@ -114,13 +145,13 @@ namespace digital_employee
             builder.Services.AddScoped<IBusinessService, BusinessService>();
 
             // -------------------------
-            // 7) FluentValidation Registration
+            // 8) FluentValidation Registration
             // -------------------------
             builder.Services.AddFluentValidationAutoValidation();
             builder.Services.AddValidatorsFromAssembly(typeof(AssemblyReference).Assembly);
 
             // -------------------------
-            // 8) Custom Validation Response
+            // 9) Custom Validation Response
             // -------------------------
             builder.Services.Configure<ApiBehaviorOptions>(options =>
             {

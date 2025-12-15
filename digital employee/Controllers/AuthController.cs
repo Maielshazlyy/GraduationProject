@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Service_layer.DTOS.Auth;
 using Service_layer.ServicesInterfaces;
 
@@ -17,6 +18,7 @@ namespace digital_employee.Controllers
 
         // POST: api/Auth/register
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterDTO model)
         {
             // FluentValidation بيشتغل أوتوماتيك هنا ويرجع 400 لو الداتا ناقصة
@@ -35,6 +37,7 @@ namespace digital_employee.Controllers
 
         // POST: api/Auth/login
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginDTO model)
         {
             try
@@ -48,6 +51,7 @@ namespace digital_employee.Controllers
             }
         }
         [HttpPost("google-login")]
+        [AllowAnonymous]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDTO model)
         {
             try
