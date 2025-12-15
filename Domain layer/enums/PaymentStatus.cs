@@ -10,6 +10,7 @@ namespace Domain_layer.enums
     {
         Completed,
         Failed,
-        Pending
+        Pending,
+        Success
     }
 }
