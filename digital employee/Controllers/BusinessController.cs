@@ -21,7 +21,7 @@ namespace digital_employee.Controllers
         // GET: api/Business
         [HttpGet]
         [Authorize(Policy = "OwnerOrAdmin")]
-        public async Task<ActionResult<IEnumerable<BusinessResponseDTO>>> GetAll()
+        public async Task<IActionResult> GetAll()
         {
             var businesses = await _businessService.GetAllAsync();
             return Ok(businesses.ToDtoList());
@@ -30,19 +30,23 @@ namespace digital_employee.Controllers
         // GET: api/Business/{id}
         [HttpGet("{id}")]
         [Authorize(Policy = "OwnerOrAdmin")]
-        public async Task<ActionResult<BusinessResponseDTO>> GetById(string id)
+        public async Task<IActionResult> GetById(string id)
         {
             var business = await _businessService.GetByIdAsync(id);
-            if (business == null) return NotFound();
+            if (business == null)
+                return NotFound(new { Message = $"Business with id '{id}' not found." });
+
             return Ok(business.ToDto());
         }
 
         // POST: api/Business
-        // Simple create (CRUD) using existing BusinessCreateDTO
         [HttpPost]
         [Authorize(Policy = "OwnerOrAdmin")]
-        public async Task<ActionResult<BusinessResponseDTO>> Create([FromBody] BusinessCreateDTO dto)
+        public async Task<IActionResult> Create([FromBody] BusinessCreateDTO dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var business = new Domain_layer.Models.Business
             {
                 Name = dto.Name,
@@ -56,21 +60,33 @@ namespace digital_employee.Controllers
         }
 
         // POST: api/Business/onboard
-        // Full onboarding flow for restaurant owner (business + agent config + KB + subscription + payment)
         [HttpPost("onboard")]
-        [AllowAnonymous] // or Authorize depending on your UX (e.g. after registration)
-        public async Task<ActionResult<BusinessResponseDTO>> Onboard([FromBody] BusinessOnboardingDTO dto)
+        [AllowAnonymous] // Allow public access for first-time business registration
+        public async Task<IActionResult> Onboard([FromBody] BusinessOnboardingDTO dto)
         {
-            var business = await _businessService.OnboardRestaurantAsync(dto);
-            return Ok(business.ToDto());
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var business = await _businessService.OnboardRestaurantAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = business.Id }, business.ToDto());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = "Onboarding failed.", Error = ex.Message });
+            }
         }
 
         // PUT: api/Business/{id}
         [HttpPut("{id}")]
         [Authorize(Policy = "OwnerOrAdmin")]
-        public async Task<ActionResult<BusinessResponseDTO>> Update(string id, [FromBody] BusinessCreateDTO dto)
+        public async Task<IActionResult> Update(string id, [FromBody] BusinessCreateDTO dto)
         {
-            var updatedBusiness = new Domain_layer.Models.Business
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var business = new Domain_layer.Models.Business
             {
                 Name = dto.Name,
                 Type = dto.Type,
@@ -78,10 +94,11 @@ namespace digital_employee.Controllers
                 Phone = dto.Phone
             };
 
-            var result = await _businessService.UpdateAsync(id, updatedBusiness);
-            if (result == null) return NotFound();
+            var updated = await _businessService.UpdateAsync(id, business);
+            if (updated == null)
+                return NotFound(new { Message = $"Business with id '{id}' not found." });
 
-            return Ok(result.ToDto());
+            return Ok(updated.ToDto());
         }
 
         // DELETE: api/Business/{id}
@@ -90,11 +107,11 @@ namespace digital_employee.Controllers
         public async Task<IActionResult> Delete(string id)
         {
             var deleted = await _businessService.DeleteAsync(id);
-            if (!deleted) return NotFound();
+            if (!deleted)
+                return NotFound(new { Message = $"Business with id '{id}' not found." });
 
             return NoContent();
         }
     }
 }
-
 

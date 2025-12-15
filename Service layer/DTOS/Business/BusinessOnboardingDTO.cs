@@ -1,48 +1,47 @@
 using System;
 using System.Collections.Generic;
-using Service_layer.DTOS.KnowledgeBase;
 
 namespace Service_layer.DTOS.Business
 {
     /// <summary>
-    /// Full onboarding payload for a new business (restaurant) owner.
+    /// DTO for complete restaurant business onboarding flow.
+    /// Includes business info, agent configuration, knowledge base, subscription, and payment.
     /// </summary>
     public class BusinessOnboardingDTO
     {
-        // Business basic info
-        public string Name { get; set; }
-        public string Type { get; set; } = "Restaurant";
-        public string Address { get; set; }
-        public string Phone { get; set; }
+        // Business Information
+        public string Name { get; set; } = string.Empty;
+        public string Type { get; set; } = "Restaurant"; // Default to Restaurant
+        public string Address { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
 
-        // Agent / chatbot configuration
-        public string AgentName { get; set; }
-        public string AgentTone { get; set; }  // maps to ChatbotPersonality
-        public string WelcomeMessage { get; set; }
+        // Agent/Chatbot Configuration
+        public string AgentName { get; set; } = string.Empty;
+        public string AgentTone { get; set; } = "Friendly"; // e.g., Friendly, Professional, Casual
+        public string WelcomeMessage { get; set; } = string.Empty;
 
-        // Knowledge base seed data (for restaurant menu, FAQs, etc.)
-        public List<KnowledgeBaseItemDTO> KnowledgeBaseItems { get; set; } = new();
+        // Knowledge Base (Q&A pairs for the restaurant)
+        public List<KnowledgeBaseItemDTO> KnowledgeBaseItems { get; set; } = new List<KnowledgeBaseItemDTO>();
 
-        // Subscription
-        
-        // e.g. \"Monthly\", \"Yearly\"
-        
-        public string PlanName { get; set; }
+        // Subscription Plan
+        public string PlanName { get; set; } = string.Empty; // e.g., "Monthly", "Yearly"
         public decimal Price { get; set; }
 
-        // Payment (simple prototype – in real life you'd use a payment gateway token)
-        public string CardHolderName { get; set; }
-        public string CardNumber { get; set; }
-        public string CardExpiryMonth { get; set; }
-        public string CardExpiryYear { get; set; }
-        public string CardCvv { get; set; }
+        // Payment Card Details (prototype - in production, use payment gateway)
+        public string CardHolderName { get; set; } = string.Empty;
+        public string CardNumber { get; set; } = string.Empty;
+        public int CardExpiryMonth { get; set; }
+        public int CardExpiryYear { get; set; }
+        public string CardCvv { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// Knowledge base item (Question/Answer pair)
+    /// </summary>
     public class KnowledgeBaseItemDTO
     {
-        public string Question { get; set; }
-        public string Answer { get; set; }
+        public string Question { get; set; } = string.Empty;
+        public string Answer { get; set; } = string.Empty;
     }
 }
-
 

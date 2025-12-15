@@ -7,6 +7,9 @@ using Service_layer.DTOS.Business;
 
 namespace Service_layer.Mapping
 {
+    /// <summary>
+    /// Mapping extensions for BusinessOnboardingDTO to domain entities
+    /// </summary>
     public static class BusinessOnboardingMapping
     {
         public static Business ToBusiness(this BusinessOnboardingDTO dto)
@@ -17,6 +20,7 @@ namespace Service_layer.Mapping
                 Type = string.IsNullOrWhiteSpace(dto.Type) ? "Restaurant" : dto.Type,
                 Address = dto.Address,
                 Phone = dto.Phone,
+                CreatedAt = DateTime.UtcNow
             };
         }
 
@@ -28,7 +32,15 @@ namespace Service_layer.Mapping
                 BusinessId = businessId,
                 ChatbotWelcomeMessage = dto.WelcomeMessage,
                 ChatbotPersonality = dto.AgentTone,
-                // AgentName can be stored later or used in prompts/messages
+                ChatbotEnabled = true,
+                // Defaults from Setting entity
+                AutoAssignTickets = true,
+                EnableNotifications = true,
+                Language = "en",
+                TimeZone = "UTC",
+                EmailNotifications = true,
+                SmsNotifications = false,
+                PushNotifications = true
             };
         }
 
@@ -42,18 +54,25 @@ namespace Service_layer.Mapping
                 KnowledgeBaseId = Guid.NewGuid().ToString(),
                 Question = item.Question,
                 Answer = item.Answer,
-                BusinessId = businessId
+                BusinessId = businessId,
+                CreatedAt = DateTime.UtcNow
             });
         }
 
         public static Subscription ToSubscription(this BusinessOnboardingDTO dto, string businessId)
         {
+            var startDate = DateTime.UtcNow;
+            var endDate = dto.PlanName.ToLower().Contains("yearly") || dto.PlanName.ToLower().Contains("year")
+                ? startDate.AddYears(1)
+                : startDate.AddMonths(1);
+
             return new Subscription
             {
                 Id = Guid.NewGuid().ToString(),
                 PlanName = dto.PlanName,
                 Price = dto.Price,
-                StartDate = DateTime.UtcNow,
+                StartDate = startDate,
+                EndDate = endDate,
                 IsActive = true,
                 BusinessId = businessId
             };
@@ -69,9 +88,10 @@ namespace Service_layer.Mapping
                 PaymentMethod = PaymentMethod.Card,
                 TransactionDate = DateTime.UtcNow,
                 Status = PaymentStatus.Success
+                // NOTE: Card details (CardNumber, CVV, etc.) are NOT stored for security reasons.
+                // In production, you would call a payment gateway (Stripe, PayPal, etc.) and store only a token/reference.
             };
         }
     }
 }
-
 
