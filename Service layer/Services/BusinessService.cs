@@ -5,7 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Domain_layer.Interfaces;
 using Domain_layer.Models;
+using Service_layer.DTOS.Business;
 using Service_layer.Services_Interfaces;
+using Service_layer.Mapping;
 
 namespace Service_layer.Services
 {
@@ -38,12 +40,10 @@ namespace Service_layer.Services
             var existing = await _unitOfWork.Businesses.GetByIdAsync(id);
             if (existing == null) return null;
 
-            existing.BusinessId = business.BusinessId;
             existing.Name = business.Name;
             existing.Type = business.Type;
             existing.Address = business.Address;
             existing.Phone = business.Phone;
-            existing.CreatedAt = business.CreatedAt;
 
             _unitOfWork.Businesses.Update(existing);
             await _unitOfWork.CompleteAsync();
@@ -60,6 +60,42 @@ namespace Service_layer.Services
             await _unitOfWork.CompleteAsync();
 
             return true;
+        }
+
+        /// <summary>
+        /// Full onboarding for a new restaurant business.
+        /// </summary>
+        public async Task<Business> OnboardRestaurantAsync(BusinessOnboardingDTO dto)
+        {
+            // 1) Create Business (BusinessId is Guid by default in entity)
+            var business = dto.ToBusiness();
+            await _unitOfWork.Businesses.AddAsync(business);
+
+            // 2) Create Setting (agent configuration)
+            var setting = dto.ToSetting(business.Id);
+            await _unitOfWork.Repository<Setting>().AddAsync(setting);
+
+            // 3) Seed Knowledge Base
+            var kbEntities = dto.ToKnowledgeBaseEntities(business.Id);
+            foreach (var kb in kbEntities)
+            {
+                await _unitOfWork.Repository<KnowledgeBase>().AddAsync(kb);
+            }
+
+            // 4) Create Subscription
+            var subscription = dto.ToSubscription(business.Id);
+            await _unitOfWork.Repository<Subscription>().AddAsync(subscription);
+
+            // 5) Create initial PaymentTransaction (status set to Success for now)
+            var payment = dto.ToPaymentTransaction(subscription.Id);
+
+            // NOTE: Card details from dto are not stored for security reasons in this simple example.
+            await _unitOfWork.Repository<PaymentTransaction>().AddAsync(payment);
+
+            // 6) Commit everything
+            await _unitOfWork.CompleteAsync();
+
+            return business;
         }
     }
 }
