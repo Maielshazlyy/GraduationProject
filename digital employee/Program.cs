@@ -116,7 +116,7 @@ namespace digital_employee
                     ValidAudience = builder.Configuration["JWT:Audience"],
                     ValidIssuer = builder.Configuration["JWT:Issuer"],
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
+                        Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"] ?? throw new InvalidOperationException("JWT:Key is not configured")))
                 };
             });
 
@@ -141,8 +141,36 @@ namespace digital_employee
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
+            
+            // Auth Services
             builder.Services.AddScoped<IAuthService, AuthService>();
+            
+            // Business Services
             builder.Services.AddScoped<IBusinessService, BusinessService>();
+            
+            // Ticket Services
+            builder.Services.AddScoped<ITicketService, TicketService>();
+            
+            // Order Services
+            builder.Services.AddScoped<IOrderService, OrderService>();
+            
+            // Feedback Services
+            builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+            
+            // MenuItem Services
+            builder.Services.AddScoped<IMenuItemService, MenuItemService>();
+            
+            // Message Services
+            builder.Services.AddScoped<IMessageService, MessageService>();
+            
+            // Notification Services
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+            
+            // KnowledgeBase Services
+            builder.Services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
+            
+            // Report Services
+            builder.Services.AddScoped<IReportService, ReportService>();
 
             // -------------------------
             // 8) FluentValidation Registration
@@ -158,11 +186,11 @@ namespace digital_employee
                 options.InvalidModelStateResponseFactory = context =>
                 {
                     var errors = context.ModelState
-                        .Where(e => e.Value.Errors.Count > 0)
+                        .Where(e => e.Value?.Errors.Count > 0)
                         .Select(e => new
                         {
                             Field = e.Key,
-                            Error = e.Value.Errors.First().ErrorMessage
+                            Error = e.Value?.Errors.FirstOrDefault()?.ErrorMessage ?? "Validation error"
                         });
 
                     return new BadRequestObjectResult(new
