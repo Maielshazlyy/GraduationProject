@@ -14,5 +14,6 @@ namespace Service_layer.Services_Interfaces
         Task<Business> CreateAsync(Business business);
         Task<Business?> UpdateAsync(string id, Business business);
         Task<bool> DeleteAsync(string id);
+        Task<Business> OnboardRestaurantAsync(Service_layer.DTOS.Business.BusinessOnboardingDTO dto);
     }
 }

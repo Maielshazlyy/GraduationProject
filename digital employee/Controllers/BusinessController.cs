@@ -9,7 +9,7 @@ namespace digital_employee.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] 
+    [Authorize]
     public class BusinessController : ControllerBase
     {
         private readonly IBusinessService _businessService;
@@ -50,14 +50,35 @@ namespace digital_employee.Controllers
 
             var business = new Domain_layer.Models.Business
             {
+                Id = Guid.NewGuid().ToString(),
                 Name = dto.Name,
                 Type = dto.Type,
                 Address = dto.Address,
-                Phone = dto.Phone
+                Phone = dto.Phone,
+                CreatedAt = DateTime.UtcNow
             };
 
             var created = await _businessService.CreateAsync(business);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created.ToDto());
+        }
+
+        // POST: api/Business/onboard
+        [HttpPost("onboard")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Onboard([FromBody] BusinessOnboardingDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var business = await _businessService.OnboardRestaurantAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = business.Id }, business.ToDto());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = "Onboarding failed.", Error = ex.Message });
+            }
         }
 
         // PUT: api/Business/{id}
@@ -96,4 +117,3 @@ namespace digital_employee.Controllers
         }
     }
 }
-
