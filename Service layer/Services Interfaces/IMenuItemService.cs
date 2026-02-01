@@ -1,5 +1,5 @@
 using Domain_layer.Models;
-using Service_layer.DTOS.MenuItem;
+using Service_layer.DTOS.menuItem;
 
 namespace Service_layer.Services_Interfaces
 {

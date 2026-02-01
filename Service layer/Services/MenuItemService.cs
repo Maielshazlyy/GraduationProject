@@ -51,7 +51,7 @@ namespace Service_layer.Services
                 Description = dto.Description,
                 Price = dto.Price,
                 Category = dto.Category,
-                IsAvailable = dto.IsAvailable,
+                IsAvailable = true, // Default to available when creating
                 BusinessId = dto.BusinessId
             };
 
