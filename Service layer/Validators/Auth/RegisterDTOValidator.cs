@@ -24,9 +24,7 @@ namespace Service_layer.Validators.Auth
                 .NotEmpty().WithMessage("Password is required.")
                 .MinimumLength(6).WithMessage("Password must be at least 6 characters.");
 
-            // التحقق من أن الـ BusinessId ليس فارغاً (لأنه string)
-            RuleFor(x => x.BusinessId)
-                .NotEmpty().WithMessage("BusinessId is required.");
+            // BusinessId اختياري - يمكن ربط المستخدم بـ Business لاحقاً
         }
     }
 }

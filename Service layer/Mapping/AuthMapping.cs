@@ -20,7 +20,7 @@ namespace Service_layer.Mapping
                 Email = dto.Email,
                 FullName = dto.FullName,
 
-                // الـ BusinessId بيجي string من الـ DTO
+                // BusinessId اختياري - يمكن أن يكون null
                 BusinessId = dto.BusinessId,
 
                 // تعيين دور افتراضي عند التسجيل

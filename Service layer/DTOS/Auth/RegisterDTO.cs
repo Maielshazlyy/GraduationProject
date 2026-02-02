@@ -11,6 +11,6 @@ namespace Service_layer.DTOS.Auth
         public string FullName { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
-        public string BusinessId { get; set; } // String لتوافق التعديلات
+        public string? BusinessId { get; set; } // اختياري - يمكن ربط المستخدم بـ Business لاحقاً
     }
 }
