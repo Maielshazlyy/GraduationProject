@@ -27,12 +27,6 @@ namespace Service_layer.Validators.Auth
             // التحقق من أن الـ BusinessId ليس فارغاً (لأنه string)
             RuleFor(x => x.BusinessId)
                 .NotEmpty().WithMessage("BusinessId is required.");
-
-            // التحقق من الأدوار المسموحة
-            RuleFor(x => x.Role)
-                .NotEmpty()
-                .Must(r => r == "Owner" || r == "Admin" || r == "Agent")
-                .WithMessage("Role must be Owner, Admin, or Agent.");
         }
     }
 }

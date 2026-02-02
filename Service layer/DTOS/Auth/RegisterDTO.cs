@@ -11,7 +11,6 @@ namespace Service_layer.DTOS.Auth
         public string FullName { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
-        public string Role { get; set; }      // "Admin", "Owner", "Agent"
         public string BusinessId { get; set; } // String لتوافق التعديلات
     }
 }
