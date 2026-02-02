@@ -68,6 +68,7 @@ namespace DAL.Context
                 .HasOne(u => u.Business)
                 .WithMany(b => b.Users)
                 .HasForeignKey(u => u.BusinessId)
+                .IsRequired(false) // جعل BusinessId اختياري
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Customer>()

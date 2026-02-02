@@ -633,7 +633,6 @@ namespace DAL.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("BusinessId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -1125,8 +1124,8 @@ namespace DAL.Migrations
                     b.HasOne("Domain_layer.Models.Business", "Business")
                         .WithMany("Users")
                         .HasForeignKey("BusinessId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired(false)
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Business");
                 });
