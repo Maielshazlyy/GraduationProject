@@ -30,6 +30,17 @@ namespace digital_employee
             // 1) Controllers
             // -------------------------
             builder.Services.AddControllers();
+            
+            // CORS Configuration
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
 
             // -------------------------
             // 2) OpenAPI / Swagger
@@ -53,7 +64,7 @@ namespace digital_employee
                     Scheme = "Bearer",
                     BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = "Enter your JWT Token here without 'Bearer' prefix."
+                    Description = "Enter your JWT token. Example: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n\nYou can get the token from /api/Auth/login or /api/Auth/register endpoints."
                 });
 
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -138,9 +149,32 @@ namespace digital_employee
             // -------------------------
             // 7) Dependency Injection (تسجيل الخدمات - جديد)
             // -------------------------
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            
+            // Generic Repository
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            
+            // Specific Repositories
             builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
+            builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+            builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+            builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
+            builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+            builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
+            builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+            builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+            builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+            builder.Services.AddScoped<IReportRepository, ReportRepository>();
+            builder.Services.AddScoped<IKnowledgeBaseRepository, KnowledgeBaseRepository>();
+            builder.Services.AddScoped<IInteractionRepository, InteractionRepository>();
+            builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+            builder.Services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
+            builder.Services.AddScoped<ISettingRepository, SettingRepository>();
+            builder.Services.AddScoped<IIntegrationRepository, IntegrationRepository>();
+            builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+            builder.Services.AddScoped<ISentimentRepository, SentimentRepository>();
+            
+            // UnitOfWork
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             
             // Auth Services
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -171,6 +205,30 @@ namespace digital_employee
             
             // Report Services
             builder.Services.AddScoped<IReportService, ReportService>();
+            
+            // Customer Services
+            builder.Services.AddScoped<ICustomerService, CustomerService>();
+            
+            // Interaction Services
+            builder.Services.AddScoped<IInteractionService, InteractionService>();
+            
+            // Subscription Services
+            builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+            
+            // PaymentTransaction Services
+            builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();
+            
+            // Setting Services
+            builder.Services.AddScoped<ISettingService, SettingService>();
+            
+            // Integration Services
+            builder.Services.AddScoped<IIntegrationService, IntegrationService>();
+            
+            // AuditLog Services
+            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+            
+            // Sentiment Services
+            builder.Services.AddScoped<ISentimentService, SentimentService>();
 
             // -------------------------
             // 8) FluentValidation Registration
@@ -217,6 +275,7 @@ namespace digital_employee
             // -------------------------
             // 10) Middlewares
             // -------------------------
+            app.UseCors("AllowAll");
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
