@@ -8,14 +8,14 @@ namespace Service_layer.Services
 {
     public class MessageService : IMessageService
     {
-        private readonly IRepository<Message> _messageRepository;
-        private readonly IRepository<Interaction> _interactionRepository;
+        private readonly IMessageRepository _messageRepository;
+        private readonly IInteractionRepository _interactionRepository;
         private readonly IRepository<User> _userRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         public MessageService(
-            IRepository<Message> messageRepository,
-            IRepository<Interaction> interactionRepository,
+            IMessageRepository messageRepository,
+            IInteractionRepository interactionRepository,
             IRepository<User> userRepository,
             IUnitOfWork unitOfWork)
         {
@@ -32,8 +32,7 @@ namespace Service_layer.Services
 
         public async Task<IEnumerable<Message>> GetByInteractionIdAsync(string interactionId)
         {
-            var allMessages = await _messageRepository.GetAllAsync();
-            return allMessages.Where(m => m.InteractionId == interactionId);
+            return await _messageRepository.GetByInteractionIdAsync(interactionId);
         }
 
         public async Task<Message?> GetByIdAsync(string id)

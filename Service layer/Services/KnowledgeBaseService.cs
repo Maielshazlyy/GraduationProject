@@ -8,13 +8,13 @@ namespace Service_layer.Services
 {
     public class KnowledgeBaseService : IKnowledgeBaseService
     {
-        private readonly IRepository<KnowledgeBase> _knowledgeBaseRepository;
-        private readonly IRepository<Business> _businessRepository;
+        private readonly IKnowledgeBaseRepository _knowledgeBaseRepository;
+        private readonly IBusinessRepository _businessRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         public KnowledgeBaseService(
-            IRepository<KnowledgeBase> knowledgeBaseRepository,
-            IRepository<Business> businessRepository,
+            IKnowledgeBaseRepository knowledgeBaseRepository,
+            IBusinessRepository businessRepository,
             IUnitOfWork unitOfWork)
         {
             _knowledgeBaseRepository = knowledgeBaseRepository;
@@ -29,8 +29,7 @@ namespace Service_layer.Services
 
         public async Task<IEnumerable<KnowledgeBase>> GetByBusinessIdAsync(string businessId)
         {
-            var allKb = await _knowledgeBaseRepository.GetAllAsync();
-            return allKb.Where(kb => kb.BusinessId == businessId);
+            return await _knowledgeBaseRepository.GetByBusinessIdAsync(businessId);
         }
 
         public async Task<KnowledgeBase?> GetByIdAsync(string id)

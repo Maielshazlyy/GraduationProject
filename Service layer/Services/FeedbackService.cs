@@ -8,15 +8,15 @@ namespace Service_layer.Services
 {
     public class FeedbackService : IFeedbackService
     {
-        private readonly IRepository<Feedback> _feedbackRepository;
-        private readonly IRepository<Customer> _customerRepository;
-        private readonly IRepository<Ticket> _ticketRepository;
+        private readonly IFeedbackRepository _feedbackRepository;
+        private readonly ICustomerRepository _customerRepository;
+        private readonly ITicketRepository _ticketRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         public FeedbackService(
-            IRepository<Feedback> feedbackRepository,
-            IRepository<Customer> customerRepository,
-            IRepository<Ticket> ticketRepository,
+            IFeedbackRepository feedbackRepository,
+            ICustomerRepository customerRepository,
+            ITicketRepository ticketRepository,
             IUnitOfWork unitOfWork)
         {
             _feedbackRepository = feedbackRepository;
@@ -32,8 +32,7 @@ namespace Service_layer.Services
 
         public async Task<IEnumerable<Feedback>> GetByCustomerIdAsync(string customerId)
         {
-            var allFeedbacks = await _feedbackRepository.GetAllAsync();
-            return allFeedbacks.Where(f => f.CustomerId == customerId);
+            return await _feedbackRepository.GetByCustomerIdAsync(customerId);
         }
 
         public async Task<Feedback?> GetByIdAsync(string id)

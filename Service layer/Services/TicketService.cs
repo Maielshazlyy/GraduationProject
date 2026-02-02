@@ -8,16 +8,16 @@ namespace Service_layer.Services
 {
     public class TicketService : ITicketService
     {
-        private readonly IRepository<Ticket> _ticketRepository;
-        private readonly IRepository<Business> _businessRepository;
-        private readonly IRepository<Customer> _customerRepository;
+        private readonly ITicketRepository _ticketRepository;
+        private readonly IBusinessRepository _businessRepository;
+        private readonly ICustomerRepository _customerRepository;
         private readonly IRepository<User> _userRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         public TicketService(
-            IRepository<Ticket> ticketRepository,
-            IRepository<Business> businessRepository,
-            IRepository<Customer> customerRepository,
+            ITicketRepository ticketRepository,
+            IBusinessRepository businessRepository,
+            ICustomerRepository customerRepository,
             IRepository<User> userRepository,
             IUnitOfWork unitOfWork)
         {
@@ -35,8 +35,7 @@ namespace Service_layer.Services
 
         public async Task<IEnumerable<Ticket>> GetByBusinessIdAsync(string businessId)
         {
-            var allTickets = await _ticketRepository.GetAllAsync();
-            return allTickets.Where(t => t.BusinessId == businessId);
+            return await _ticketRepository.GetByBusinessIdAsync(businessId);
         }
 
         public async Task<Ticket?> GetByIdAsync(string id)

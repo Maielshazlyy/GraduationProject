@@ -22,5 +22,10 @@ namespace Service_layer.Mapping
                 AnalyzedAt = s.AnalyzedAt
             };
         }
+
+        public static IEnumerable<SentimentResponseDTO> ToDtoList(this IEnumerable<Sentiment> sentiments)
+        {
+            return sentiments.Select(s => s.ToDto()).ToList();
+        }
     }
 }

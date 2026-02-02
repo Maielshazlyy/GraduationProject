@@ -9,19 +9,19 @@ namespace Service_layer.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly IRepository<Order> _orderRepository;
-        private readonly IRepository<OrderItem> _orderItemRepository;
-        private readonly IRepository<Business> _businessRepository;
-        private readonly IRepository<Customer> _customerRepository;
-        private readonly IRepository<MenuItem> _menuItemRepository;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IOrderItemRepository _orderItemRepository;
+        private readonly IBusinessRepository _businessRepository;
+        private readonly ICustomerRepository _customerRepository;
+        private readonly IMenuItemRepository _menuItemRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         public OrderService(
-            IRepository<Order> orderRepository,
-            IRepository<OrderItem> orderItemRepository,
-            IRepository<Business> businessRepository,
-            IRepository<Customer> customerRepository,
-            IRepository<MenuItem> menuItemRepository,
+            IOrderRepository orderRepository,
+            IOrderItemRepository orderItemRepository,
+            IBusinessRepository businessRepository,
+            ICustomerRepository customerRepository,
+            IMenuItemRepository menuItemRepository,
             IUnitOfWork unitOfWork)
         {
             _orderRepository = orderRepository;
@@ -39,14 +39,12 @@ namespace Service_layer.Services
 
         public async Task<IEnumerable<Order>> GetByBusinessIdAsync(string businessId)
         {
-            var allOrders = await _orderRepository.GetAllAsync();
-            return allOrders.Where(o => o.BusinessId == businessId);
+            return await _orderRepository.GetByBusinessIdAsync(businessId);
         }
 
         public async Task<IEnumerable<Order>> GetByCustomerIdAsync(string customerId)
         {
-            var allOrders = await _orderRepository.GetAllAsync();
-            return allOrders.Where(o => o.CustomerId == customerId);
+            return await _orderRepository.GetByCustomerIdAsync(customerId);
         }
 
         public async Task<Order?> GetByIdAsync(string id)

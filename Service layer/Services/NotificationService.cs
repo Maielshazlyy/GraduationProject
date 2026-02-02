@@ -8,14 +8,14 @@ namespace Service_layer.Services
 {
     public class NotificationService : INotificationService
     {
-        private readonly IRepository<Notification> _notificationRepository;
-        private readonly IRepository<Business> _businessRepository;
+        private readonly INotificationRepository _notificationRepository;
+        private readonly IBusinessRepository _businessRepository;
         private readonly IRepository<User> _userRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         public NotificationService(
-            IRepository<Notification> notificationRepository,
-            IRepository<Business> businessRepository,
+            INotificationRepository notificationRepository,
+            IBusinessRepository businessRepository,
             IRepository<User> userRepository,
             IUnitOfWork unitOfWork)
         {
@@ -32,14 +32,12 @@ namespace Service_layer.Services
 
         public async Task<IEnumerable<Notification>> GetByBusinessIdAsync(string businessId)
         {
-            var allNotifications = await _notificationRepository.GetAllAsync();
-            return allNotifications.Where(n => n.BusinessId == businessId);
+            return await _notificationRepository.GetByBusinessIdAsync(businessId);
         }
 
         public async Task<IEnumerable<Notification>> GetByUserIdAsync(string userId)
         {
-            var allNotifications = await _notificationRepository.GetAllAsync();
-            return allNotifications.Where(n => n.UserId == userId);
+            return await _notificationRepository.GetByUserIdAsync(userId);
         }
 
         public async Task<Notification?> GetByIdAsync(string id)

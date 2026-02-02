@@ -9,13 +9,13 @@ namespace Service_layer.Services
 {
     public class ReportService : IReportService
     {
-        private readonly IRepository<Report> _reportRepository;
-        private readonly IRepository<Business> _businessRepository;
+        private readonly IReportRepository _reportRepository;
+        private readonly IBusinessRepository _businessRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         public ReportService(
-            IRepository<Report> reportRepository,
-            IRepository<Business> businessRepository,
+            IReportRepository reportRepository,
+            IBusinessRepository businessRepository,
             IUnitOfWork unitOfWork)
         {
             _reportRepository = reportRepository;
@@ -30,8 +30,7 @@ namespace Service_layer.Services
 
         public async Task<IEnumerable<Report>> GetByBusinessIdAsync(string businessId)
         {
-            var allReports = await _reportRepository.GetAllAsync();
-            return allReports.Where(r => r.BusinessId == businessId);
+            return await _reportRepository.GetByBusinessIdAsync(businessId);
         }
 
         public async Task<Report?> GetByIdAsync(string id)

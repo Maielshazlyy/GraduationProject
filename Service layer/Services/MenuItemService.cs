@@ -8,13 +8,13 @@ namespace Service_layer.Services
 {
     public class MenuItemService : IMenuItemService
     {
-        private readonly IRepository<MenuItem> _menuItemRepository;
-        private readonly IRepository<Business> _businessRepository;
+        private readonly IMenuItemRepository _menuItemRepository;
+        private readonly IBusinessRepository _businessRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         public MenuItemService(
-            IRepository<MenuItem> menuItemRepository,
-            IRepository<Business> businessRepository,
+            IMenuItemRepository menuItemRepository,
+            IBusinessRepository businessRepository,
             IUnitOfWork unitOfWork)
         {
             _menuItemRepository = menuItemRepository;
@@ -29,8 +29,7 @@ namespace Service_layer.Services
 
         public async Task<IEnumerable<MenuItem>> GetByBusinessIdAsync(string businessId)
         {
-            var allItems = await _menuItemRepository.GetAllAsync();
-            return allItems.Where(m => m.BusinessId == businessId);
+            return await _menuItemRepository.GetByBusinessIdAsync(businessId);
         }
 
         public async Task<MenuItem?> GetByIdAsync(string id)

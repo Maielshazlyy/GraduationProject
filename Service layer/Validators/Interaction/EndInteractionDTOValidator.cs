@@ -12,8 +12,8 @@ namespace Service_layer.Validators.Interaction
     {
         public EndInteractionDTOValidator()
         {
-            RuleFor(x => x.InteractionId)
-                .NotEmpty();
+            // UserId is optional - can be null if handled by AI
+            // No validation rules needed as UserId is optional
         }
     }
 }
