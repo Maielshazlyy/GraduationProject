@@ -1,6 +1,10 @@
 using System;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Domain_layer.Models;
+using Domain_layer.Constants;
 using Service_layer.Services_Interfaces;
 using Service_layer.DTOS.Business;
 using Service_layer.Mapping;
@@ -13,10 +17,12 @@ namespace digital_employee.Controllers
     public class BusinessController : ControllerBase
     {
         private readonly IBusinessService _businessService;
+        private readonly UserManager<User> _userManager;
 
-        public BusinessController(IBusinessService businessService)
+        public BusinessController(IBusinessService businessService, UserManager<User> userManager)
         {
             _businessService = businessService;
+            _userManager = userManager;
         }
 
         // GET: api/Business
@@ -42,11 +48,24 @@ namespace digital_employee.Controllers
 
         // POST: api/Business
         [HttpPost]
-        [Authorize(Policy = "OwnerOrAdmin")]
+        [Authorize(Policy = "OwnerOrAdmin")] // فقط Admin أو Owner يمكنهم إنشاء Business
         public async Task<IActionResult> Create([FromBody] BusinessCreateDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            // الحصول على المستخدم الحالي
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { Message = "User not found." });
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return Unauthorized(new { Message = "User not found." });
+
+            // التحقق من أن المستخدم ليس لديه Business بالفعل
+            if (!string.IsNullOrEmpty(user.BusinessId))
+                return BadRequest(new { Message = "User already has a business. One user can only have one business." });
 
             var business = new Domain_layer.Models.Business
             {
@@ -59,6 +78,12 @@ namespace digital_employee.Controllers
             };
 
             var created = await _businessService.CreateAsync(business);
+
+            // ربط المستخدم بالـ Business وتحديث role إلى Owner
+            user.BusinessId = created.Id;
+            user.Role = Roles.Owner;
+            await _userManager.UpdateAsync(user);
+
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created.ToDto());
         }
 

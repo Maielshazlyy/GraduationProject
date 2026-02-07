@@ -229,6 +229,9 @@ namespace digital_employee
             
             // Sentiment Services
             builder.Services.AddScoped<ISentimentService, SentimentService>();
+            
+            // User Services
+            builder.Services.AddScoped<IUserService, UserService>();
 
             // -------------------------
             // 8) FluentValidation Registration

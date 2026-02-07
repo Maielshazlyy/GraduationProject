@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Domain_layer.Models;
+using Domain_layer.Constants;
 using Service_layer.DTOS.Auth;
 using Service_layer.ServicesInterfaces;
 
@@ -10,10 +13,12 @@ namespace digital_employee.Controllers
     public class AuthController:ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly UserManager<User> _userManager;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, UserManager<User> userManager)
         {
             _authService = authService;
+            _userManager = userManager;
         }
 
         // POST: api/Auth/register
@@ -58,6 +63,62 @@ namespace digital_employee.Controllers
             {
                 var result = await _authService.GoogleLoginAsync(model.IdToken);
                 return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        // POST: api/Auth/promote-to-owner
+        [HttpPost("promote-to-owner")]
+        [Authorize(Policy = "AdminOnly")] // فقط Admin يمكنه ترقية المستخدمين
+        public async Task<IActionResult> PromoteToOwner([FromBody] string userId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                    return NotFound(new { Message = "User not found." });
+
+                user.Role = Roles.Owner;
+                var result = await _userManager.UpdateAsync(user);
+
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    return BadRequest(new { Message = errors });
+                }
+
+                return Ok(new { Message = $"User {user.Email} has been promoted to Owner. Please login again to get a new token." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        // POST: api/Auth/promote-to-admin
+        [HttpPost("promote-to-admin")]
+        [Authorize(Policy = "AdminOnly")] // فقط Admin يمكنه ترقية المستخدمين إلى Admin
+        public async Task<IActionResult> PromoteToAdmin([FromBody] string userId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                    return NotFound(new { Message = "User not found." });
+
+                user.Role = Roles.Admin;
+                var result = await _userManager.UpdateAsync(user);
+
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    return BadRequest(new { Message = errors });
+                }
+
+                return Ok(new { Message = $"User {user.Email} has been promoted to Admin. Please login again to get a new token." });
             }
             catch (Exception ex)
             {
