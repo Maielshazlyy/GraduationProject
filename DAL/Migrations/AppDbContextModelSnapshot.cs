@@ -1124,7 +1124,6 @@ namespace DAL.Migrations
                     b.HasOne("Domain_layer.Models.Business", "Business")
                         .WithMany("Users")
                         .HasForeignKey("BusinessId")
-                        .IsRequired(false)
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Business");

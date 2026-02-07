@@ -233,6 +233,12 @@ namespace digital_employee
             // User Services
             builder.Services.AddScoped<IUserService, UserService>();
 
+            // Business Analytics Services
+            builder.Services.AddScoped<IBusinessAnalyticsService, BusinessAnalyticsService>();
+
+            // Chatbot Services
+            builder.Services.AddScoped<IChatbotService, ChatbotService>();
+
             // -------------------------
             // 8) FluentValidation Registration
             // -------------------------
