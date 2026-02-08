@@ -68,12 +68,17 @@ namespace Service_layer.Services
             // 1. تحديد المعلومات اللي هتكون جوه التوكن (Claims)
             var authClaims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id), 
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.FullName),
-                new Claim(ClaimTypes.Role, user.Role),
-                new Claim("BusinessId", user.BusinessId) 
+                new Claim(ClaimTypes.NameIdentifier, user.Id ?? string.Empty), 
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                new Claim(ClaimTypes.Name, user.FullName ?? string.Empty),
+                new Claim(ClaimTypes.Role, user.Role ?? "User"),
             };
+            
+            // Add BusinessId only if it exists
+            if (!string.IsNullOrEmpty(user.BusinessId))
+            {
+                authClaims.Add(new Claim("BusinessId", user.BusinessId));
+            }
 
             // 2. مفتاح التشفير (لازم يكون نفس الموجود في appsettings)
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));

@@ -15,17 +15,17 @@ namespace Service_layer.Services
    public class BusinessService:IBusinessService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IRepository<Setting> _settingsRepository;
-        private readonly IRepository<KnowledgeBase> _knowledgeBaseRepository;
-        private readonly IRepository<Subscription> _subscriptionRepository;
-        private readonly IRepository<PaymentTransaction> _paymentRepository;
+        private readonly ISettingRepository _settingsRepository;
+        private readonly IKnowledgeBaseRepository _knowledgeBaseRepository;
+        private readonly ISubscriptionRepository _subscriptionRepository;
+        private readonly IPaymentTransactionRepository _paymentRepository;
 
         public BusinessService(
             IUnitOfWork unitOfWork,
-            IRepository<Setting> settingsRepository,
-            IRepository<KnowledgeBase> knowledgeBaseRepository,
-            IRepository<Subscription> subscriptionRepository,
-            IRepository<PaymentTransaction> paymentRepository)
+            ISettingRepository settingsRepository,
+            IKnowledgeBaseRepository knowledgeBaseRepository,
+            ISubscriptionRepository subscriptionRepository,
+            IPaymentTransactionRepository paymentRepository)
         {
             _unitOfWork = unitOfWork;
             _settingsRepository = settingsRepository;

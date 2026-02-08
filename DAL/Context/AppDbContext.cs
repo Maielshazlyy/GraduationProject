@@ -40,12 +40,35 @@ namespace DAL.Context
             base.OnModelCreating(modelBuilder);
 
             // ---------------------------
+            // Primary Keys Configuration
+            // ---------------------------
+            modelBuilder.Entity<Business>().HasKey(b => b.Id);
+            modelBuilder.Entity<Customer>().HasKey(c => c.CustomerId);
+            modelBuilder.Entity<Order>().HasKey(o => o.OrderId);
+            modelBuilder.Entity<OrderItem>().HasKey(oi => oi.OrderItemId);
+            modelBuilder.Entity<Ticket>().HasKey(t => t.Id);
+            modelBuilder.Entity<Interaction>().HasKey(i => i.InteractionId);
+            modelBuilder.Entity<Message>().HasKey(m => m.MessageId);
+            modelBuilder.Entity<Notification>().HasKey(n => n.NotificationId);
+            modelBuilder.Entity<Report>().HasKey(r => r.Id);
+            modelBuilder.Entity<Feedback>().HasKey(f => f.FeedbackId);
+            modelBuilder.Entity<MenuItem>().HasKey(m => m.MenuItemId);
+            modelBuilder.Entity<Setting>().HasKey(s => s.SettingId);
+            modelBuilder.Entity<Subscription>().HasKey(s => s.Id);
+            modelBuilder.Entity<PaymentTransaction>().HasKey(pt => pt.Id);
+            modelBuilder.Entity<Integration>().HasKey(i => i.Id);
+            modelBuilder.Entity<AuditLog>().HasKey(a => a.AuditLogId);
+            modelBuilder.Entity<KnowledgeBase>().HasKey(k => k.KnowledgeBaseId);
+            modelBuilder.Entity<Sentiment>().HasKey(s => s.SentimentId);
+
+            // ---------------------------
             // Business relations (1:M / 1:1)
             // ---------------------------
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Business)
                 .WithMany(b => b.Users)
                 .HasForeignKey(u => u.BusinessId)
+                .IsRequired(false) // جعل BusinessId اختياري
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Customer>()

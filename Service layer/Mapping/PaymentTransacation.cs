@@ -8,10 +8,12 @@ using Service_layer.DTOS.PaymentTranscation;
 
 namespace Service_layer.Mapping
 {
-    public static class PaymentTransacation
+    public static class PaymentTransactionMapping
     {
         public static PaymentTransacationResponseDTO ToDto(this PaymentTransaction p)
         {
+            if (p == null) return null;
+
             return new PaymentTransacationResponseDTO
             {
                 Id = p.Id,
@@ -20,9 +22,14 @@ namespace Service_layer.Mapping
                 PaymentMethod = p.PaymentMethod.ToString(),
                 TransactionDate = p.TransactionDate,
                 Status = p.Status.ToString(),
-
                 SubscriptionId = p.SubscriptionId,
+                SubscriptionPlanName = p.Subscription?.PlanName ?? string.Empty
             };
+        }
+
+        public static IEnumerable<PaymentTransacationResponseDTO> ToDtoList(this IEnumerable<PaymentTransaction> payments)
+        {
+            return payments.Select(p => p.ToDto()).ToList();
         }
     }
 }
