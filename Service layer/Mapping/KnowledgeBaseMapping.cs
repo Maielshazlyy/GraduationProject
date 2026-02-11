@@ -20,7 +20,10 @@ namespace Service_layer.Mapping
                 CreatedAt = k.CreatedAt,
 
                 BusinessId = k.BusinessId,
-                BusinessName = k.Business?.Name ?? ""
+                BusinessName = k.Business?.Name ?? "",
+                IsFAQ = k.IsFAQ,
+                DisplayOrder = k.DisplayOrder,
+                IsActive = k.IsActive
             };
         }
 

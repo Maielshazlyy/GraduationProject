@@ -67,8 +67,8 @@ namespace Service_layer.DTOS.Business
         public string WorkingHoursId { get; set; } = string.Empty;
         public int DayOfWeek { get; set; }
         public string DayName { get; set; } = string.Empty; // "Sunday", "Monday", etc.
-        public TimeSpan? OpenTime { get; set; }
-        public TimeSpan? CloseTime { get; set; }
+        public string? OpenTime { get; set; } // Format: "HH:mm" e.g., "09:00"
+        public string? CloseTime { get; set; } // Format: "HH:mm" e.g., "22:00"
         public bool IsClosed { get; set; }
     }
 }

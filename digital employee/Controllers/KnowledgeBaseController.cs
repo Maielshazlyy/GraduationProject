@@ -32,7 +32,8 @@ namespace digital_employee.Controllers
         [Authorize(Policy = "AgentOrOwnerOrAdmin")]
         public async Task<IActionResult> GetByBusinessId(string businessId)
         {
-            var kb = await _knowledgeBaseService.GetByBusinessIdAsync(businessId);
+            // Get only internal KnowledgeBase items (not FAQs)
+            var kb = await _knowledgeBaseService.GetKnowledgeBaseByBusinessIdAsync(businessId);
             return Ok(kb.ToDtoList());
         }
 

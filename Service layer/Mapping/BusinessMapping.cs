@@ -63,8 +63,8 @@ namespace Service_layer.Mapping
                     WorkingHoursId = wh.WorkingHoursId,
                     DayOfWeek = wh.DayOfWeek,
                     DayName = wh.DayOfWeek >= 0 && wh.DayOfWeek < 7 ? dayNames[wh.DayOfWeek] : "",
-                    OpenTime = wh.OpenTime,
-                    CloseTime = wh.CloseTime,
+                    OpenTime = wh.OpenTime?.ToString(@"HH\:mm"),
+                    CloseTime = wh.CloseTime?.ToString(@"HH\:mm"),
                     IsClosed = wh.IsClosed
                 }).ToList() ?? new List<WorkingHoursResponseDTO>(),
 

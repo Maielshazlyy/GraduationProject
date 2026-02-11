@@ -138,8 +138,8 @@ namespace Service_layer.Services
                     {
                         WorkingHoursId = Guid.NewGuid().ToString(),
                         DayOfWeek = whDto.DayOfWeek,
-                        OpenTime = whDto.OpenTime,
-                        CloseTime = whDto.CloseTime,
+                        OpenTime = !string.IsNullOrWhiteSpace(whDto.OpenTime) && TimeSpan.TryParse(whDto.OpenTime, out var openTime) ? openTime : null,
+                        CloseTime = !string.IsNullOrWhiteSpace(whDto.CloseTime) && TimeSpan.TryParse(whDto.CloseTime, out var closeTime) ? closeTime : null,
                         IsClosed = whDto.IsClosed,
                         BusinessId = id
                     };

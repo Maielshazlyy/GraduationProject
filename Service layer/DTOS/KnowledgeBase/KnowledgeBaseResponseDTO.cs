@@ -14,5 +14,8 @@ namespace Service_layer.DTOS.KnowledgeBase
         public DateTime CreatedAt { get; set; }
         public string BusinessId { get; set; }
         public string BusinessName { get; set; }
+        public bool IsFAQ { get; set; } // true = FAQ (public), false = KnowledgeBase (internal)
+        public int DisplayOrder { get; set; } // For FAQs ordering
+        public bool IsActive { get; set; } // Can be disabled
     }
 }

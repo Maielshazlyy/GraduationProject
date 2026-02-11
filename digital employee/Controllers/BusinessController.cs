@@ -113,8 +113,8 @@ namespace digital_employee.Controllers
                 {
                     WorkingHoursId = Guid.NewGuid().ToString(),
                     DayOfWeek = wh.DayOfWeek,
-                    OpenTime = wh.OpenTime,
-                    CloseTime = wh.CloseTime,
+                    OpenTime = !string.IsNullOrWhiteSpace(wh.OpenTime) && TimeSpan.TryParse(wh.OpenTime, out var openTime) ? openTime : null,
+                    CloseTime = !string.IsNullOrWhiteSpace(wh.CloseTime) && TimeSpan.TryParse(wh.CloseTime, out var closeTime) ? closeTime : null,
                     IsClosed = wh.IsClosed,
                     BusinessId = business.Id
                 }).ToList();

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Domain_layer.Interfaces;
 using Domain_layer.Models;
 using Service_layer.DTOS.KnowledgeBase;
@@ -32,6 +33,20 @@ namespace Service_layer.Services
             return await _knowledgeBaseRepository.GetByBusinessIdAsync(businessId);
         }
 
+        // Get only FAQs (public, for customers)
+        public async Task<IEnumerable<KnowledgeBase>> GetFAQsByBusinessIdAsync(string businessId)
+        {
+            var all = await _knowledgeBaseRepository.GetByBusinessIdAsync(businessId);
+            return all.Where(kb => kb.IsFAQ && kb.IsActive).OrderBy(kb => kb.DisplayOrder);
+        }
+
+        // Get only KnowledgeBase items (internal, for chatbot)
+        public async Task<IEnumerable<KnowledgeBase>> GetKnowledgeBaseByBusinessIdAsync(string businessId)
+        {
+            var all = await _knowledgeBaseRepository.GetByBusinessIdAsync(businessId);
+            return all.Where(kb => !kb.IsFAQ && kb.IsActive);
+        }
+
         public async Task<KnowledgeBase?> GetByIdAsync(string id)
         {
             return await _knowledgeBaseRepository.GetByIdAsync(id);
@@ -49,6 +64,9 @@ namespace Service_layer.Services
                 Question = dto.Question,
                 Answer = dto.Answer,
                 BusinessId = dto.BusinessId,
+                IsFAQ = dto.IsFAQ,
+                DisplayOrder = dto.DisplayOrder,
+                IsActive = dto.IsActive,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -64,6 +82,9 @@ namespace Service_layer.Services
 
             kb.Question = dto.Question;
             kb.Answer = dto.Answer;
+            kb.IsFAQ = dto.IsFAQ;
+            kb.DisplayOrder = dto.DisplayOrder;
+            kb.IsActive = dto.IsActive;
 
             _knowledgeBaseRepository.Update(kb);
             await _unitOfWork.CompleteAsync();

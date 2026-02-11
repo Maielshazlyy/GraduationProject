@@ -69,8 +69,8 @@ namespace Service_layer.Mapping
             {
                 WorkingHoursId = Guid.NewGuid().ToString(),
                 DayOfWeek = wh.DayOfWeek,
-                OpenTime = wh.OpenTime,
-                CloseTime = wh.CloseTime,
+                OpenTime = !string.IsNullOrWhiteSpace(wh.OpenTime) && TimeSpan.TryParse(wh.OpenTime, out var openTime) ? openTime : null,
+                CloseTime = !string.IsNullOrWhiteSpace(wh.CloseTime) && TimeSpan.TryParse(wh.CloseTime, out var closeTime) ? closeTime : null,
                 IsClosed = wh.IsClosed,
                 BusinessId = businessId
             });
@@ -107,12 +107,15 @@ namespace Service_layer.Mapping
             if (dto.KnowledgeBaseItems == null || dto.KnowledgeBaseItems.Count == 0)
                 return Enumerable.Empty<KnowledgeBase>();
 
-            return dto.KnowledgeBaseItems.Select(item => new KnowledgeBase
+            return dto.KnowledgeBaseItems.Select((item, index) => new KnowledgeBase
             {
                 KnowledgeBaseId = Guid.NewGuid().ToString(),
                 Question = item.Question,
                 Answer = item.Answer,
                 BusinessId = businessId,
+                IsFAQ = true, // Onboarding items are FAQs by default
+                DisplayOrder = index,
+                IsActive = true,
                 CreatedAt = DateTime.UtcNow
             });
         }

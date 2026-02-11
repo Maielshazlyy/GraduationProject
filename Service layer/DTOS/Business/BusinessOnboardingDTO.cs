@@ -111,8 +111,8 @@ namespace Service_layer.DTOS.Business
     public class WorkingHoursItemDTO
     {
         public int DayOfWeek { get; set; } // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-        public TimeSpan? OpenTime { get; set; }
-        public TimeSpan? CloseTime { get; set; }
+        public string? OpenTime { get; set; } // Format: "HH:mm" e.g., "09:00"
+        public string? CloseTime { get; set; } // Format: "HH:mm" e.g., "22:00"
         public bool IsClosed { get; set; } = false;
     }
 }
