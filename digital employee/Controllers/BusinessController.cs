@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -74,8 +75,52 @@ namespace digital_employee.Controllers
                 Type = dto.Type,
                 Address = dto.Address,
                 Phone = dto.Phone,
+                // Contact Information
+                Email = dto.Email,
+                Website = dto.Website,
+                FacebookUrl = dto.FacebookUrl,
+                InstagramUrl = dto.InstagramUrl,
+                // Location
+                City = dto.City,
+                Country = dto.Country,
+                Latitude = dto.Latitude,
+                Longitude = dto.Longitude,
+                // Restaurant Information
+                Description = dto.Description,
+                CuisineType = dto.CuisineType,
+                PriceRange = dto.PriceRange,
+                LogoUrl = dto.LogoUrl,
+                CoverImageUrl = dto.CoverImageUrl,
+                // Features & Services
+                HasDelivery = dto.HasDelivery,
+                HasTakeout = dto.HasTakeout,
+                HasParking = dto.HasParking,
+                HasWiFi = dto.HasWiFi,
+                HasOutdoorSeating = dto.HasOutdoorSeating,
+                AcceptsReservations = dto.AcceptsReservations,
+                // Payment Methods
+                PaymentMethods = dto.PaymentMethods,
+                // Status
+                IsActive = true,
+                IsVerified = false,
                 CreatedAt = DateTime.UtcNow
             };
+
+            // Create Working Hours if provided
+            if (dto.WorkingHours != null && dto.WorkingHours.Any())
+            {
+                var workingHours = dto.WorkingHours.Select(wh => new WorkingHours
+                {
+                    WorkingHoursId = Guid.NewGuid().ToString(),
+                    DayOfWeek = wh.DayOfWeek,
+                    OpenTime = wh.OpenTime,
+                    CloseTime = wh.CloseTime,
+                    IsClosed = wh.IsClosed,
+                    BusinessId = business.Id
+                }).ToList();
+                
+                business.WorkingHours = workingHours;
+            }
 
             var created = await _businessService.CreateAsync(business);
 
@@ -98,6 +143,20 @@ namespace digital_employee.Controllers
             try
             {
                 var business = await _businessService.OnboardRestaurantAsync(dto);
+                
+                // Optional: إذا كان المستخدم مسجل دخول، اربطه بالـ Business
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user != null && string.IsNullOrEmpty(user.BusinessId))
+                    {
+                        user.BusinessId = business.Id;
+                        user.Role = Roles.Owner;
+                        await _userManager.UpdateAsync(user);
+                    }
+                }
+                
                 return CreatedAtAction(nameof(GetById), new { id = business.Id }, business.ToDto());
             }
             catch (Exception ex)
@@ -109,20 +168,12 @@ namespace digital_employee.Controllers
         // PUT: api/Business/{id}
         [HttpPut("{id}")]
         [Authorize(Policy = "OwnerOrAdmin")]
-        public async Task<IActionResult> Update(string id, [FromBody] BusinessCreateDTO dto)
+        public async Task<IActionResult> Update(string id, [FromBody] BusinessUpdateDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var business = new Domain_layer.Models.Business
-            {
-                Name = dto.Name,
-                Type = dto.Type,
-                Address = dto.Address,
-                Phone = dto.Phone
-            };
-
-            var updated = await _businessService.UpdateAsync(id, business);
+            var updated = await _businessService.UpdateAsync(id, dto);
             if (updated == null)
                 return NotFound(new { Message = $"Business with id '{id}' not found." });
 

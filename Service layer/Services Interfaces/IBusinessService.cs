@@ -12,7 +12,7 @@ namespace Service_layer.Services_Interfaces
         Task<IEnumerable<Business>> GetAllAsync();
         Task<Business?> GetByIdAsync(string id);
         Task<Business> CreateAsync(Business business);
-        Task<Business?> UpdateAsync(string id, Business business);
+        Task<Business?> UpdateAsync(string id, Service_layer.DTOS.Business.BusinessUpdateDTO dto);
         Task<bool> DeleteAsync(string id);
         Task<Business> OnboardRestaurantAsync(Service_layer.DTOS.Business.BusinessOnboardingDTO dto);
     }

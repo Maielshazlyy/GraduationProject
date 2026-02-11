@@ -160,6 +160,8 @@ namespace digital_employee
             builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
             builder.Services.AddScoped<ITicketRepository, TicketRepository>();
             builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
+            builder.Services.AddScoped<IMenuCategoryRepository, MenuCategoryRepository>();
+            builder.Services.AddScoped<IWorkingHoursRepository, WorkingHoursRepository>();
             builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
             builder.Services.AddScoped<IMessageRepository, MessageRepository>();
             builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
@@ -193,6 +195,9 @@ namespace digital_employee
             
             // MenuItem Services
             builder.Services.AddScoped<IMenuItemService, MenuItemService>();
+            
+            // MenuCategory Services
+            builder.Services.AddScoped<IMenuCategoryService, MenuCategoryService>();
             
             // Message Services
             builder.Services.AddScoped<IMessageService, MessageService>();
@@ -238,6 +243,9 @@ namespace digital_employee
 
             // Chatbot Services
             builder.Services.AddScoped<IChatbotService, ChatbotService>();
+
+            // Dashboard Services
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
 
             // -------------------------
             // 8) FluentValidation Registration

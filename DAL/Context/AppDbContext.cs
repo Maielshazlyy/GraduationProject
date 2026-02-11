@@ -19,6 +19,8 @@ namespace DAL.Context
        // public DbSet<User> Users { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<MenuItem> MenuItems { get; set; }
+        public DbSet<MenuCategory> MenuCategories { get; set; }
+        public DbSet<WorkingHours> WorkingHours { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
@@ -53,6 +55,8 @@ namespace DAL.Context
             modelBuilder.Entity<Report>().HasKey(r => r.Id);
             modelBuilder.Entity<Feedback>().HasKey(f => f.FeedbackId);
             modelBuilder.Entity<MenuItem>().HasKey(m => m.MenuItemId);
+            modelBuilder.Entity<MenuCategory>().HasKey(mc => mc.MenuCategoryId);
+            modelBuilder.Entity<WorkingHours>().HasKey(wh => wh.WorkingHoursId);
             modelBuilder.Entity<Setting>().HasKey(s => s.SettingId);
             modelBuilder.Entity<Subscription>().HasKey(s => s.Id);
             modelBuilder.Entity<PaymentTransaction>().HasKey(pt => pt.Id);
@@ -82,6 +86,28 @@ namespace DAL.Context
                 .WithMany(b => b.MenuItems)
                 .HasForeignKey(m => m.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Business -> MenuCategories (1 : M)
+            modelBuilder.Entity<MenuCategory>()
+                .HasOne(mc => mc.Business)
+                .WithMany(b => b.MenuCategories)
+                .HasForeignKey(mc => mc.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Business -> WorkingHours (1 : M)
+            modelBuilder.Entity<WorkingHours>()
+                .HasOne(wh => wh.Business)
+                .WithMany(b => b.WorkingHours)
+                .HasForeignKey(wh => wh.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // MenuItem -> MenuCategory (M : 1)
+            modelBuilder.Entity<MenuItem>()
+                .HasOne(mi => mi.MenuCategory)
+                .WithMany(mc => mc.MenuItems)
+                .HasForeignKey(mi => mi.MenuCategoryId)
+                .IsRequired(false) // Optional - للتوافق مع البيانات القديمة
+                .OnDelete(DeleteBehavior.SetNull); // إذا حُذفت الفئة، MenuItem تصبح بدون category
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Business)

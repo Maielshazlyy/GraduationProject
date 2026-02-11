@@ -19,6 +19,8 @@ namespace DAL.UnitOfWork
         public IOrderItemRepository OrderItems { get; }
         public ITicketRepository Tickets { get; }
         public IMenuItemRepository MenuItems { get; }
+        public IMenuCategoryRepository MenuCategories { get; }
+        public IWorkingHoursRepository WorkingHours { get; }
         public IFeedbackRepository Feedbacks { get; }
         public IMessageRepository Messages { get; }
         public INotificationRepository Notifications { get; }
@@ -40,6 +42,8 @@ namespace DAL.UnitOfWork
             IOrderItemRepository orderItemRepository,
             ITicketRepository ticketRepository,
             IMenuItemRepository menuItemRepository,
+            IMenuCategoryRepository menuCategoryRepository,
+            IWorkingHoursRepository workingHoursRepository,
             IFeedbackRepository feedbackRepository,
             IMessageRepository messageRepository,
             INotificationRepository notificationRepository,
@@ -60,6 +64,8 @@ namespace DAL.UnitOfWork
             OrderItems = orderItemRepository;
             Tickets = ticketRepository;
             MenuItems = menuItemRepository;
+            MenuCategories = menuCategoryRepository;
+            WorkingHours = workingHoursRepository;
             Feedbacks = feedbackRepository;
             Messages = messageRepository;
             Notifications = notificationRepository;

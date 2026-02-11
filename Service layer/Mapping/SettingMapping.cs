@@ -22,7 +22,16 @@ namespace Service_layer.Mapping
                 ChatbotPersonality = s.ChatbotPersonality,
                 EmailNotifications = s.EmailNotifications,
                 SmsNotifications = s.SmsNotifications,
-                PushNotifications = s.PushNotifications
+                PushNotifications = s.PushNotifications,
+                // Voice Settings
+                AgentVoice = s.AgentVoice,
+                AgentVoiceProvider = s.AgentVoiceProvider,
+                AgentVoiceSpeed = s.AgentVoiceSpeed,
+                AgentVoicePitch = s.AgentVoicePitch,
+                AgentVoiceLanguage = s.AgentVoiceLanguage,
+                // Custom AI Prompts
+                CustomSystemPrompt = s.CustomSystemPrompt,
+                CustomGreetingTemplate = s.CustomGreetingTemplate
             };
         }
     }

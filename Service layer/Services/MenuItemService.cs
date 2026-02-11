@@ -49,7 +49,7 @@ namespace Service_layer.Services
                 Name = dto.Name,
                 Description = dto.Description,
                 Price = dto.Price,
-                Category = dto.Category,
+                MenuCategoryId = dto.MenuCategoryId, // يمكن أن يكون null
                 IsAvailable = true, // Default to available when creating
                 BusinessId = dto.BusinessId
             };
@@ -67,7 +67,7 @@ namespace Service_layer.Services
             menuItem.Name = dto.Name;
             menuItem.Description = dto.Description;
             menuItem.Price = dto.Price;
-            menuItem.Category = dto.Category;
+            menuItem.MenuCategoryId = dto.MenuCategoryId;
             menuItem.IsAvailable = dto.IsAvailable;
 
             _menuItemRepository.Update(menuItem);

@@ -34,11 +34,63 @@ namespace Service_layer.Services
 
             var setting = await _settingRepository.GetByBusinessIdAsync(businessId);
             if (setting == null)
-                throw new ArgumentException($"Settings not found for business '{businessId}'.");
+                throw new ArgumentException($"Settings not found for business '{businessId}'. Please create settings first.");
 
-            setting.AutoAssignTickets = dto.AutoAssignTickets;
-            setting.EnableNotifications = dto.EnableNotifications;
-            setting.Language = dto.Language;
+            // Update only provided fields (partial update)
+            if (dto.AutoAssignTickets.HasValue)
+                setting.AutoAssignTickets = dto.AutoAssignTickets.Value;
+            
+            if (dto.EnableNotifications.HasValue)
+                setting.EnableNotifications = dto.EnableNotifications.Value;
+            
+            if (!string.IsNullOrWhiteSpace(dto.Language))
+                setting.Language = dto.Language;
+            
+            if (!string.IsNullOrWhiteSpace(dto.TimeZone))
+                setting.TimeZone = dto.TimeZone;
+
+            // Chatbot Settings
+            if (dto.ChatbotEnabled.HasValue)
+                setting.ChatbotEnabled = dto.ChatbotEnabled.Value;
+            
+            if (!string.IsNullOrWhiteSpace(dto.ChatbotWelcomeMessage))
+                setting.ChatbotWelcomeMessage = dto.ChatbotWelcomeMessage;
+            
+            if (!string.IsNullOrWhiteSpace(dto.ChatbotPersonality))
+                setting.ChatbotPersonality = dto.ChatbotPersonality;
+
+            // Voice Settings
+            if (!string.IsNullOrWhiteSpace(dto.AgentVoice))
+                setting.AgentVoice = dto.AgentVoice;
+            
+            if (!string.IsNullOrWhiteSpace(dto.AgentVoiceProvider))
+                setting.AgentVoiceProvider = dto.AgentVoiceProvider;
+            
+            if (dto.AgentVoiceSpeed.HasValue)
+                setting.AgentVoiceSpeed = Math.Clamp(dto.AgentVoiceSpeed.Value, 0.5, 2.0);
+            
+            if (dto.AgentVoicePitch.HasValue)
+                setting.AgentVoicePitch = Math.Clamp(dto.AgentVoicePitch.Value, 0.5, 2.0);
+            
+            if (!string.IsNullOrWhiteSpace(dto.AgentVoiceLanguage))
+                setting.AgentVoiceLanguage = dto.AgentVoiceLanguage;
+
+            // Custom AI Prompts
+            if (dto.CustomSystemPrompt != null)
+                setting.CustomSystemPrompt = dto.CustomSystemPrompt;
+            
+            if (dto.CustomGreetingTemplate != null)
+                setting.CustomGreetingTemplate = dto.CustomGreetingTemplate;
+
+            // Notification Settings
+            if (dto.EmailNotifications.HasValue)
+                setting.EmailNotifications = dto.EmailNotifications.Value;
+            
+            if (dto.SmsNotifications.HasValue)
+                setting.SmsNotifications = dto.SmsNotifications.Value;
+            
+            if (dto.PushNotifications.HasValue)
+                setting.PushNotifications = dto.PushNotifications.Value;
 
             _settingRepository.Update(setting);
             await _unitOfWork.CompleteAsync();

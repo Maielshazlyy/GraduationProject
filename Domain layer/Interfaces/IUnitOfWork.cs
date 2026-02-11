@@ -14,6 +14,8 @@ namespace Domain_layer.Interfaces
         IOrderItemRepository OrderItems { get; }
         ITicketRepository Tickets { get; }
         IMenuItemRepository MenuItems { get; }
+        IMenuCategoryRepository MenuCategories { get; }
+        IWorkingHoursRepository WorkingHours { get; }
         IFeedbackRepository Feedbacks { get; }
         IMessageRepository Messages { get; }
         INotificationRepository Notifications { get; }
