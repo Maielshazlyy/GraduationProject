@@ -115,12 +115,8 @@ namespace Service_layer.Validators.Business
                 .NotEmpty().WithMessage("Welcome message is required.")
                 .MaximumLength(500).WithMessage("Welcome message cannot exceed 500 characters.");
 
-            // Knowledge Base
-            RuleFor(x => x.KnowledgeBaseItems)
-                .NotNull().WithMessage("Knowledge base items cannot be null.")
-                .Must(items => items != null && items.Count > 0)
-                .WithMessage("At least one knowledge base item is required.");
-
+            // Knowledge Base (Optional in onboarding)
+            // Owner can add FAQs/KnowledgeBase later from FAQ/KnowledgeBase screens
             RuleForEach(x => x.KnowledgeBaseItems)
                 .SetValidator(new KnowledgeBaseItemDTOValidator());
 

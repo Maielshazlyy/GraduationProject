@@ -19,9 +19,9 @@ namespace DAL.Repositories
             return await FindAsync(m => m.BusinessId == businessId);
         }
         
-        public async Task<IEnumerable<MenuItem>> GetByCategoryAsync(string category)
+        public async Task<IEnumerable<MenuItem>> GetByCategoryAsync(string categoryId)
         {
-            return await FindAsync(m => m.Category == category);
+            return await FindAsync(m => m.MenuCategoryId == categoryId);
         }
         
         public async Task<IEnumerable<MenuItem>> GetAvailableItemsAsync(string businessId)

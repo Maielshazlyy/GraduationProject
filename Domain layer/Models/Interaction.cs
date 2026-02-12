@@ -9,9 +9,21 @@ namespace Domain_layer.Models
     public class Interaction
     {
         public string InteractionId { get; set; }
-        public string Channel { get; set; } = string.Empty; // e.g. WhatsApp, Voice, Web
 
-        public string Status { get; set; } = "Open"; //open,in progress, closed
+        /// <summary>
+        /// Channel of the interaction, e.g. WebChat, WhatsApp, Voice.
+        /// </summary>
+        public string Channel { get; set; } = string.Empty;
+
+        /// <summary>
+        /// High-level interaction type: Informational, Order, Ticket, Mixed, etc.
+        /// </summary>
+        public string? InteractionType { get; set; }
+
+        /// <summary>
+        /// Status of the interaction: Open, InProgress, Escalated, Closed.
+        /// </summary>
+        public string Status { get; set; } = "Open";
 
         public bool? IsEnded { get; set; }
 
@@ -27,7 +39,16 @@ namespace Domain_layer.Models
         public string CustomerId { get; set; }
         public Customer Customer { get; set; }
 
-        public ICollection<Message> Messages { get; set; } = new List<Message>();
+        /// <summary>
+        /// Optional link to an order created within this interaction.
+        /// </summary>
+        public string? RelatedOrderId { get; set; }
 
+        /// <summary>
+        /// Optional link to a support ticket created within this interaction.
+        /// </summary>
+        public string? RelatedTicketId { get; set; }
+
+        public ICollection<Message> Messages { get; set; } = new List<Message>();
     }
     }

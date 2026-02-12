@@ -107,7 +107,7 @@ namespace DAL.Context
                 .WithMany(mc => mc.MenuItems)
                 .HasForeignKey(mi => mi.MenuCategoryId)
                 .IsRequired(false) // Optional - للتوافق مع البيانات القديمة
-                .OnDelete(DeleteBehavior.SetNull); // إذا حُذفت الفئة، MenuItem تصبح بدون category
+                .OnDelete(DeleteBehavior.NoAction); // Changed to NoAction to avoid cascade path conflicts
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Business)
