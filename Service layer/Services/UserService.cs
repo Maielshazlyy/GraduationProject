@@ -84,6 +84,39 @@ namespace Service_layer.Services
             var result = await _userManager.DeleteAsync(user);
             return result.Succeeded;
         }
+
+        public async Task<User> CreateHumanEmployeeAsync(string businessId, CreateHumanEmployeeDTO dto)
+        {
+            if (string.IsNullOrWhiteSpace(businessId))
+                throw new ArgumentException("BusinessId is required to create a human employee.");
+
+            var business = await _businessRepository.GetByIdAsync(businessId);
+            if (business == null)
+                throw new ArgumentException($"Business with id '{businessId}' not found.");
+
+            // Ensure email is unique
+            var existing = await _userManager.FindByEmailAsync(dto.Email);
+            if (existing != null)
+                throw new ArgumentException($"User with email '{dto.Email}' already exists.");
+
+            var user = new User
+            {
+                UserName = dto.Email,
+                Email = dto.Email,
+                FullName = dto.FullName,
+                BusinessId = businessId,
+                Role = Roles.Agent,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await _userManager.CreateAsync(user, dto.Password);
+            if (!result.Succeeded)
+            {
+                throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+
+            return user;
+        }
     }
 }
 

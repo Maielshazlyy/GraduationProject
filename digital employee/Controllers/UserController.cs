@@ -122,6 +122,38 @@ namespace digital_employee.Controllers
 
             return NoContent();
         }
+
+        /// <summary>
+        /// Business Owner adds a new human employee (Agent) under their business.
+        /// BusinessId is taken from the owner's JWT token, so the owner cannot
+        /// create agents for other businesses.
+        /// </summary>
+        // POST: api/User/agents
+        [HttpPost("agents")]
+        [Authorize(Policy = "OwnerOrAdmin")]
+        public async Task<IActionResult> CreateHumanEmployee([FromBody] CreateHumanEmployeeDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var businessId = User.FindFirst("BusinessId")?.Value;
+            if (string.IsNullOrWhiteSpace(businessId))
+                return BadRequest(new { Message = "BusinessId not found in token. Make sure the owner is linked to a business." });
+
+            try
+            {
+                var user = await _userService.CreateHumanEmployeeAsync(businessId, dto);
+                return CreatedAtAction(nameof(GetById), new { id = user.Id }, user.ToDto());
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
     }
 }
 
