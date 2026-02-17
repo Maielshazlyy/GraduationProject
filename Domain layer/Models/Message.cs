@@ -38,6 +38,16 @@ namespace Domain_layer.Models
         /// </summary>
         public string? AiMetadataJson { get; set; }
 
+        /// <summary>
+        /// For Voice messages: Path to stored audio recording file.
+        /// </summary>
+        public string? AudioPath { get; set; }
+
+        /// <summary>
+        /// Confidence score from AI intent detection (0.0 to 1.0).
+        /// </summary>
+        public double? ConfidenceScore { get; set; }
+
         // Optional sentiment navigation (1:1)
         public Sentiment? Sentiment { get; set; }
     }

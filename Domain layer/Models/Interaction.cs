@@ -21,7 +21,7 @@ namespace Domain_layer.Models
         public string? InteractionType { get; set; }
 
         /// <summary>
-        /// Status of the interaction: Open, InProgress, Escalated, Closed.
+        /// Status of the interaction: Open, InProgress, Escalated, Closed, Interrupted.
         /// </summary>
         public string Status { get; set; } = "Open";
 
@@ -29,6 +29,11 @@ namespace Domain_layer.Models
 
         public DateTime StartedAt { get; set; } = DateTime.UtcNow;
         public DateTime? EndedAt { get; set; }
+
+        /// <summary>
+        /// For Voice calls: Unique session identifier from telephony provider.
+        /// </summary>
+        public string? CallSessionId { get; set; }
 
         public string BusinessId { get; set; }
         public Business Business { get; set; }

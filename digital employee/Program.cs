@@ -245,6 +245,7 @@ namespace digital_employee
             builder.Services.AddScoped<IChatbotService, ChatbotService>();
             builder.Services.AddScoped<IIntentDetectionService, IntentDetectionService>();
             builder.Services.AddScoped<ICustomerChatService, CustomerChatService>();
+            builder.Services.AddScoped<ICustomerVoiceService, CustomerVoiceService>();
 
             // Dashboard Services
             builder.Services.AddScoped<IDashboardService, DashboardService>();
