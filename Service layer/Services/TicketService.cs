@@ -38,6 +38,17 @@ namespace Service_layer.Services
             return await _ticketRepository.GetByBusinessIdAsync(businessId);
         }
 
+        public async Task<IEnumerable<Ticket>> GetOpenEscalationQueueAsync(string businessId)
+        {
+            var all = await _ticketRepository.GetByBusinessIdAsync(businessId);
+
+            // Queue = HumanEscalation tickets that are not ended and not assigned yet
+            return all.Where(t =>
+                !t.IsEnded &&
+                string.Equals(t.TicketType, "HumanEscalation", StringComparison.OrdinalIgnoreCase) &&
+                string.IsNullOrEmpty(t.AssignedToUserId));
+        }
+
         public async Task<Ticket?> GetByIdAsync(string id)
         {
             return await _ticketRepository.GetByIdAsync(id);
@@ -96,7 +107,8 @@ namespace Service_layer.Services
                 ticket.AssignedToUserId = dto.UserId;
             }
 
-            ticket.Status = "In Progress";
+            // When an agent is assigned, ticket moves into active work state.
+            ticket.Status = "InProgress";
 
             _ticketRepository.Update(ticket);
             await _unitOfWork.CompleteAsync();
@@ -108,11 +120,36 @@ namespace Service_layer.Services
             var ticket = await _ticketRepository.GetByIdAsync(id);
             if (ticket == null) return null;
 
+            // Mark ticket as closed
             ticket.Status = "Closed";
             ticket.IsEnded = true;
             ticket.ClosedAt = DateTime.UtcNow;
 
+            // If ClosedByUserId is provided, ensure the user exists and store as assignee/handler
+            if (!string.IsNullOrWhiteSpace(dto.ClosedByUserId))
+            {
+                var user = await _userRepository.GetByIdAsync(dto.ClosedByUserId);
+                if (user == null)
+                    throw new ArgumentException($"User with id '{dto.ClosedByUserId}' not found.");
+
+                ticket.AssignedToUserId = dto.ClosedByUserId;
+            }
+
             _ticketRepository.Update(ticket);
+
+            // Also close the related interaction if any
+            if (!string.IsNullOrWhiteSpace(ticket.InteractionId))
+            {
+                var interaction = await _unitOfWork.Interactions.GetByIdAsync(ticket.InteractionId);
+                if (interaction != null)
+                {
+                    interaction.Status = "Closed";
+                    interaction.IsEnded = true;
+                    interaction.EndedAt = DateTime.UtcNow;
+                    _unitOfWork.Interactions.Update(interaction);
+                }
+            }
+
             await _unitOfWork.CompleteAsync();
             return ticket;
         }

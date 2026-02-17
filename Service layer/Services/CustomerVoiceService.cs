@@ -105,70 +105,81 @@ namespace Service_layer.Services
             bool hasDeliveryDelay = false;
             List<string>? alternativeTimeSlots = null;
 
-            switch (intentResult.Intent)
+            var shouldEscalate = ShouldEscalateToHuman(intentResult);
+
+            if (shouldEscalate)
             {
-                case "CreateOrder":
-                    {
-                        var orderResult = await _businessLogic.HandleCreateOrderWithDeliveryCheckAsync(interaction, intentResult);
-                        orderId = orderResult.Order?.OrderId;
-                        cartSummary = orderResult.Cart;
-                        recommendations = orderResult.Recommendations;
-                        hasDeliveryDelay = orderResult.HasDeliveryDelay;
-                        alternativeTimeSlots = orderResult.AlternativeTimeSlots;
-                        interaction.InteractionType = "Order";
-                        interaction.RelatedOrderId = orderId;
-                        replyText = _businessLogic.BuildOrderReply(
-                            (orderResult.Order, orderResult.Cart, orderResult.Recommendations),
-                            hasDeliveryDelay,
-                            alternativeTimeSlots,
-                            intentResult.DetectedDialect);
-                        break;
-                    }
-
-                case "ModifyOrder":
-                    {
-                        replyText = await _businessLogic.HandleModifyOrderAsync(interaction, intentResult);
-                        break;
-                    }
-
-                case "CancelOrder":
-                    {
-                        replyText = await _businessLogic.HandleCancelOrderAsync(interaction, intentResult);
-                        break;
-                    }
-
-                case "Complaint":
-                case "RequestHumanAgent":
-                    {
-                        var ticket = await _businessLogic.HandleTicketAsync(interaction, intentResult);
-                        ticketId = ticket.TicketId;
-                        interaction.InteractionType = "Ticket";
-                        interaction.RelatedTicketId = ticketId;
-                        if (intentResult.Intent == "RequestHumanAgent")
+                var ticket = await _businessLogic.HandleTicketAsync(interaction, intentResult);
+                ticketId = ticket.TicketId;
+                replyText = _businessLogic.BuildTicketReply(ticket, intentResult.Intent, intentResult.DetectedDialect);
+            }
+            else
+            {
+                switch (intentResult.Intent)
+                {
+                    case "CreateOrder":
                         {
-                            interaction.Status = "Escalated";
+                            var orderResult = await _businessLogic.HandleCreateOrderWithDeliveryCheckAsync(interaction, intentResult);
+                            orderId = orderResult.Order?.OrderId;
+                            cartSummary = orderResult.Cart;
+                            recommendations = orderResult.Recommendations;
+                            hasDeliveryDelay = orderResult.HasDeliveryDelay;
+                            alternativeTimeSlots = orderResult.AlternativeTimeSlots;
+                            interaction.InteractionType = "Order";
+                            interaction.RelatedOrderId = orderId;
+                            replyText = _businessLogic.BuildOrderReply(
+                                (orderResult.Order, orderResult.Cart, orderResult.Recommendations),
+                                hasDeliveryDelay,
+                                alternativeTimeSlots,
+                                intentResult.DetectedDialect);
+                            break;
                         }
-                        replyText = _businessLogic.BuildTicketReply(ticket, intentResult.Intent, intentResult.DetectedDialect);
-                        break;
-                    }
 
-                case "AskAboutOrderStatus":
-                    {
-                        replyText = await _businessLogic.HandleAskOrderStatusAsync(interaction, intentResult);
-                        break;
-                    }
+                    case "ModifyOrder":
+                        {
+                            replyText = await _businessLogic.HandleModifyOrderAsync(interaction, intentResult);
+                            break;
+                        }
 
-                case "AskAboutProducts":
-                    {
-                        replyText = await _businessLogic.HandleAskProductsAsync(interaction, intentResult);
-                        break;
-                    }
+                    case "CancelOrder":
+                        {
+                            replyText = await _businessLogic.HandleCancelOrderAsync(interaction, intentResult);
+                            break;
+                        }
 
-                default:
-                    {
-                        replyText = await _businessLogic.HandleGeneralQuestionAsync(interaction, intentResult);
-                        break;
-                    }
+                    case "Complaint":
+                    case "RequestHumanAgent":
+                        {
+                            var ticket = await _businessLogic.HandleTicketAsync(interaction, intentResult);
+                            ticketId = ticket.TicketId;
+                            interaction.InteractionType = "Ticket";
+                            interaction.RelatedTicketId = ticketId;
+                            if (intentResult.Intent == "RequestHumanAgent")
+                            {
+                                interaction.Status = "Escalated";
+                            }
+                            replyText = _businessLogic.BuildTicketReply(ticket, intentResult.Intent, intentResult.DetectedDialect);
+                            break;
+                        }
+
+                    case "AskAboutOrderStatus":
+                        {
+                            replyText = await _businessLogic.HandleAskOrderStatusAsync(interaction, intentResult);
+                            break;
+                        }
+
+                    case "AskAboutProducts":
+                        {
+                            replyText = await _businessLogic.HandleAskProductsAsync(interaction, intentResult);
+                            break;
+                        }
+
+                    default:
+                        {
+                            replyText = await _businessLogic.HandleGeneralQuestionAsync(interaction, intentResult);
+                            break;
+                        }
+                }
             }
 
             _unitOfWork.Interactions.Update(interaction);
@@ -287,6 +298,29 @@ namespace Service_layer.Services
         }
 
         #region Private Helper Methods
+
+        private static bool ShouldEscalateToHuman(DetectedIntentResultDTO intentResult)
+        {
+            const double confidenceThreshold = 0.6;
+
+            if (intentResult == null)
+                return false;
+
+            if (string.Equals(intentResult.Intent, "RequestHumanAgent", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (intentResult.RequiresEscalation)
+                return true;
+
+            if (!string.IsNullOrWhiteSpace(intentResult.ComplexityLevel) &&
+                string.Equals(intentResult.ComplexityLevel, "High", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (intentResult.Confidence < confidenceThreshold)
+                return true;
+
+            return false;
+        }
 
         private async Task<Interaction> GetOrCreateInteractionAsync(CustomerChatRequestDTO request, string channel)
         {

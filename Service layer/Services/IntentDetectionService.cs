@@ -25,7 +25,10 @@ namespace Service_layer.Services
             var result = new DetectedIntentResultDTO
             {
                 Confidence = 0.5,
-                RequiresAction = false
+                RequiresAction = false,
+                ComplexityLevel = "Low",
+                RequiresEscalation = false,
+                PriorityLevel = "Normal"
             };
 
             if (lower.Contains("order") || lower.Contains("اطلب") || lower.Contains("عايز") && lower.Contains("برجر"))
@@ -41,11 +44,16 @@ namespace Service_layer.Services
             {
                 result.Intent = "Complaint";
                 result.RequiresAction = true;
+                result.ComplexityLevel = "Medium";
             }
             else if (lower.Contains("موظف") || lower.Contains("human") || lower.Contains("agent"))
             {
                 result.Intent = "RequestHumanAgent";
                 result.RequiresAction = true;
+                result.ComplexityLevel = "High";
+                result.RequiresEscalation = true;
+                result.PriorityLevel = "High";
+                result.EscalationReason = "Customer explicitly requested a human agent.";
             }
             else if (lower.Contains("منيو") || lower.Contains("menu") || lower.Contains("products"))
             {

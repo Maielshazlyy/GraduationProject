@@ -202,13 +202,22 @@ namespace Service_layer.Services
 
         public async Task<Ticket> HandleTicketAsync(Interaction interaction, DetectedIntentResultDTO intent)
         {
-            var ticketType = intent.Intent == "RequestHumanAgent"
+            var isHumanEscalation =
+                intent.Intent == "RequestHumanAgent" ||
+                intent.RequiresEscalation ||
+                string.Equals(intent.ComplexityLevel, "High", StringComparison.OrdinalIgnoreCase);
+
+            var ticketType = isHumanEscalation
                 ? "HumanEscalation"
                 : intent.Entities.TryGetValue("ticketType", out var type) ? type : "QualityIssue";
 
-            var subject = intent.Intent == "RequestHumanAgent"
-                ? "Customer requested human agent"
+            var subject = isHumanEscalation
+                ? "Customer escalated to human agent"
                 : "Customer complaint from chat/voice";
+
+            var priority = !string.IsNullOrWhiteSpace(intent.PriorityLevel)
+                ? intent.PriorityLevel
+                : (isHumanEscalation ? "High" : "Normal");
 
             var ticket = new Ticket
             {
@@ -220,12 +229,24 @@ namespace Service_layer.Services
                 RelatedOrderId = interaction.RelatedOrderId,
                 TicketType = ticketType,
                 Subject = subject,
-                Status = "Open",
+                Status = isHumanEscalation ? "Escalated" : "Open",
+                PriorityLevel = priority,
+                EscalationConfidence = isHumanEscalation ? intent.Confidence : null,
+                EscalationReason = isHumanEscalation ? (intent.EscalationReason ?? "Escalated by AI decision logic.") : null,
                 CreatedAt = DateTime.UtcNow
             };
 
             await _unitOfWork.Tickets.AddAsync(ticket);
             await _unitOfWork.CompleteAsync();
+
+            if (isHumanEscalation)
+            {
+                interaction.InteractionType = "Ticket";
+                interaction.RelatedTicketId = ticket.TicketId;
+                interaction.Status = "Escalated";
+                _unitOfWork.Interactions.Update(interaction);
+                await _unitOfWork.CompleteAsync();
+            }
 
             return ticket;
         }
@@ -317,10 +338,10 @@ namespace Service_layer.Services
         public string BuildTicketReply(Ticket ticket, string intent, string? dialect)
         {
             var greeting = dialect == "Egyptian" ? "تمام" : "تم";
-            
-            if (intent == "RequestHumanAgent")
+
+            if (ticket.TicketType == "HumanEscalation" || intent == "RequestHumanAgent")
             {
-                return $"{greeting}، حولت المحادثة لموظف خدمة عملاء. رقم التذكرة: {ticket.TicketId}. هيتم التواصل معاك في أقرب وقت.";
+                return $"{greeting}، هحوّل المحادثة دلوقتي لمتخصص من خدمة العملاء. رقم التذكرة: {ticket.TicketId}. من فضلك انتظر لحظات لحد ما حد من الفريق ينضم ليك.";
             }
 
             return $"{greeting}، تم فتح تذكرة شكوى برقم: {ticket.TicketId}. هنراجع المشكلة ونتواصل معاك لحلّها في أقرب وقت ممكن.";

@@ -22,10 +22,18 @@ namespace Service_layer.DTOS.Ticket
         public string CustomerId { get; set; }
         public string CustomerName { get; set; }
         public int TotalFeedback { get; set; }
-       
 
         public string? AssignedToUserId { get; set; }
-        public string AssignedToUserName { get; set; }
+        public string AssignedToUserName { get; set; } = string.Empty;
 
-        }
+        // HITL / escalation metadata
+        public string? TicketType { get; set; }
+        public string? PriorityLevel { get; set; }
+        public double? EscalationConfidence { get; set; }
+        public string? EscalationReason { get; set; }
+
+        public string? InteractionId { get; set; }
+        public string? RelatedOrderId { get; set; }
+
+    }
 }

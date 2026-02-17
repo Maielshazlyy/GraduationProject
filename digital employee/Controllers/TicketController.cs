@@ -27,6 +27,26 @@ namespace digital_employee.Controllers
             return Ok(tickets.ToDtoList());
         }
 
+        /// <summary>
+        /// Get all escalated chats (HumanEscalation tickets) that are not yet
+        /// assigned to any agent for the current business. This powers the
+        /// agent dashboard queue: when an agent joins one of these, it is
+        /// assigned to them and disappears from other agents' queues.
+        /// </summary>
+        // GET: api/Ticket/queue
+        [HttpGet("queue")]
+        [Authorize(Policy = "AgentOrOwnerOrAdmin")]
+        public async Task<IActionResult> GetEscalationQueue()
+        {
+            // BusinessId is stored in JWT token for user
+            var businessId = User.FindFirst("BusinessId")?.Value;
+            if (string.IsNullOrWhiteSpace(businessId))
+                return BadRequest(new { Message = "BusinessId not found in token." });
+
+            var tickets = await _ticketService.GetOpenEscalationQueueAsync(businessId);
+            return Ok(tickets.ToDtoList());
+        }
+
         // GET: api/Ticket/business/{businessId}
         [HttpGet("business/{businessId}")]
         [Authorize(Policy = "AgentOrOwnerOrAdmin")]

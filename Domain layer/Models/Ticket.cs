@@ -31,6 +31,22 @@ namespace Domain_layer.Models
         public string? TicketType { get; set; }
 
         /// <summary>
+        /// Priority level for this ticket: Low, Normal, High, Critical.
+        /// Used by agent routing and dashboards.
+        /// </summary>
+        public string? PriorityLevel { get; set; }
+
+        /// <summary>
+        /// Confidence score from AI when escalation was triggered (0.0 - 1.0).
+        /// </summary>
+        public double? EscalationConfidence { get; set; }
+
+        /// <summary>
+        /// Reason for escalation, stored for audit and reporting.
+        /// </summary>
+        public string? EscalationReason { get; set; }
+
+        /// <summary>
         /// Optional link to the interaction that created this ticket.
         /// </summary>
         public string? InteractionId { get; set; }

@@ -75,6 +75,39 @@ namespace digital_employee.Controllers
                 return StatusCode(500, new { Message = "Chat handling failed.", Error = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Get backend-driven recommendations for a main menu item
+        /// (e.g., suggest fries and drink with burger) for the public order page.
+        /// </summary>
+        [HttpPost("recommendations")]
+        [ProducesResponseType(typeof(System.Collections.Generic.List<RecommendationItemDTO>), 200)]
+        public async Task<IActionResult> GetOrderRecommendations(
+            [FromBody] CustomerOrderRecommendationRequestDTO request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (string.IsNullOrWhiteSpace(request.BusinessId))
+                return BadRequest(new { Message = "BusinessId is required." });
+
+            if (string.IsNullOrWhiteSpace(request.MainMenuItemId))
+                return BadRequest(new { Message = "MainMenuItemId is required." });
+
+            try
+            {
+                var recs = await _customerChatService.GetOrderRecommendationsAsync(request);
+                return Ok(recs);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Failed to get recommendations.", Error = ex.Message });
+            }
+        }
     }
 }
 

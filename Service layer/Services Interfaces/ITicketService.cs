@@ -8,6 +8,13 @@ namespace Service_layer.Services_Interfaces
         Task<IEnumerable<Ticket>> GetAllAsync();
         Task<IEnumerable<Ticket>> GetByBusinessIdAsync(string businessId);
         Task<Ticket?> GetByIdAsync(string id);
+
+        /// <summary>
+        /// Get all escalated tickets (HumanEscalation) that are not yet assigned
+        /// to any agent, for a specific business. This powers the agent queue
+        /// on the dashboard.
+        /// </summary>
+        Task<IEnumerable<Ticket>> GetOpenEscalationQueueAsync(string businessId);
         Task<Ticket> CreateAsync(TicketCreateDTO dto);
         Task<Ticket?> UpdateAsync(string id, TicketUpdateDTO dto);
         Task<Ticket?> AssignTicketAsync(string id, AssignTicketDTO dto);

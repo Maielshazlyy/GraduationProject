@@ -87,6 +87,23 @@ namespace Service_layer.DTOS.Chat
         public bool IsInterrupted { get; set; } = false;
     }
 
+    /// <summary>
+    /// Request from customer site (order page) to get recommendations
+    /// for a main menu item without going through chat/voice.
+    /// </summary>
+    public class CustomerOrderRecommendationRequestDTO
+    {
+        /// <summary>
+        /// Business that owns the menu.
+        /// </summary>
+        public string BusinessId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The main menu item the customer selected (e.g., burger).
+        /// </summary>
+        public string MainMenuItemId { get; set; } = string.Empty;
+    }
+
     public class ChatCartSummaryDTO
     {
         public decimal TotalPrice { get; set; }
@@ -126,6 +143,28 @@ namespace Service_layer.DTOS.Chat
         /// Detected dialect (e.g., "Egyptian", "Standard Arabic", "English").
         /// </summary>
         public string? DetectedDialect { get; set; }
+
+        /// <summary>
+        /// Conversation complexity level as assessed by AI: Low, Medium, High.
+        /// Used for escalation decisions.
+        /// </summary>
+        public string? ComplexityLevel { get; set; }
+
+        /// <summary>
+        /// Whether AI recommends escalating to a human agent.
+        /// Backend still makes the final decision.
+        /// </summary>
+        public bool RequiresEscalation { get; set; }
+
+        /// <summary>
+        /// Suggested ticket priority: Low, Normal, High, Critical.
+        /// </summary>
+        public string? PriorityLevel { get; set; }
+
+        /// <summary>
+        /// Human-readable reason for escalation to support audit & reporting.
+        /// </summary>
+        public string? EscalationReason { get; set; }
     }
 
     /// <summary>
