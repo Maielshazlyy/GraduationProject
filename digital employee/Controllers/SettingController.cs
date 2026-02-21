@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service_layer.DTOS.Setting;
 using Service_layer.Mapping;
 using Service_layer.Services_Interfaces;
+using System.Security.Claims;
 
 namespace digital_employee.Controllers
 {
@@ -12,10 +13,12 @@ namespace digital_employee.Controllers
     public class SettingController : ControllerBase
     {
         private readonly ISettingService _settingService;
+        private readonly IAuditLogService _auditLogService;
 
-        public SettingController(ISettingService settingService)
+        public SettingController(ISettingService settingService, IAuditLogService auditLogService)
         {
             _settingService = settingService;
+            _auditLogService = auditLogService;
         }
 
         // GET: api/Setting/business/{businessId}
@@ -41,6 +44,18 @@ namespace digital_employee.Controllers
             try
             {
                 var setting = await _settingService.UpdateAsync(businessId, dto);
+                
+                // Log settings update
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogSettingsActionAsync(
+                        businessId: businessId,
+                        action: "UpdateSettings",
+                        userId: currentUserId
+                    );
+                }
+                
                 return Ok(setting.ToDto());
             }
             catch (ArgumentException ex)

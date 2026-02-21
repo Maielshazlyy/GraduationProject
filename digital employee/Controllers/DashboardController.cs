@@ -87,6 +87,66 @@ namespace digital_employee.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
+
+        // GET: api/Dashboard/audit-logs/recent
+        [HttpGet("audit-logs/recent")]
+        [Authorize(Policy = "OwnerOrAdmin")]
+        public async Task<IActionResult> GetRecentAuditLogs([FromQuery] int count = 20)
+        {
+            try
+            {
+                var businessId = User.FindFirstValue("BusinessId");
+                if (string.IsNullOrEmpty(businessId))
+                    return BadRequest(new { Message = "BusinessId not found in token." });
+
+                var auditLogs = await _dashboardService.GetRecentAuditLogsAsync(businessId, count);
+                return Ok(auditLogs);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        // GET: api/Dashboard/audit-logs/statistics
+        [HttpGet("audit-logs/statistics")]
+        [Authorize(Policy = "OwnerOrAdmin")]
+        public async Task<IActionResult> GetAuditLogStatistics()
+        {
+            try
+            {
+                var businessId = User.FindFirstValue("BusinessId");
+                if (string.IsNullOrEmpty(businessId))
+                    return BadRequest(new { Message = "BusinessId not found in token." });
+
+                var statistics = await _dashboardService.GetAuditLogStatisticsAsync(businessId);
+                return Ok(statistics);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        // GET: api/Dashboard/audit-logs/customer/{customerId}
+        [HttpGet("audit-logs/customer/{customerId}")]
+        [Authorize(Policy = "OwnerOrAdmin")]
+        public async Task<IActionResult> GetCustomerAuditLogs(string customerId)
+        {
+            try
+            {
+                var businessId = User.FindFirstValue("BusinessId");
+                if (string.IsNullOrEmpty(businessId))
+                    return BadRequest(new { Message = "BusinessId not found in token." });
+
+                var auditLogs = await _dashboardService.GetCustomerAuditLogsAsync(businessId, customerId);
+                return Ok(auditLogs);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
     }
 }
 

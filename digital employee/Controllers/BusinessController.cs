@@ -19,11 +19,13 @@ namespace digital_employee.Controllers
     {
         private readonly IBusinessService _businessService;
         private readonly UserManager<User> _userManager;
+        private readonly IAuditLogService _auditLogService;
 
-        public BusinessController(IBusinessService businessService, UserManager<User> userManager)
+        public BusinessController(IBusinessService businessService, UserManager<User> userManager, IAuditLogService auditLogService)
         {
             _businessService = businessService;
             _userManager = userManager;
+            _auditLogService = auditLogService;
         }
 
         // GET: api/Business
@@ -129,6 +131,13 @@ namespace digital_employee.Controllers
             user.Role = Roles.Owner;
             await _userManager.UpdateAsync(user);
 
+            // Log business creation
+            await _auditLogService.LogBusinessActionAsync(
+                businessId: created.Id,
+                action: "CreateBusiness",
+                userId: userId
+            );
+
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created.ToDto());
         }
 
@@ -177,6 +186,17 @@ namespace digital_employee.Controllers
             if (updated == null)
                 return NotFound(new { Message = $"Business with id '{id}' not found." });
 
+            // Log business update
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrWhiteSpace(currentUserId))
+            {
+                await _auditLogService.LogBusinessActionAsync(
+                    businessId: id,
+                    action: "UpdateBusiness",
+                    userId: currentUserId
+                );
+            }
+
             return Ok(updated.ToDto());
         }
 
@@ -188,6 +208,17 @@ namespace digital_employee.Controllers
             var deleted = await _businessService.DeleteAsync(id);
             if (!deleted)
                 return NotFound(new { Message = $"Business with id '{id}' not found." });
+
+            // Log business deletion
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrWhiteSpace(currentUserId))
+            {
+                await _auditLogService.LogBusinessActionAsync(
+                    businessId: id,
+                    action: "DeleteBusiness",
+                    userId: currentUserId
+                );
+            }
 
             return NoContent();
         }

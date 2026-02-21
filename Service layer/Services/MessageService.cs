@@ -12,17 +12,20 @@ namespace Service_layer.Services
         private readonly IInteractionRepository _interactionRepository;
         private readonly IRepository<User> _userRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAuditLogService? _auditLogService;
 
         public MessageService(
             IMessageRepository messageRepository,
             IInteractionRepository interactionRepository,
             IRepository<User> userRepository,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IAuditLogService? auditLogService = null)
         {
             _messageRepository = messageRepository;
             _interactionRepository = interactionRepository;
             _userRepository = userRepository;
             _unitOfWork = unitOfWork;
+            _auditLogService = auditLogService;
         }
 
         public async Task<IEnumerable<Message>> GetAllAsync()
@@ -65,6 +68,18 @@ namespace Service_layer.Services
 
             await _messageRepository.AddAsync(message);
             await _unitOfWork.CompleteAsync();
+
+            // Log message creation by agent
+            if (_auditLogService != null && dto.SenderType == "Agent" && !string.IsNullOrWhiteSpace(dto.UserId))
+            {
+                await _auditLogService.LogInteractionActionAsync(
+                    businessId: interaction.BusinessId,
+                    action: "AgentSendMessage",
+                    interactionId: dto.InteractionId,
+                    userId: dto.UserId
+                );
+            }
+
             return message;
         }
 

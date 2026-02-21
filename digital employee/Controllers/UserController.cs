@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service_layer.DTOS.User;
 using Service_layer.Mapping;
 using Service_layer.Services_Interfaces;
+using System.Security.Claims;
 
 namespace digital_employee.Controllers
 {
@@ -12,10 +13,12 @@ namespace digital_employee.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IAuditLogService _auditLogService;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, IAuditLogService auditLogService)
         {
             _userService = userService;
+            _auditLogService = auditLogService;
         }
 
         // GET: api/User
@@ -95,9 +98,23 @@ namespace digital_employee.Controllers
 
             try
             {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var businessId = User.FindFirstValue("BusinessId");
+                
                 var result = await _userService.AssignRoleAsync(dto.UserId, dto.NewRole);
                 if (!result)
                     return NotFound(new { Message = $"User with id '{dto.UserId}' not found." });
+
+                // Log the role assignment
+                if (!string.IsNullOrWhiteSpace(businessId) && !string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogUserActionAsync(
+                        businessId: businessId,
+                        action: $"AssignRole_{dto.NewRole}",
+                        userId: currentUserId,
+                        targetUserId: dto.UserId
+                    );
+                }
 
                 return Ok(new { Message = $"User role has been updated to '{dto.NewRole}'. Please login again to get a new token." });
             }
@@ -116,9 +133,23 @@ namespace digital_employee.Controllers
         [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> Delete(string id)
         {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var businessId = User.FindFirstValue("BusinessId");
+            
             var deleted = await _userService.DeleteAsync(id);
             if (!deleted)
                 return NotFound(new { Message = $"User with id '{id}' not found." });
+
+            // Log the user deletion
+            if (!string.IsNullOrWhiteSpace(businessId) && !string.IsNullOrWhiteSpace(currentUserId))
+            {
+                await _auditLogService.LogUserActionAsync(
+                    businessId: businessId,
+                    action: "DeleteUser",
+                    userId: currentUserId,
+                    targetUserId: id
+                );
+            }
 
             return NoContent();
         }
@@ -142,7 +173,21 @@ namespace digital_employee.Controllers
 
             try
             {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                
                 var user = await _userService.CreateHumanEmployeeAsync(businessId, dto);
+                
+                // Log the creation of human employee
+                if (!string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogUserActionAsync(
+                        businessId: businessId,
+                        action: "CreateHumanEmployee",
+                        userId: currentUserId,
+                        targetUserId: user.Id
+                    );
+                }
+                
                 return CreatedAtAction(nameof(GetById), new { id = user.Id }, user.ToDto());
             }
             catch (ArgumentException ex)

@@ -9,6 +9,12 @@ namespace Service_layer.Services_Interfaces
         Task<IEnumerable<Sentiment>> GetByMessageIdAsync(string messageId);
         Task<IEnumerable<Sentiment>> GetByBusinessIdAsync(string businessId);
         Task<Sentiment?> GetByIdAsync(string id);
+        
+        /// <summary>
+        /// Analyze sentiment of a message using AI.
+        /// Returns sentiment analysis result (Positive, Negative, Neutral) with score.
+        /// </summary>
+        Task<Sentiment> AnalyzeSentimentAsync(string messageId, string messageText, string language = "ar");
     }
 }
 

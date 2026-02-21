@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service_layer.DTOS.Order;
 using Service_layer.Mapping;
 using Service_layer.Services_Interfaces;
+using System.Security.Claims;
 
 namespace digital_employee.Controllers
 {
@@ -12,10 +13,12 @@ namespace digital_employee.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
+        private readonly IAuditLogService _auditLogService;
 
-        public OrderController(IOrderService orderService)
+        public OrderController(IOrderService orderService, IAuditLogService auditLogService)
         {
             _orderService = orderService;
+            _auditLogService = auditLogService;
         }
 
         // GET: api/Order
@@ -68,6 +71,19 @@ namespace digital_employee.Controllers
             try
             {
                 var order = await _orderService.CreateAsync(dto);
+                
+                // Log order creation
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrWhiteSpace(dto.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogOrderActionAsync(
+                        businessId: dto.BusinessId,
+                        action: "CreateOrder",
+                        orderId: order.OrderId,
+                        userId: currentUserId
+                    );
+                }
+                
                 return CreatedAtAction(nameof(GetById), new { id = order.OrderId }, order.ToDto());
             }
             catch (ArgumentException ex)
@@ -90,6 +106,18 @@ namespace digital_employee.Controllers
                 if (order == null)
                     return NotFound(new { Message = $"Order with id '{id}' not found." });
 
+                // Log order status update
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrWhiteSpace(order.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogOrderActionAsync(
+                        businessId: order.BusinessId,
+                        action: $"UpdateOrderStatus_{dto.Status}",
+                        orderId: order.OrderId,
+                        userId: currentUserId
+                    );
+                }
+
                 return Ok(order.ToDto());
             }
             catch (ArgumentException ex)
@@ -103,9 +131,26 @@ namespace digital_employee.Controllers
         [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> Delete(string id)
         {
+            // Get order before deletion to log it
+            var order = await _orderService.GetByIdAsync(id);
+            if (order == null)
+                return NotFound(new { Message = $"Order with id '{id}' not found." });
+
             var deleted = await _orderService.DeleteAsync(id);
             if (!deleted)
                 return NotFound(new { Message = $"Order with id '{id}' not found." });
+
+            // Log order deletion
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrWhiteSpace(order.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+            {
+                await _auditLogService.LogOrderActionAsync(
+                    businessId: order.BusinessId,
+                    action: "DeleteOrder",
+                    orderId: id,
+                    userId: currentUserId
+                );
+            }
 
             return NoContent();
         }

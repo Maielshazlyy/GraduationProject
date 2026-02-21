@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service_layer.DTOS.KnowledgeBase;
 using Service_layer.Mapping;
 using Service_layer.Services_Interfaces;
+using System.Security.Claims;
 
 namespace digital_employee.Controllers
 {
@@ -12,10 +13,12 @@ namespace digital_employee.Controllers
     public class KnowledgeBaseController : ControllerBase
     {
         private readonly IKnowledgeBaseService _knowledgeBaseService;
+        private readonly IAuditLogService _auditLogService;
 
-        public KnowledgeBaseController(IKnowledgeBaseService knowledgeBaseService)
+        public KnowledgeBaseController(IKnowledgeBaseService knowledgeBaseService, IAuditLogService auditLogService)
         {
             _knowledgeBaseService = knowledgeBaseService;
+            _auditLogService = auditLogService;
         }
 
         // GET: api/KnowledgeBase
@@ -60,6 +63,19 @@ namespace digital_employee.Controllers
             try
             {
                 var kb = await _knowledgeBaseService.CreateAsync(dto);
+                
+                // Log knowledge base creation
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrWhiteSpace(dto.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogKnowledgeBaseActionAsync(
+                        businessId: dto.BusinessId,
+                        action: "CreateKnowledgeBase",
+                        knowledgeBaseId: kb.KnowledgeBaseId,
+                        userId: currentUserId
+                    );
+                }
+                
                 return CreatedAtAction(nameof(GetById), new { id = kb.KnowledgeBaseId }, kb.ToDto());
             }
             catch (ArgumentException ex)
@@ -80,6 +96,18 @@ namespace digital_employee.Controllers
             if (kb == null)
                 return NotFound(new { Message = $"KnowledgeBase with id '{id}' not found." });
 
+            // Log knowledge base update
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrWhiteSpace(kb.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+            {
+                await _auditLogService.LogKnowledgeBaseActionAsync(
+                    businessId: kb.BusinessId,
+                    action: "UpdateKnowledgeBase",
+                    knowledgeBaseId: id,
+                    userId: currentUserId
+                );
+            }
+
             return Ok(kb.ToDto());
         }
 
@@ -88,9 +116,26 @@ namespace digital_employee.Controllers
         [Authorize(Policy = "OwnerOrAdmin")]
         public async Task<IActionResult> Delete(string id)
         {
+            // Get knowledge base before deletion to log it
+            var kb = await _knowledgeBaseService.GetByIdAsync(id);
+            if (kb == null)
+                return NotFound(new { Message = $"KnowledgeBase with id '{id}' not found." });
+
             var deleted = await _knowledgeBaseService.DeleteAsync(id);
             if (!deleted)
                 return NotFound(new { Message = $"KnowledgeBase with id '{id}' not found." });
+
+            // Log knowledge base deletion
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrWhiteSpace(kb.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+            {
+                await _auditLogService.LogKnowledgeBaseActionAsync(
+                    businessId: kb.BusinessId,
+                    action: "DeleteKnowledgeBase",
+                    knowledgeBaseId: id,
+                    userId: currentUserId
+                );
+            }
 
             return NoContent();
         }

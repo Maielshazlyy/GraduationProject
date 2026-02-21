@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service_layer.DTOS.menuItem;
 using Service_layer.Mapping;
 using Service_layer.Services_Interfaces;
+using System.Security.Claims;
 
 namespace digital_employee.Controllers
 {
@@ -12,10 +13,12 @@ namespace digital_employee.Controllers
     public class MenuItemController : ControllerBase
     {
         private readonly IMenuItemService _menuItemService;
+        private readonly IAuditLogService _auditLogService;
 
-        public MenuItemController(IMenuItemService menuItemService)
+        public MenuItemController(IMenuItemService menuItemService, IAuditLogService auditLogService)
         {
             _menuItemService = menuItemService;
+            _auditLogService = auditLogService;
         }
 
         // GET: api/MenuItem
@@ -59,6 +62,19 @@ namespace digital_employee.Controllers
             try
             {
                 var item = await _menuItemService.CreateAsync(dto);
+                
+                // Log menu item creation
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrWhiteSpace(dto.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogMenuItemActionAsync(
+                        businessId: dto.BusinessId,
+                        action: "CreateMenuItem",
+                        menuItemId: item.MenuItemId,
+                        userId: currentUserId
+                    );
+                }
+                
                 return CreatedAtAction(nameof(GetById), new { id = item.MenuItemId }, item.ToDto());
             }
             catch (ArgumentException ex)
@@ -79,6 +95,18 @@ namespace digital_employee.Controllers
             if (item == null)
                 return NotFound(new { Message = $"MenuItem with id '{id}' not found." });
 
+            // Log menu item update
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrWhiteSpace(item.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+            {
+                await _auditLogService.LogMenuItemActionAsync(
+                    businessId: item.BusinessId,
+                    action: "UpdateMenuItem",
+                    menuItemId: id,
+                    userId: currentUserId
+                );
+            }
+
             return Ok(item.ToDto());
         }
 
@@ -87,9 +115,26 @@ namespace digital_employee.Controllers
         [Authorize(Policy = "OwnerOrAdmin")]
         public async Task<IActionResult> Delete(string id)
         {
+            // Get menu item before deletion to log it
+            var item = await _menuItemService.GetByIdAsync(id);
+            if (item == null)
+                return NotFound(new { Message = $"MenuItem with id '{id}' not found." });
+
             var deleted = await _menuItemService.DeleteAsync(id);
             if (!deleted)
                 return NotFound(new { Message = $"MenuItem with id '{id}' not found." });
+
+            // Log menu item deletion
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrWhiteSpace(item.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+            {
+                await _auditLogService.LogMenuItemActionAsync(
+                    businessId: item.BusinessId,
+                    action: "DeleteMenuItem",
+                    menuItemId: id,
+                    userId: currentUserId
+                );
+            }
 
             return NoContent();
         }

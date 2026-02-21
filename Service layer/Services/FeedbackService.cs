@@ -12,17 +12,20 @@ namespace Service_layer.Services
         private readonly ICustomerRepository _customerRepository;
         private readonly ITicketRepository _ticketRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAuditLogService? _auditLogService;
 
         public FeedbackService(
             IFeedbackRepository feedbackRepository,
             ICustomerRepository customerRepository,
             ITicketRepository ticketRepository,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IAuditLogService? auditLogService = null)
         {
             _feedbackRepository = feedbackRepository;
             _customerRepository = customerRepository;
             _ticketRepository = ticketRepository;
             _unitOfWork = unitOfWork;
+            _auditLogService = auditLogService;
         }
 
         public async Task<IEnumerable<Feedback>> GetAllAsync()
@@ -68,6 +71,19 @@ namespace Service_layer.Services
 
             await _feedbackRepository.AddAsync(feedback);
             await _unitOfWork.CompleteAsync();
+
+            // Log feedback creation
+            if (_auditLogService != null && !string.IsNullOrWhiteSpace(customer.BusinessId))
+            {
+                await _auditLogService.CreateAsync(
+                    businessId: customer.BusinessId,
+                    action: "CreateFeedback",
+                    entity: "Feedback",
+                    entityId: feedback.FeedbackId,
+                    userId: null // Customer-initiated
+                );
+            }
+
             return feedback;
         }
 

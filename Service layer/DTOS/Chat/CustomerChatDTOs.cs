@@ -145,6 +145,11 @@ namespace Service_layer.DTOS.Chat
         public string? DetectedDialect { get; set; }
 
         /// <summary>
+        /// Detected language code (e.g., "ar" for Arabic, "en" for English).
+        /// </summary>
+        public string? DetectedLanguage { get; set; }
+
+        /// <summary>
         /// Conversation complexity level as assessed by AI: Low, Medium, High.
         /// Used for escalation decisions.
         /// </summary>

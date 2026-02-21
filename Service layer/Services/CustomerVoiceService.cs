@@ -20,17 +20,23 @@ namespace Service_layer.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IIntentDetectionService _intentDetectionService;
         private readonly ISettingService _settingService;
+        private readonly IAuditLogService? _auditLogService;
+        private readonly ISentimentService? _sentimentService;
         private readonly CustomerInteractionBusinessLogic _businessLogic;
 
         public CustomerVoiceService(
             IUnitOfWork unitOfWork,
             IIntentDetectionService intentDetectionService,
-            ISettingService settingService)
+            ISettingService settingService,
+            IAuditLogService? auditLogService = null,
+            ISentimentService? sentimentService = null)
         {
             _unitOfWork = unitOfWork;
             _intentDetectionService = intentDetectionService;
             _settingService = settingService;
-            _businessLogic = new CustomerInteractionBusinessLogic(unitOfWork);
+            _auditLogService = auditLogService;
+            _sentimentService = sentimentService;
+            _businessLogic = new CustomerInteractionBusinessLogic(unitOfWork, auditLogService);
         }
 
         public async Task<CustomerChatResponseDTO> HandleVoiceMessageAsync(CustomerChatRequestDTO request)
@@ -95,6 +101,27 @@ namespace Service_layer.Services
             customerMessage.ConfidenceScore = intentResult.Confidence;
             customerMessage.AiMetadataJson = System.Text.Json.JsonSerializer.Serialize(intentResult);
             _unitOfWork.Messages.Update(customerMessage);
+            await _unitOfWork.CompleteAsync();
+
+            // 4.5) Analyze sentiment of customer message using AI
+            if (_sentimentService != null && !string.IsNullOrWhiteSpace(messageText))
+            {
+                try
+                {
+                    var language = intentResult.DetectedLanguage ?? "ar";
+                    var sentiment = await _sentimentService.AnalyzeSentimentAsync(
+                        customerMessage.MessageId, 
+                        messageText, 
+                        language);
+                    // Sentiment is automatically linked to message via MessageId
+                }
+                catch (Exception ex)
+                {
+                    // Log error but don't fail the request
+                    // TODO: Add proper logging
+                    System.Diagnostics.Debug.WriteLine($"Sentiment analysis failed: {ex.Message}");
+                }
+            }
 
             // 5) Execute business logic based on intent (with delivery delay check for Voice)
             string replyText;
@@ -112,6 +139,17 @@ namespace Service_layer.Services
                 var ticket = await _businessLogic.HandleTicketAsync(interaction, intentResult);
                 ticketId = ticket.TicketId;
                 replyText = _businessLogic.BuildTicketReply(ticket, intentResult.Intent, intentResult.DetectedDialect);
+                
+                // Log escalation event
+                if (_auditLogService != null && ticket.TicketType == "HumanEscalation")
+                {
+                    await _auditLogService.LogInteractionActionAsync(
+                        businessId: interaction.BusinessId,
+                        action: $"EscalateToHuman_{intentResult.Intent}",
+                        interactionId: interaction.InteractionId,
+                        userId: null // AI-triggered escalation
+                    );
+                }
             }
             else
             {

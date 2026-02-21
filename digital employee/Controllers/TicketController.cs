@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service_layer.DTOS.Ticket;
 using Service_layer.Mapping;
 using Service_layer.Services_Interfaces;
+using System.Security.Claims;
 
 namespace digital_employee.Controllers
 {
@@ -12,10 +13,12 @@ namespace digital_employee.Controllers
     public class TicketController : ControllerBase
     {
         private readonly ITicketService _ticketService;
+        private readonly IAuditLogService _auditLogService;
 
-        public TicketController(ITicketService ticketService)
+        public TicketController(ITicketService ticketService, IAuditLogService auditLogService)
         {
             _ticketService = ticketService;
+            _auditLogService = auditLogService;
         }
 
         // GET: api/Ticket
@@ -116,6 +119,18 @@ namespace digital_employee.Controllers
                 if (ticket == null)
                     return NotFound(new { Message = $"Ticket with id '{id}' not found." });
 
+                // Log the ticket assignment
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrWhiteSpace(ticket.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogTicketActionAsync(
+                        businessId: ticket.BusinessId,
+                        action: "AssignTicket",
+                        ticketId: ticket.TicketId,
+                        userId: currentUserId
+                    );
+                }
+
                 return Ok(ticket.ToDto());
             }
             catch (ArgumentException ex)
@@ -135,6 +150,18 @@ namespace digital_employee.Controllers
             var ticket = await _ticketService.CloseTicketAsync(id, dto);
             if (ticket == null)
                 return NotFound(new { Message = $"Ticket with id '{id}' not found." });
+
+            // Log the ticket closure
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? dto.ClosedByUserId;
+            if (!string.IsNullOrWhiteSpace(ticket.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+            {
+                await _auditLogService.LogTicketActionAsync(
+                    businessId: ticket.BusinessId,
+                    action: "CloseTicket",
+                    ticketId: ticket.TicketId,
+                    userId: currentUserId
+                );
+            }
 
             return Ok(ticket.ToDto());
         }

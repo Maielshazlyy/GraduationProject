@@ -27,6 +27,11 @@ namespace Service_layer.DTOS.Dashboard
         public bool IsSetupComplete { get; set; }
         public List<string> SetupStepsCompleted { get; set; } = new List<string>();
         public List<string> SetupStepsPending { get; set; } = new List<string>();
+
+        // Audit Log Summary
+        public int TotalAuditLogs { get; set; }
+        public int AuditLogsLast24Hours { get; set; }
+        public DateTime? LastAuditLogDate { get; set; }
     }
 }
 

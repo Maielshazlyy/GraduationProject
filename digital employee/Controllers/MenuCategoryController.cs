@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service_layer.DTOS.MenuCategory;
 using Service_layer.Mapping;
 using Service_layer.Services_Interfaces;
+using System.Security.Claims;
 
 namespace digital_employee.Controllers
 {
@@ -12,10 +13,12 @@ namespace digital_employee.Controllers
     public class MenuCategoryController : ControllerBase
     {
         private readonly IMenuCategoryService _menuCategoryService;
+        private readonly IAuditLogService _auditLogService;
 
-        public MenuCategoryController(IMenuCategoryService menuCategoryService)
+        public MenuCategoryController(IMenuCategoryService menuCategoryService, IAuditLogService auditLogService)
         {
             _menuCategoryService = menuCategoryService;
+            _auditLogService = auditLogService;
         }
 
         // GET: api/MenuCategory
@@ -68,6 +71,19 @@ namespace digital_employee.Controllers
             try
             {
                 var category = await _menuCategoryService.CreateAsync(dto);
+                
+                // Log menu category creation
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrWhiteSpace(dto.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogMenuCategoryActionAsync(
+                        businessId: dto.BusinessId,
+                        action: "CreateMenuCategory",
+                        menuCategoryId: category.MenuCategoryId,
+                        userId: currentUserId
+                    );
+                }
+                
                 return CreatedAtAction(nameof(GetById), new { id = category.MenuCategoryId }, category.ToDto());
             }
             catch (ArgumentException ex)
@@ -88,6 +104,18 @@ namespace digital_employee.Controllers
             if (category == null)
                 return NotFound(new { Message = $"MenuCategory with id '{id}' not found." });
 
+            // Log menu category update
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrWhiteSpace(category.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+            {
+                await _auditLogService.LogMenuCategoryActionAsync(
+                    businessId: category.BusinessId,
+                    action: "UpdateMenuCategory",
+                    menuCategoryId: id,
+                    userId: currentUserId
+                );
+            }
+
             return Ok(category.ToDto());
         }
 
@@ -98,9 +126,26 @@ namespace digital_employee.Controllers
         {
             try
             {
+                // Get category before deletion to log it
+                var category = await _menuCategoryService.GetByIdAsync(id);
+                if (category == null)
+                    return NotFound(new { Message = $"MenuCategory with id '{id}' not found." });
+
                 var deleted = await _menuCategoryService.DeleteAsync(id);
                 if (!deleted)
                     return NotFound(new { Message = $"MenuCategory with id '{id}' not found." });
+
+                // Log menu category deletion
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrWhiteSpace(category.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogMenuCategoryActionAsync(
+                        businessId: category.BusinessId,
+                        action: "DeleteMenuCategory",
+                        menuCategoryId: id,
+                        userId: currentUserId
+                    );
+                }
 
                 return NoContent();
             }

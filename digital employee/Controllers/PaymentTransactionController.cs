@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Service_layer.DTOS.PaymentTranscation;
 using Service_layer.Mapping;
 using Service_layer.Services_Interfaces;
+using System.Security.Claims;
+using Domain_layer.Interfaces;
 using PaymentTransactionMapping = Service_layer.Mapping.PaymentTransactionMapping;
 
 namespace digital_employee.Controllers
@@ -13,10 +15,17 @@ namespace digital_employee.Controllers
     public class PaymentTransactionController : ControllerBase
     {
         private readonly IPaymentTransactionService _paymentService;
+        private readonly IAuditLogService _auditLogService;
+        private readonly ISubscriptionRepository _subscriptionRepository;
 
-        public PaymentTransactionController(IPaymentTransactionService paymentService)
+        public PaymentTransactionController(
+            IPaymentTransactionService paymentService, 
+            IAuditLogService auditLogService,
+            ISubscriptionRepository subscriptionRepository)
         {
             _paymentService = paymentService;
+            _auditLogService = auditLogService;
+            _subscriptionRepository = subscriptionRepository;
         }
 
         // GET: api/PaymentTransaction
@@ -69,6 +78,24 @@ namespace digital_employee.Controllers
             try
             {
                 var payment = await _paymentService.CreateAsync(dto);
+                
+                // Get BusinessId from subscription to log payment transaction creation
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrWhiteSpace(currentUserId) && !string.IsNullOrWhiteSpace(dto.SubscriptionId))
+                {
+                    // Get subscription to access BusinessId
+                    var subscription = await _subscriptionRepository.GetByIdAsync(dto.SubscriptionId);
+                    if (subscription != null && !string.IsNullOrWhiteSpace(subscription.BusinessId))
+                    {
+                        await _auditLogService.LogPaymentTransactionActionAsync(
+                            businessId: subscription.BusinessId,
+                            action: "CreatePaymentTransaction",
+                            paymentTransactionId: payment.Id,
+                            userId: currentUserId
+                        );
+                    }
+                }
+                
                 return CreatedAtAction(nameof(GetById), new { id = payment.Id }, PaymentTransactionMapping.ToDto(payment));
             }
             catch (ArgumentException ex)

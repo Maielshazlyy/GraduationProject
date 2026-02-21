@@ -6,6 +6,7 @@ using Domain_layer.Interfaces;
 using Domain_layer.Models;
 using Domain_layer.enums;
 using Service_layer.DTOS.Chat;
+using Service_layer.Services_Interfaces;
 
 namespace Service_layer.Services
 {
@@ -16,10 +17,12 @@ namespace Service_layer.Services
     public class CustomerInteractionBusinessLogic
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAuditLogService? _auditLogService;
 
-        public CustomerInteractionBusinessLogic(IUnitOfWork unitOfWork)
+        public CustomerInteractionBusinessLogic(IUnitOfWork unitOfWork, IAuditLogService? auditLogService = null)
         {
             _unitOfWork = unitOfWork;
+            _auditLogService = auditLogService;
         }
 
         public async Task<(Order? Order, ChatCartSummaryDTO? Cart, List<RecommendationItemDTO> Recommendations)>
@@ -59,6 +62,17 @@ namespace Service_layer.Services
 
             await _unitOfWork.Orders.AddAsync(order);
             await _unitOfWork.CompleteAsync();
+
+            // Log order creation from chat/voice
+            if (_auditLogService != null)
+            {
+                await _auditLogService.LogOrderActionAsync(
+                    businessId: interaction.BusinessId,
+                    action: "CreateOrderFromChat",
+                    orderId: order.OrderId,
+                    userId: null // Customer-initiated, not a user action
+                );
+            }
 
             var cart = new ChatCartSummaryDTO
             {
@@ -196,6 +210,17 @@ namespace Service_layer.Services
             order.Status = OrderStatus.Cancelled;
             _unitOfWork.Orders.Update(order);
             await _unitOfWork.CompleteAsync();
+
+            // Log order cancellation from chat/voice
+            if (_auditLogService != null)
+            {
+                await _auditLogService.LogOrderActionAsync(
+                    businessId: interaction.BusinessId,
+                    action: "CancelOrderFromChat",
+                    orderId: orderId,
+                    userId: null // Customer-initiated
+                );
+            }
 
             return $"تم إلغاء الطلب رقم {orderId} بنجاح.";
         }
