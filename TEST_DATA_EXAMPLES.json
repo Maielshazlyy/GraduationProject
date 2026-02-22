@@ -1,0 +1,267 @@
+{
+    "swaggerUrls": {
+        "iisExpressHttps": "https://localhost:44361/swagger",
+        "iisExpressHttp": "http://localhost:9875/swagger",
+        "https": "https://localhost:7119/swagger",
+        "http": "http://localhost:5157/swagger"
+    },
+    "apiBaseUrls": {
+        "iisExpressHttps": "https://localhost:44361",
+        "iisExpressHttp": "http://localhost:9875",
+        "https": "https://localhost:7119",
+        "http": "http://localhost:5157"
+    },
+    "testUsers": {
+        "admin": {
+            "email": "admin@test.com",
+            "password": "Admin123!",
+            "role": "Admin",
+            "note": "يحتاج إنشاء من Admin أو ترقية مستخدم موجود"
+        },
+        "owner": {
+            "email": "owner@test.com",
+            "password": "Owner123!",
+            "role": "Owner",
+            "note": "يمكن إنشاؤه من Register endpoint"
+        },
+        "agent": {
+            "email": "agent@test.com",
+            "password": "Agent123!",
+            "role": "Agent",
+            "note": "يتم إنشاؤه من Owner عبر POST /api/User/agents"
+        }
+    },
+    "sampleRequests": {
+        "register": {
+            "endpoint": "POST /api/Auth/register",
+            "body": {
+                "fullName": "Test Owner",
+                "email": "owner@test.com",
+                "password": "Owner123!",
+                "businessId": null
+            },
+            "response": {
+                "userId": "user-guid",
+                "email": "owner@test.com",
+                "fullName": "Test Owner",
+                "role": "User",
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "expiration": "2024-01-18T10:30:00Z",
+                "businessId": null
+            }
+        },
+        "login": {
+            "endpoint": "POST /api/Auth/login",
+            "body": {
+                "email": "owner@test.com",
+                "password": "Owner123!"
+            },
+            "response": {
+                "userId": "user-guid",
+                "email": "owner@test.com",
+                "fullName": "Test Owner",
+                "role": "Owner",
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "expiration": "2024-01-18T10:30:00Z",
+                "businessId": "business-guid"
+            }
+        },
+        "chatMessageArabic": {
+            "endpoint": "POST /api/CustomerChat/message",
+            "body": {
+                "businessId": "your-business-id",
+                "customerId": null,
+                "interactionId": null,
+                "channel": "WebChat",
+                "message": "عايز أطلب برجر"
+            },
+            "response": {
+                "interactionId": "interaction-guid",
+                "replyText": "تمام، سجلت لك طلب جديد...",
+                "orderId": "order-guid",
+                "ticketId": null,
+                "cart": {
+                    "totalPrice": 50.00,
+                    "items": [
+                        {
+                            "menuItemId": "item-guid",
+                            "name": "برجر",
+                            "quantity": 1,
+                            "unitPrice": 50.00
+                        }
+                    ]
+                },
+                "recommendations": [
+                    {
+                        "menuItemId": "item-guid-2",
+                        "name": "بطاطس",
+                        "price": 10.00,
+                        "reason": "Popular side with burgers"
+                    }
+                ],
+                "isInterrupted": false
+            }
+        },
+        "chatMessageEnglish": {
+            "endpoint": "POST /api/CustomerChat/message",
+            "body": {
+                "businessId": "your-business-id",
+                "customerId": null,
+                "interactionId": null,
+                "channel": "WebChat",
+                "message": "I want to order a burger"
+            }
+        },
+        "voiceSessionInitialize": {
+            "endpoint": "POST /api/CustomerVoice/session/initialize",
+            "body": {
+                "businessId": "your-business-id",
+                "customerId": null,
+                "callSessionId": "call-session-123"
+            },
+            "response": {
+                "interactionId": "interaction-guid",
+                "channel": "Voice",
+                "status": "Open",
+                "callSessionId": "call-session-123",
+                "startedAt": "2024-01-15T10:30:00Z"
+            }
+        },
+        "getSentiment": {
+            "endpoint": "GET /api/Sentiment/message/{messageId}",
+            "headers": {
+                "Authorization": "Bearer {jwtToken}"
+            },
+            "response": [
+                {
+                    "sentimentId": "sentiment-guid",
+                    "messageId": "message-guid",
+                    "sourceText": "عايز أطلب برجر",
+                    "label": "Positive",
+                    "score": 0.8,
+                    "analyzedAt": "2024-01-15T10:30:00Z"
+                }
+            ]
+        }
+    },
+    "sampleMessages": {
+        "arabic": {
+            "createOrder": "عايز أطلب برجر",
+            "askOrderStatus": "عايز أعرف حالة الطلب",
+            "complaint": "مش عاجبني الطلب",
+            "requestHuman": "عايز أتكلم مع موظف بشري",
+            "askProducts": "عايز أشوف المنيو",
+            "cancelOrder": "عايز ألغي الطلب"
+        },
+        "english": {
+            "createOrder": "I want to order a burger",
+            "askOrderStatus": "What is my order status",
+            "complaint": "I'm not satisfied with my order",
+            "requestHuman": "I want to talk to a human agent",
+            "askProducts": "Show me the menu",
+            "cancelOrder": "I want to cancel my order"
+        }
+    },
+    "jwtTokenInfo": {
+        "structure": {
+            "header": {
+                "alg": "HS256",
+                "typ": "JWT"
+            },
+            "payload": {
+                "sub": "user-id",
+                "email": "user@example.com",
+                "name": "User Name",
+                "role": "Owner",
+                "BusinessId": "business-id",
+                "exp": 1234567890,
+                "iss": "https://localhost:44361",
+                "aud": "https://localhost:44361"
+            }
+        },
+        "expiration": "3 days",
+        "claims": [
+            "sub (NameIdentifier): User ID",
+            "email: User Email",
+            "name: Full Name",
+            "role: Role (Admin/Owner/Agent/User)",
+            "BusinessId: Business ID (if exists)"
+        ]
+    },
+    "commonErrors": {
+        "400": {
+            "message": "Bad Request",
+            "commonCauses": [
+                "Missing required fields",
+                "Invalid BusinessId",
+                "Invalid format"
+            ]
+        },
+        "401": {
+            "message": "Unauthorized",
+            "commonCauses": [
+                "Missing or invalid JWT Token",
+                "Token expired",
+                "Wrong role permissions"
+            ],
+            "solution": "Login again to get new token"
+        },
+        "404": {
+            "message": "Not Found",
+            "commonCauses": [
+                "BusinessId doesn't exist",
+                "InteractionId doesn't exist",
+                "MessageId doesn't exist"
+            ]
+        },
+        "500": {
+            "message": "Internal Server Error",
+            "commonCauses": [
+                "Database connection issue",
+                "Server error",
+                "Missing configuration"
+            ],
+            "solution": "Check server logs"
+        }
+    },
+    "testingWorkflow": {
+        "step1": {
+            "action": "Start the project",
+            "command": "F5 in Visual Studio (IIS Express) or dotnet run",
+            "expected": "API running on https://localhost:44361 (IIS Express) or https://localhost:7119 (dotnet run)"
+        },
+        "step2": {
+            "action": "Open Swagger",
+            "url": "https://localhost:44361/swagger (IIS Express) or https://localhost:7119/swagger (dotnet run)",
+            "expected": "Swagger UI opens successfully"
+        },
+        "step3": {
+            "action": "Import Postman Collection & Environment",
+            "files": [
+                "AI_Endpoints_Postman_Collection.json",
+                "Postman_Environment.json"
+            ],
+            "expected": "Collection and Environment imported"
+        },
+        "step4": {
+            "action": "Get JWT Token",
+            "endpoint": "Authentication → Login - Owner",
+            "expected": "Token saved automatically to jwtToken variable"
+        },
+        "step5": {
+            "action": "Set BusinessId",
+            "source": "From login response or database",
+            "expected": "businessId variable set in environment"
+        },
+        "step6": {
+            "action": "Test Chat Endpoint",
+            "endpoint": "Customer Chat → Send Chat Message (Arabic)",
+            "expected": "Response with interactionId and replyText"
+        },
+        "step7": {
+            "action": "Test Sentiment Analysis",
+            "endpoint": "Sentiment Analysis → Get Sentiment by Message ID",
+            "expected": "Sentiment analysis result"
+        }
+    }
+}
