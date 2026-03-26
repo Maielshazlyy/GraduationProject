@@ -206,6 +206,42 @@ namespace Service_layer.DTOS.Chat
         public int Rating { get; set; } // 1-5
         public string? Comment { get; set; }
     }
+
+    /// <summary>
+    /// Context sent to Generative AI for response generation.
+    /// Backend provides the FACTS (what happened), AI generates the natural language reply.
+    /// </summary>
+    public class ResponseGenerationContextDTO
+    {
+        public string BusinessId { get; set; } = string.Empty;
+        public string InteractionId { get; set; } = string.Empty;
+        public string Intent { get; set; } = string.Empty;
+        public string? DetectedLanguage { get; set; }
+        public string? DetectedDialect { get; set; }
+
+        /// <summary>
+        /// Recent conversation messages (Customer + AI) for context.
+        /// </summary>
+        public List<string> RecentMessages { get; set; } = new();
+
+        /// <summary>
+        /// What happened: "OrderCreated", "TicketCreated", "OrderCancelled", "OrderStatusRetrieved", "ProductsListed", "EscalatedToHuman", "GeneralQuestion"
+        /// </summary>
+        public string ActionOutcome { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Structured data for the AI to include in response.
+        /// For OrderCreated: orderId, totalPrice, cart, recommendations, hasDeliveryDelay, alternativeTimeSlots.
+        /// Recommendations: Backend computes them (e.g. burger → suggest fries, drink).
+        /// AI uses recommendations to suggest them naturally to the customer in the response (Chat or Voice).
+        /// </summary>
+        public Dictionary<string, object> ActionData { get; set; } = new();
+
+        /// <summary>
+        /// Channel: "WebChat" or "Voice"
+        /// </summary>
+        public string Channel { get; set; } = "WebChat";
+    }
 }
 
 

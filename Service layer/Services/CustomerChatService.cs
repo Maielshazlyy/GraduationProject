@@ -18,6 +18,7 @@ namespace Service_layer.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IIntentDetectionService _intentDetectionService;
+        private readonly IResponseGenerationService _responseGenerationService;
         private readonly ISettingService _settingService;
         private readonly IAuditLogService? _auditLogService;
         private readonly ISentimentService? _sentimentService;
@@ -26,12 +27,14 @@ namespace Service_layer.Services
         public CustomerChatService(
             IUnitOfWork unitOfWork,
             IIntentDetectionService intentDetectionService,
+            IResponseGenerationService responseGenerationService,
             ISettingService settingService,
             IAuditLogService? auditLogService = null,
             ISentimentService? sentimentService = null)
         {
             _unitOfWork = unitOfWork;
             _intentDetectionService = intentDetectionService;
+            _responseGenerationService = responseGenerationService;
             _settingService = settingService;
             _auditLogService = auditLogService;
             _sentimentService = sentimentService;
@@ -109,26 +112,26 @@ namespace Service_layer.Services
             var shouldEscalate = ShouldEscalateToHuman(intentResult);
 
             // 5) Execute business logic based on intent / escalation
-            string replyText;
             string? orderId = null;
             string? ticketId = null;
             ChatCartSummaryDTO? cartSummary = null;
             var recommendations = new List<RecommendationItemDTO>();
+            var context = BuildResponseContext(interaction, intentResult, recentMessages, "WebChat");
 
             if (shouldEscalate)
             {
                 var ticket = await _businessLogic.HandleTicketAsync(interaction, intentResult);
                 ticketId = ticket.TicketId;
-                replyText = _businessLogic.BuildTicketReply(ticket, intentResult.Intent, intentResult.DetectedDialect);
-                
-                // Log escalation event
+                context.ActionOutcome = "EscalatedToHuman";
+                context.ActionData["ticketId"] = ticket.TicketId;
+
                 if (_auditLogService != null && ticket.TicketType == "HumanEscalation")
                 {
                     await _auditLogService.LogInteractionActionAsync(
                         businessId: interaction.BusinessId,
                         action: $"EscalateToHuman_{intentResult.Intent}",
                         interactionId: interaction.InteractionId,
-                        userId: null // AI-triggered escalation
+                        userId: null
                     );
                 }
             }
@@ -144,19 +147,27 @@ namespace Service_layer.Services
                             recommendations = orderResult.Recommendations;
                             interaction.InteractionType = "Order";
                             interaction.RelatedOrderId = orderId;
-                            replyText = _businessLogic.BuildOrderReply(orderResult, false, null, intentResult.DetectedDialect);
+                            context.ActionOutcome = "OrderCreated";
+                            context.ActionData["orderId"] = orderId ?? "";
+                            context.ActionData["totalPrice"] = cartSummary?.TotalPrice ?? 0m;
+                            context.ActionData["hasDeliveryDelay"] = false;
+                            context.ActionData["recommendations"] = recommendations;
                             break;
                         }
 
                     case "ModifyOrder":
                         {
-                            replyText = await _businessLogic.HandleModifyOrderAsync(interaction, intentResult);
+                            var msg = await _businessLogic.HandleModifyOrderAsync(interaction, intentResult);
+                            context.ActionOutcome = "ModifyOrderHandled";
+                            context.ActionData["message"] = msg;
                             break;
                         }
 
                     case "CancelOrder":
                         {
-                            replyText = await _businessLogic.HandleCancelOrderAsync(interaction, intentResult);
+                            var msg = await _businessLogic.HandleCancelOrderAsync(interaction, intentResult);
+                            context.ActionOutcome = "OrderCancelled";
+                            context.ActionData["message"] = msg;
                             break;
                         }
 
@@ -168,28 +179,33 @@ namespace Service_layer.Services
                             interaction.InteractionType = "Ticket";
                             interaction.RelatedTicketId = ticketId;
                             if (intentResult.Intent == "RequestHumanAgent")
-                            {
                                 interaction.Status = "Escalated";
-                            }
-                            replyText = _businessLogic.BuildTicketReply(ticket, intentResult.Intent, intentResult.DetectedDialect);
+                            context.ActionOutcome = ticket.TicketType == "HumanEscalation" ? "EscalatedToHuman" : "TicketCreated";
+                            context.ActionData["ticketId"] = ticket.TicketId;
                             break;
                         }
 
                     case "AskAboutOrderStatus":
                         {
-                            replyText = await _businessLogic.HandleAskOrderStatusAsync(interaction, intentResult);
+                            var msg = await _businessLogic.HandleAskOrderStatusAsync(interaction, intentResult);
+                            context.ActionOutcome = "OrderStatusRetrieved";
+                            context.ActionData["message"] = msg;
                             break;
                         }
 
                     case "AskAboutProducts":
                         {
-                            replyText = await _businessLogic.HandleAskProductsAsync(interaction, intentResult);
+                            var msg = await _businessLogic.HandleAskProductsAsync(interaction, intentResult);
+                            context.ActionOutcome = "ProductsListed";
+                            context.ActionData["message"] = msg;
                             break;
                         }
 
                     default:
                         {
-                            replyText = await _businessLogic.HandleGeneralQuestionAsync(interaction, intentResult);
+                            var msg = await _businessLogic.HandleGeneralQuestionAsync(interaction, intentResult);
+                            context.ActionOutcome = "GeneralQuestion";
+                            context.ActionData["message"] = msg;
                             break;
                         }
                 }
@@ -197,6 +213,9 @@ namespace Service_layer.Services
 
             _unitOfWork.Interactions.Update(interaction);
             await _unitOfWork.CompleteAsync();
+
+            // 5.5) AI Response Generation - AI generates the reply based on outcome
+            var replyText = await _responseGenerationService.GenerateResponseAsync(context);
 
             // 5) Store AI reply message
             var aiMessage = new Message
@@ -346,6 +365,26 @@ namespace Service_layer.Services
             await _unitOfWork.CompleteAsync();
 
             return interaction;
+        }
+
+        private static ResponseGenerationContextDTO BuildResponseContext(
+            Interaction interaction,
+            DetectedIntentResultDTO intentResult,
+            List<string> recentMessages,
+            string channel)
+        {
+            return new ResponseGenerationContextDTO
+            {
+                BusinessId = interaction.BusinessId,
+                InteractionId = interaction.InteractionId,
+                Intent = intentResult.Intent,
+                DetectedLanguage = intentResult.DetectedLanguage,
+                DetectedDialect = intentResult.DetectedDialect,
+                RecentMessages = recentMessages,
+                ActionOutcome = "",
+                ActionData = new Dictionary<string, object>(),
+                Channel = channel
+            };
         }
 
         #endregion

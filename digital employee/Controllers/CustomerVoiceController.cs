@@ -10,6 +10,10 @@ namespace digital_employee.Controllers
     /// Customer-facing voice call API (Voice channel).
     /// Handles audio messages, speech-to-text, text-to-speech, call sessions,
     /// delivery delays, recovery, and feedback collection.
+    /// 
+    /// ⚠️ NOTE: This REST API endpoint is a PLACEHOLDER for testing.
+    /// The actual Voice implementation will use WebSocket (SignalR) for real-time streaming.
+    /// Audio will be streamed directly from the device via WebSocket, not sent as Base64 in JSON.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]

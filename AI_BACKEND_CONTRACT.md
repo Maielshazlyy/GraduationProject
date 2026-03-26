@@ -8,6 +8,101 @@
 
 ---
 
+## 🤖 Agentic AI - المفهوم الأساسي
+
+**التقسيم:**
+1. **AI** يديك **Intent** → Backend ينفذ **Business Logic** بناءً عليه
+2. **Backend** يخبر AI إنه نفذ (ActionOutcome + ActionData)
+3. **AI** يولد الرد بناءً على النتيجة
+4. **Backend** يبعته للـ Frontend (بدون تعديل)
+
+📄 **راجع:** `AGENTIC_AI_FLOW.md` للتفاصيل الكاملة.
+
+---
+
+## ⚠️ ملاحظة مهمة: WebSocket للـ Voice
+
+**الـ Voice سيتم عبر WebSocket (SignalR) وليس REST API.**
+
+- الصوت يُرسل مباشرة من الجهاز (streaming) عبر WebSocket
+- لا يتم حفظ الملفات الصوتية - الصوت يُعالج في الوقت الفعلي (real-time)
+- الـ REST API الحالي (`/api/CustomerVoice/message`) هو placeholder للاختبار فقط
+- Speech-to-Text و Text-to-Speech يعملان مع audio chunks مباشرة (streaming)
+
+---
+
+## 📝 Contract 0: Response Generation / توليد الرد ⭐ (الأهم)
+
+**الترتيب:** Backend ينفذ Business Logic أولاً → ثم يرسل النتيجة للـ AI → AI يولد الرد.
+
+### Interface
+```csharp
+Task<string> GenerateResponseAsync(ResponseGenerationContextDTO context);
+```
+
+### ✅ Input (ما يرسله Backend)
+
+Backend يرسل **النتيجة** بعد تنفيذ Business Logic:
+- `ActionOutcome`: ماذا نفذ (OrderCreated, TicketCreated, etc.)
+- `ActionData`: البيانات (orderId, cart, recommendations, etc.)
+
+```csharp
+public class ResponseGenerationContextDTO
+{
+    public string BusinessId { get; set; }
+    public string InteractionId { get; set; }
+    public string Intent { get; set; }
+    public string? DetectedLanguage { get; set; }
+    public string? DetectedDialect { get; set; }
+    public List<string> RecentMessages { get; set; }
+    public string ActionOutcome { get; set; }      // "OrderCreated", "TicketCreated", etc.
+    public Dictionary<string, object> ActionData { get; set; }  // orderId, cart, etc.
+    public string Channel { get; set; }           // "WebChat" or "Voice"
+}
+```
+
+### ✅ Output (ما يتوقعه Backend)
+
+**Return Type:** `string` - **الرد النصي الكامل**
+
+- هذا هو الرد اللي Backend **يبعته للـ Frontend مباشرة**
+- Backend **لا يعدله**
+- الـ AI يولد رد طبيعي، محادثي، مناسب للسياق واللغة
+
+**Example Output:**
+```
+"تمام! سجلت لك برجر كبير. عايز تضيف بطاطس أو مشروب؟"
+```
+
+### ⚠️ Requirements
+
+1. الرد يجب أن يكون **باللغة المناسبة** (عربي أو إنجليزي حسب DetectedLanguage)
+2. الرد يجب أن **يتضمن المعلومات المهمة** من ActionData (رقم الطلب، التذكرة، إلخ)
+3. الرد يجب أن يكون **طبيعي ومحادثي** (Generative AI)
+4. الرد يجب أن يكون **مناسب للقناة** (Chat أو Voice)
+
+### 📦 Recommendations / التوصيات
+
+**Backend** يحسب التوصيات (مثلاً: طلب برجر → يقترح بطاطس، مشروب) ويبعتها في `ActionData["recommendations"]`.
+
+**AI** يستقبل التوصيات ويضيفها في الرد بشكل طبيعي للعميل (Chat أو Voice).
+
+```csharp
+// ActionData عند OrderCreated:
+{
+    "orderId": "ord-123",
+    "totalPrice": 50,
+    "recommendations": [
+        { "menuItemId": "...", "name": "بطاطس", "price": 15, "reason": "مناسبة مع البرجر" },
+        { "menuItemId": "...", "name": "بيبسي", "price": 10, "reason": "مشروب مناسب" }
+    ]
+}
+```
+
+**مثال على رد AI:** "تمام! سجلت لك برجر كبير. عايز تضيف بطاطس أو بيبسي؟"
+
+---
+
 ## 📝 Contract 1: Intent Detection / اكتشاف النية
 
 ### Interface
@@ -190,24 +285,49 @@ public class Sentiment
 ## 📝 Contract 3: Speech-to-Text / تحويل الصوت إلى نص
 
 ### Interface
+
+**⚠️ ملاحظة:** في التطبيق الفعلي (WebSocket)، Audio chunks تُرسل مباشرة (streaming)، وليس Base64.
+
 ```csharp
+// WebSocket (streaming) - التطبيق الفعلي:
 private async Task<string> ConvertAudioToTextAsync(
-    string audioDataBase64,
+    byte[] audioChunk,  // Audio chunk مباشرة من WebSocket
+    string? audioFormat
+)
+
+// REST API placeholder - للاختبار فقط:
+private async Task<string> ConvertAudioToTextAsync(
+    string audioDataBase64,  // Base64-encoded audio (placeholder only)
     string? audioFormat
 )
 ```
 
 ### ✅ Input (ما يرسله Backend)
 
+**WebSocket (streaming) - التطبيق الفعلي:**
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `audioDataBase64` | `string` | ✅ Yes | Base64-encoded audio data |
+| `audioChunk` | `byte[]` | ✅ Yes | Audio chunk مباشرة من WebSocket (streaming) |
 | `audioFormat` | `string?` | ❌ No | Audio format ("audio/wav", "audio/mp3", "audio/webm", etc.) |
 
-**Example Input:**
+**REST API placeholder - للاختبار فقط:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `audioDataBase64` | `string` | ✅ Yes | Base64-encoded audio data (placeholder only) |
+| `audioFormat` | `string?` | ❌ No | Audio format ("audio/wav", "audio/mp3", "audio/webm", etc.) |
+
+**Example Input (WebSocket - streaming):**
 ```csharp
 ConvertAudioToTextAsync(
-    audioDataBase64: "UklGRiQAAABXQVZFZm10...",  // Base64 string
+    audioChunk: byte[],  // Audio chunk مباشرة من WebSocket
+    audioFormat: "audio/wav"
+)
+```
+
+**Example Input (REST API placeholder):**
+```csharp
+ConvertAudioToTextAsync(
+    audioDataBase64: "UklGRiQAAABXQVZFZm10...",  // Base64 string (placeholder only)
     audioFormat: "audio/wav"
 )
 ```
@@ -302,17 +422,29 @@ ConvertTextToAudioAsync(
 
 ### ✅ Output (ما يتوقعه Backend)
 
-**Return Type:** `(string audioBase64, string audioFormat)`
+**⚠️ ملاحظة:** في التطبيق الفعلي (WebSocket)، Audio chunks تُرسل مباشرة (streaming)، وليس Base64.
 
+**Return Type (WebSocket - التطبيق الفعلي):**
+- `byte[] audioChunk` - Audio chunk مباشرة من TTS service (streaming)
+- `string audioFormat` - Audio format string (e.g., "audio/wav", "audio/mp3")
+
+**Return Type (REST API placeholder - للاختبار فقط):**
+- `(string audioBase64, string audioFormat)`
 - `audioBase64`: Base64-encoded audio file
 - `audioFormat`: Audio format string (e.g., "audio/wav", "audio/mp3")
 
-**Example Output:**
+**Example Output (REST API placeholder):**
 ```csharp
 (
-    audioBase64: "UklGRiQAAABXQVZFZm10...",  // Base64 string
+    audioBase64: "UklGRiQAAABXQVZFZm10...",  // Base64 string (placeholder only)
     audioFormat: "audio/wav"
 )
+```
+
+**Example Output (WebSocket - streaming):**
+```csharp
+audioChunk: byte[]  // Audio chunk مباشرة (streaming)
+audioFormat: "audio/wav"
 ```
 
 ### ⚠️ Requirements
@@ -358,13 +490,13 @@ Backend → Saves to Database
 Backend → Returns Response to Customer
 ```
 
-### 2. Voice Flow (Audio)
+### 2. Voice Flow (Audio) - WebSocket Streaming
 ```
-Customer → Audio Message (Base64)
+Customer → Audio Chunks (WebSocket Streaming) ⚠️ NOT Base64
     ↓
-Backend → ConvertAudioToTextAsync(audioData)
+Backend → ConvertAudioToTextAsync(audioChunk)  // Streaming STT
     ↓
-AI Team → Returns Transcribed Text
+AI Team → Returns Transcribed Text (real-time)
     ↓
 Backend → DetectIntentAsync(recentMessages)
     ↓
@@ -378,14 +510,25 @@ AI Team → Returns Sentiment
     ↓
 Backend → ConvertTextToAudioAsync(responseText, settings)
     ↓
-AI Team → Returns Audio (Base64)
+AI Team → Returns Audio Chunks (streaming) ⚠️ NOT Base64
     ↓
-Backend → Returns Audio Response to Customer
+Backend → Sends Audio Chunks to Customer via WebSocket (streaming)
 ```
+
+**⚠️ ملاحظة:** 
+- الـ Voice سيتم عبر **WebSocket (SignalR)** وليس REST API
+- الصوت يُرسل مباشرة من الجهاز (streaming) - **لا يتم حفظ الملفات**
+- الـ REST API الحالي (`/api/CustomerVoice/message`) هو placeholder للاختبار فقط
 
 ---
 
 ## ✅ Acceptance Criteria / معايير القبول
+
+### Contract 0: Response Generation ⭐
+- [ ] يولد رد طبيعي ومحادثي
+- [ ] يتضمن المعلومات المهمة من ActionData
+- [ ] يدعم العربية والإنجليزية
+- [ ] الرد جاهز للعرض مباشرة (Backend يمرره للـ Frontend بدون تعديل)
 
 ### Contract 1: Intent Detection
 - [ ] يدعم جميع الـ Intents المذكورة
@@ -417,6 +560,7 @@ Backend → Returns Audio Response to Customer
 ## 📊 Performance Requirements / متطلبات الأداء
 
 ### Response Time
+- **Response Generation:** < 3 seconds ⭐
 - **Intent Detection:** < 2 seconds
 - **Sentiment Analysis:** < 1 second
 - **Speech-to-Text:** < 5 seconds (حسب طول الصوت)

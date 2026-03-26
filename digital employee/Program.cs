@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using Service_layer;
 using DAL.Context;
@@ -244,11 +244,13 @@ namespace digital_employee
             // Chatbot Services
             builder.Services.AddScoped<IChatbotService, ChatbotService>();
             builder.Services.AddScoped<IIntentDetectionService, IntentDetectionService>();
+            builder.Services.AddScoped<IResponseGenerationService, ResponseGenerationService>();
             builder.Services.AddScoped<ICustomerChatService, CustomerChatService>();
             builder.Services.AddScoped<ICustomerVoiceService, CustomerVoiceService>();
 
             // Dashboard Services
             builder.Services.AddScoped<IDashboardService, DashboardService>();
+            builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 
             // -------------------------
             // 8) FluentValidation Registration
