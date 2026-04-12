@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -46,6 +46,30 @@ namespace Service_layer.Services
         public async Task<Business> CreateAsync(Business business)
         {
             await _unitOfWork.Businesses.AddAsync(business);
+
+            // Auto-create default settings for every new business
+            var defaultSetting = new Setting
+            {
+                SettingId = Guid.NewGuid().ToString(),
+                BusinessId = business.Id,
+                AutoAssignTickets = true,
+                EnableNotifications = true,
+                Language = "en",
+                TimeZone = "UTC",
+                ChatbotEnabled = true,
+                ChatbotWelcomeMessage = "Welcome! How can I help you?",
+                ChatbotPersonality = "Friendly",
+                AgentVoice = "default",
+                AgentVoiceProvider = "azure",
+                AgentVoiceSpeed = 1.0,
+                AgentVoicePitch = 1.0,
+                AgentVoiceLanguage = "en-US",
+                EmailNotifications = true,
+                SmsNotifications = false,
+                PushNotifications = true
+            };
+            await _settingsRepository.AddAsync(defaultSetting);
+
             await _unitOfWork.CompleteAsync();
             return business;
         }

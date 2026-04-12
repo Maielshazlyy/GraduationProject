@@ -1,10 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Domain_layer.Constants;
+using Domain_layer.Interfaces;
 using Domain_layer.Models;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
@@ -19,33 +21,77 @@ namespace Service_layer.Services
     public class AuthService:IAuthService
     {
         private readonly UserManager<User> _userManager;
-        private readonly IConfiguration _configuration; // لقراءة الـ Secret Key من appsettings
-        public AuthService(UserManager<User> userManager, IConfiguration configuration)
+        private readonly IConfiguration _configuration;
+        private readonly IBusinessRepository _businessRepository;
+
+        public AuthService(UserManager<User> userManager, IConfiguration configuration, IBusinessRepository businessRepository)
         {
             _userManager = userManager;
             _configuration = configuration;
+            _businessRepository = businessRepository;
         }
 
         
         public async Task<AuthResponseDTO> RegisterAsync(RegisterDTO model)
         {
-            // 1. استخدام الـ Mapping لتحويل البيانات
+            if (string.IsNullOrWhiteSpace(model.BusinessId))
+                throw new Exception("BusinessId is required for agent registration.");
+
+            var business = await _businessRepository.GetByIdAsync(model.BusinessId);
+            if (business == null)
+                throw new Exception($"Business with id '{model.BusinessId}' not found.");
+
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
+                throw new Exception($"Email '{model.Email}' is already registered.");
+
             var user = model.ToEntity();
 
-            // 2. إنشاء المستخدم وتشفير الباسورد تلقائياً
             var result = await _userManager.CreateAsync(user, model.Password);
-
             if (!result.Succeeded)
             {
-                
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                 throw new Exception(errors);
             }
 
-            // 3. (اختياري) إضافة الرول في جدول الأدوار لو مفعلة
-            // await _userManager.AddToRoleAsync(user, model.Role);
+            return GenerateJwtToken(user);
+        }
 
-            // 4. إنشاء التوكن وإرجاع النتيجة
+        public async Task<AuthResponseDTO> RegisterAdminAsync(RegisterBootstrapDTO model)
+        {
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
+                throw new Exception($"Email '{model.Email}' is already registered.");
+
+            var user = model.ToEntity();
+            user.Role = Roles.Admin;
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new Exception(errors);
+            }
+
+            return GenerateJwtToken(user);
+        }
+
+        public async Task<AuthResponseDTO> RegisterOwnerAsync(RegisterBootstrapDTO model)
+        {
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
+                throw new Exception($"Email '{model.Email}' is already registered.");
+
+            var user = model.ToEntity();
+            user.Role = Roles.Owner;
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new Exception(errors);
+            }
+
             return GenerateJwtToken(user);
         }
 

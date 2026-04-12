@@ -1,23 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Domain_layer.enums;
 using FluentValidation;
 using Service_layer.DTOS.Order;
 
 namespace Service_layer.Validators.Order
 {
-    public class UpdateOrderStatusDTOValidator: AbstractValidator<UpdateOrderStatusDTO>
+    public class UpdateOrderStatusDTOValidator : AbstractValidator<UpdateOrderStatusDTO>
     {
+        private static readonly string[] ValidStatuses = Enum.GetNames(typeof(OrderStatus));
+
         public UpdateOrderStatusDTOValidator()
         {
             RuleFor(x => x.OrderId)
-                .NotEmpty();
+                .NotEmpty().WithMessage("OrderId is required.");
 
             RuleFor(x => x.Status)
-                .Must(s => s == "Pending" || s == "InProgress" || s == "Completed" || s == "Cancelled")
-                .WithMessage("Invalid order status");
+                .NotEmpty().WithMessage("Status is required.")
+                .Must(s => ValidStatuses.Contains(s))
+                .WithMessage($"Invalid order status. Valid values are: {string.Join(", ", Enum.GetNames(typeof(OrderStatus)))}");
         }
     }
 }

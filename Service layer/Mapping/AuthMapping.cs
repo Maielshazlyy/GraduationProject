@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,16 +15,24 @@ namespace Service_layer.Mapping
         {
             return new User
             {
-                // في Identity، الـ UserName ضروري جداً
                 UserName = dto.Email,
                 Email = dto.Email,
                 FullName = dto.FullName,
-
-                // BusinessId اختياري - يمكن أن يكون null
                 BusinessId = dto.BusinessId,
+                Role = Roles.Agent,
+                CreatedAt = DateTime.UtcNow
+            };
+        }
 
-                // تعيين دور افتراضي عند التسجيل
-                Role = Roles.User,
+        public static User ToEntity(this RegisterBootstrapDTO dto)
+        {
+            return new User
+            {
+                UserName = dto.Email,
+                Email = dto.Email,
+                FullName = dto.FullName,
+                BusinessId = null,
+                Role = Roles.Agent,
                 CreatedAt = DateTime.UtcNow
             };
         }

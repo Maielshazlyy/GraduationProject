@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Domain_layer.Models;
@@ -35,7 +35,6 @@ namespace digital_employee.Controllers
             }
             catch (Exception ex)
             {
-                // لو حصل خطأ (زي إيميل مكرر، أو BusinessId غلط)
                 return BadRequest(new { Message = ex.Message });
             }
         }
@@ -62,6 +61,38 @@ namespace digital_employee.Controllers
             try
             {
                 var result = await _authService.GoogleLoginAsync(model.IdToken);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        // POST: api/Auth/register-admin
+        [HttpPost("register-admin")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RegisterAdmin([FromBody] RegisterBootstrapDTO model)
+        {
+            try
+            {
+                var result = await _authService.RegisterAdminAsync(model);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        // POST: api/Auth/register-owner
+        [HttpPost("register-owner")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RegisterOwner([FromBody] RegisterBootstrapDTO model)
+        {
+            try
+            {
+                var result = await _authService.RegisterOwnerAsync(model);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -100,7 +131,7 @@ namespace digital_employee.Controllers
 
         // POST: api/Auth/promote-to-admin
         [HttpPost("promote-to-admin")]
-        [Authorize(Policy = "AdminOnly")] // فقط Admin يمكنه ترقية المستخدمين إلى Admin
+        [Authorize(Policy = "AdminOnly")] 
         public async Task<IActionResult> PromoteToAdmin([FromBody] string userId)
         {
             try

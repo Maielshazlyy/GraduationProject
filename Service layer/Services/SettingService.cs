@@ -23,7 +23,39 @@ namespace Service_layer.Services
 
         public async Task<Setting?> GetByBusinessIdAsync(string businessId)
         {
-            return await _settingRepository.GetByBusinessIdAsync(businessId);
+            var setting = await _settingRepository.GetByBusinessIdAsync(businessId);
+
+            // Auto-create default settings if missing (backward compatibility)
+            if (setting == null)
+            {
+                var business = await _businessRepository.GetByIdAsync(businessId);
+                if (business == null) return null;
+
+                setting = new Setting
+                {
+                    SettingId = Guid.NewGuid().ToString(),
+                    BusinessId = businessId,
+                    AutoAssignTickets = true,
+                    EnableNotifications = true,
+                    Language = "en",
+                    TimeZone = "UTC",
+                    ChatbotEnabled = true,
+                    ChatbotWelcomeMessage = "Welcome! How can I help you?",
+                    ChatbotPersonality = "Friendly",
+                    AgentVoice = "default",
+                    AgentVoiceProvider = "azure",
+                    AgentVoiceSpeed = 1.0,
+                    AgentVoicePitch = 1.0,
+                    AgentVoiceLanguage = "en-US",
+                    EmailNotifications = true,
+                    SmsNotifications = false,
+                    PushNotifications = true
+                };
+                await _settingRepository.AddAsync(setting);
+                await _unitOfWork.CompleteAsync();
+            }
+
+            return setting;
         }
 
         public async Task<Setting?> UpdateAsync(string businessId, SettingUpdateDTO dto)

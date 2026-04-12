@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -63,8 +63,8 @@ namespace Service_layer.Mapping
                     WorkingHoursId = wh.WorkingHoursId,
                     DayOfWeek = wh.DayOfWeek,
                     DayName = wh.DayOfWeek >= 0 && wh.DayOfWeek < 7 ? dayNames[wh.DayOfWeek] : "",
-                    OpenTime = wh.OpenTime?.ToString(@"HH\:mm"),
-                    CloseTime = wh.CloseTime?.ToString(@"HH\:mm"),
+                    OpenTime = wh.OpenTime?.ToString(@"hh\:mm"),
+                    CloseTime = wh.CloseTime?.ToString(@"hh\:mm"),
                     IsClosed = wh.IsClosed
                 }).ToList() ?? new List<WorkingHoursResponseDTO>(),
 

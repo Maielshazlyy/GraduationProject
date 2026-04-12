@@ -1,16 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FluentValidation;
 using Service_layer.DTOS.Auth;
 
 namespace Service_layer.Validators.Auth
 {
-    public class RegisterDTOValidator: AbstractValidator<RegisterDTO>
+    public class RegisterBootstrapDTOValidator : AbstractValidator<RegisterBootstrapDTO>
     {
-        public RegisterDTOValidator()
+        public RegisterBootstrapDTOValidator()
         {
             RuleFor(x => x.FullName)
                 .NotEmpty().WithMessage("Full name is required.")
@@ -23,9 +18,6 @@ namespace Service_layer.Validators.Auth
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("Password is required.")
                 .MinimumLength(6).WithMessage("Password must be at least 6 characters.");
-
-            RuleFor(x => x.BusinessId)
-                .NotEmpty().WithMessage("BusinessId is required for agent registration.");
         }
     }
 }
