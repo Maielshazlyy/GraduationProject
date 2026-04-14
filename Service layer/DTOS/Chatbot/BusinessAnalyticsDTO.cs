@@ -1,5 +1,14 @@
 namespace Service_layer.DTOS.Chatbot
 {
+    public class TopOrderedProductDTO
+    {
+        public string MenuItemId { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public int TotalQuantity { get; set; }
+        public int OrdersCount { get; set; }
+        public decimal Revenue { get; set; }
+    }
+
     public class BusinessAnalyticsDTO
     {
         // Business Info
@@ -44,8 +53,8 @@ namespace Service_layer.DTOS.Chatbot
         public int TotalMenuItems { get; set; }
         public int AvailableMenuItems { get; set; }
 
-        // Top Selling Items (simplified - can be enhanced)
-        public List<string> TopSellingItems { get; set; } = new List<string>();
+        // Top ordered products with details (for dashboard)
+        public List<TopOrderedProductDTO> TopOrderedProducts { get; set; } = new List<TopOrderedProductDTO>();
 
         // Recent Activity
         public DateTime LastOrderDate { get; set; }

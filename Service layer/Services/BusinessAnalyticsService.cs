@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Domain_layer.Interfaces;
 using Domain_layer.Models;
+using Domain_layer.enums;
 using Service_layer.DTOS.Chatbot;
 using Service_layer.Services_Interfaces;
 
@@ -12,6 +13,7 @@ namespace Service_layer.Services
     public class BusinessAnalyticsService : IBusinessAnalyticsService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private const int DefaultTopProductsCount = 10;
 
         public BusinessAnalyticsService(IUnitOfWork unitOfWork)
         {
@@ -34,6 +36,8 @@ namespace Service_layer.Services
             var interactions = (await _unitOfWork.Interactions.GetByBusinessIdAsync(businessId)).ToList();
             var menuItems = (await _unitOfWork.MenuItems.GetByBusinessIdAsync(businessId)).ToList();
 
+            var topOrderedProducts = await GetTopOrderedProductsAsync(orders, menuItems, DefaultTopProductsCount);
+
             // Calculate analytics
             var analytics = new BusinessAnalyticsDTO
             {
@@ -42,10 +46,10 @@ namespace Service_layer.Services
 
                 // Orders
                 TotalOrders = orders.Count,
-                TotalRevenue = orders.Where(o => o.Status == Domain_layer.enums.OrderStatus.Delivered || o.Status == Domain_layer.enums.OrderStatus.Paid).Sum(o => o.TotalPrice),
+                TotalRevenue = orders.Where(o => o.Status == OrderStatus.Delivered || o.Status == OrderStatus.Paid).Sum(o => o.TotalPrice),
                 AverageOrderValue = orders.Any() ? orders.Average(o => o.TotalPrice) : 0,
-                PendingOrders = orders.Count(o => o.Status == Domain_layer.enums.OrderStatus.Pending),
-                CompletedOrders = orders.Count(o => o.Status == Domain_layer.enums.OrderStatus.Delivered || o.Status == Domain_layer.enums.OrderStatus.Paid),
+                PendingOrders = orders.Count(o => o.Status == OrderStatus.Pending),
+                CompletedOrders = orders.Count(o => o.Status == OrderStatus.Delivered || o.Status == OrderStatus.Paid),
 
                 // Customers
                 TotalCustomers = customers.Count,
@@ -78,6 +82,9 @@ namespace Service_layer.Services
                 TotalMenuItems = menuItems.Count,
                 AvailableMenuItems = menuItems.Count(m => m.IsAvailable),
 
+                // Top products (dashboard)
+                TopOrderedProducts = topOrderedProducts,
+
                 // Recent Activity
                 LastOrderDate = orders.Any() ? orders.Max(o => o.CreatedAt) : DateTime.MinValue,
                 LastTicketDate = tickets.Any() ? tickets.Max(t => t.CreatedAt) : DateTime.MinValue,
@@ -85,6 +92,56 @@ namespace Service_layer.Services
             };
 
             return analytics;
+        }
+
+        private async Task<List<TopOrderedProductDTO>> GetTopOrderedProductsAsync(
+            List<Order> orders,
+            List<MenuItem> menuItems,
+            int count)
+        {
+            var normalizedCount = count <= 0 ? DefaultTopProductsCount : count;
+
+            // Only consider "successful" orders for product popularity
+            var paidStatuses = new[] { OrderStatus.Paid, OrderStatus.Delivered };
+            var validOrderIds = orders
+                .Where(o => paidStatuses.Contains(o.Status))
+                .Select(o => o.OrderId)
+                .ToHashSet(StringComparer.Ordinal);
+
+            if (validOrderIds.Count == 0)
+            {
+                return new List<TopOrderedProductDTO>();
+            }
+
+            var allOrderItems = (await _unitOfWork.OrderItems.GetAllAsync()).ToList();
+            var businessOrderItems = allOrderItems.Where(oi => validOrderIds.Contains(oi.OrderId)).ToList();
+
+            var menuItemById = menuItems
+                .GroupBy(m => m.MenuItemId)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+
+            var ranked = businessOrderItems
+                .GroupBy(oi => oi.MenuItemId)
+                .Select(g =>
+                {
+                    var menuItemId = g.Key;
+                    menuItemById.TryGetValue(menuItemId, out var menuItem);
+
+                    return new TopOrderedProductDTO
+                    {
+                        MenuItemId = menuItemId,
+                        Name = menuItem?.Name ?? "Unknown Item",
+                        TotalQuantity = g.Sum(x => x.Quantity),
+                        OrdersCount = g.Select(x => x.OrderId).Distinct(StringComparer.Ordinal).Count(),
+                        Revenue = g.Sum(x => x.UnitPrice * x.Quantity)
+                    };
+                })
+                .OrderByDescending(x => x.TotalQuantity)
+                .ThenByDescending(x => x.Revenue)
+                .Take(normalizedCount)
+                .ToList();
+
+            return ranked;
         }
 
         private double CalculateAverageResolutionTime(List<Ticket> tickets)
