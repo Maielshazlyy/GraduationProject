@@ -20,8 +20,8 @@ namespace Service_layer.Validators.Interaction
 
             RuleFor(x => x.Channel)
                 .NotEmpty()
-                .Must(c => c == "WhatsApp" || c == "Web" || c == "Voice")
-                .WithMessage("Channel must be WhatsApp, Web, or Voice.");
+                .Must(c => c == "WebChat" || c == "Voice")
+                .WithMessage("Channel must be WebChat or Voice.");
         }
     }
 }

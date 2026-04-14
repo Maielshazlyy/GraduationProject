@@ -56,7 +56,7 @@ namespace Service_layer.Services
             }
 
             // 1) Ensure interaction exists
-            var interaction = await GetOrCreateInteractionAsync(request, "WebChat");
+            var interaction = await GetOrCreateInteractionAsync(request, channel);
 
             // 2) Store customer message (text only for Chat)
             var customerMessage = new Message

@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Domain_layer.Models;
 using Domain_layer.Constants;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using DAL.UnitOfWork;
@@ -17,6 +16,7 @@ using Service_layer.Services_Interfaces;
 using DAL.Repositories;
 using FluentValidation.AspNetCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace digital_employee
 {
