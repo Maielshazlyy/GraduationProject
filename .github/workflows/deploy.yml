@@ -119,7 +119,7 @@ jobs:
             --app digital-employee-api
 
       - name: Deploy API
-        run: flyctl deploy --config fly-api.toml --app digital-employee-api --remote-only
+        run: flyctl deploy --config fly.toml --app digital-employee-api --remote-only
 
       - name: Print live URL
         run: |

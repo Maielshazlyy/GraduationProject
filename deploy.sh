@@ -85,7 +85,7 @@ $FLY secrets set \
     --app "$APP_API" --stage
 info "API secrets set"
 
-$FLY deploy --config fly-api.toml --app "$APP_API" --remote-only
+$FLY deploy --config fly.toml --app "$APP_API" --remote-only
 info "API deployed ✔"
 
 # ── 5. Done ─────────────────────────────────────────────────────
