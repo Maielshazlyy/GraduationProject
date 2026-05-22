@@ -7,11 +7,53 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────
-  # Job 1 — Deploy SQL Server (only when fly-db.toml changes)
+  # Pre-flight: validate all required secrets exist
+  # ─────────────────────────────────────────────
+  check-secrets:
+    name: Validate Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check FLY_API_TOKEN
+        run: |
+          if [ -z "${{ secrets.FLY_API_TOKEN }}" ]; then
+            echo "❌ FLY_API_TOKEN secret is not set."
+            echo ""
+            echo "Fix it in 2 minutes:"
+            echo "  1. Go to https://fly.io  → sign up free (no credit card)"
+            echo "  2. After login → fly.io dashboard → Account → Access Tokens → Create token"
+            echo "  3. Copy the token"
+            echo "  4. GitHub repo → Settings → Secrets → Actions → New secret"
+            echo "     Name:  FLY_API_TOKEN"
+            echo "     Value: (paste token)"
+            echo "  5. Also add: SA_PASSWORD, JWT_KEY  (see .env.example)"
+            echo "  6. Re-run this workflow"
+            exit 1
+          fi
+          echo "✅ FLY_API_TOKEN is set"
+
+      - name: Check SA_PASSWORD
+        run: |
+          if [ -z "${{ secrets.SA_PASSWORD }}" ]; then
+            echo "❌ SA_PASSWORD secret is not set. Add it in GitHub → Settings → Secrets."
+            exit 1
+          fi
+          echo "✅ SA_PASSWORD is set"
+
+      - name: Check JWT_KEY
+        run: |
+          if [ -z "${{ secrets.JWT_KEY }}" ]; then
+            echo "❌ JWT_KEY secret is not set. Add it in GitHub → Settings → Secrets."
+            exit 1
+          fi
+          echo "✅ JWT_KEY is set"
+
+  # ─────────────────────────────────────────────
+  # Job 1 — Deploy SQL Server
   # ─────────────────────────────────────────────
   deploy-db:
     name: Deploy SQL Server
     runs-on: ubuntu-latest
+    needs: check-secrets
     env:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:
