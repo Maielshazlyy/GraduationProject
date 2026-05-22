@@ -1,6 +1,6 @@
 # Fly.io configuration for the .NET 10 API
 # App name: digital-employee-api
-app = "digital-employee-api"
+app = "graduationproject"
 primary_region = "iad"   # US East — change to closest: ams=Europe, sin=Asia, syd=Australia
 
 [build]

@@ -104,27 +104,27 @@ jobs:
 
       - name: Create API app if it doesn't exist
         run: |
-          flyctl apps list | grep -q "digital-employee-api" \
-            || flyctl apps create digital-employee-api --org personal
+          flyctl apps list | grep -q "graduationproject" \
+            || flyctl apps create graduationproject --org personal
 
       - name: Set API secrets
         run: |
           flyctl secrets set \
             ConnectionStrings__DefaultConnection="Server=digital-employee-db.internal,1433;Database=DigitalEmployeeDB;User Id=sa;Password=${{ secrets.SA_PASSWORD }};MultipleActiveResultSets=True;TrustServerCertificate=True;Connection Timeout=60;" \
             JWT__Key="${{ secrets.JWT_KEY }}" \
-            JWT__Issuer="https://digital-employee-api.fly.dev" \
-            JWT__Audience="https://digital-employee-api.fly.dev" \
+            JWT__Issuer="https://graduationproject.fly.dev" \
+            JWT__Audience="https://graduationproject.fly.dev" \
             Google__ClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
             AI__BaseUrl="${{ secrets.AI_BASE_URL }}" \
-            --app digital-employee-api
+            --app graduationproject
 
       - name: Deploy API
-        run: flyctl deploy --config fly.toml --app digital-employee-api --remote-only
+        run: flyctl deploy --config fly.toml --app graduationproject --remote-only
 
       - name: Print live URL
         run: |
           echo ""
           echo "✅ Deployment complete!"
-          echo "🌐 API:     https://digital-employee-api.fly.dev"
-          echo "📖 Swagger: https://digital-employee-api.fly.dev/swagger"
+          echo "🌐 API:     https://graduationproject.fly.dev"
+          echo "📖 Swagger: https://graduationproject.fly.dev/swagger"
           echo ""
