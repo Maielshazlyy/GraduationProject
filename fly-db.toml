@@ -1,0 +1,30 @@
+# Fly.io configuration for SQL Server 2022 Express
+# App name: digital-employee-db
+app = "digital-employee-db"
+primary_region = "iad"   # Must match fly-api.toml region for internal networking
+
+[build]
+  image = "mcr.microsoft.com/mssql/server:2022-latest"
+
+[env]
+  ACCEPT_EULA              = "Y"
+  MSSQL_PID                = "Express"
+  MSSQL_MEMORY_LIMIT_MB    = "512"
+
+# Persist the database files between restarts
+[mounts]
+  source      = "sqlserver_data"
+  destination = "/var/opt/mssql"
+  initial_size = "5gb"
+
+[[services]]
+  protocol    = "tcp"
+  internal_port = 1433
+
+  # SQL Server is PRIVATE — only reachable by the API via Fly internal network
+  # No public TCP ports exposed
+
+[[vm]]
+  memory   = "1gb"     # SQL Server Express needs at least 512 MB; 1 GB is safer
+  cpu_kind = "shared"
+  cpus     = 1

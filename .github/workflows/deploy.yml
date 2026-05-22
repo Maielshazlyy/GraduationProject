@@ -1,0 +1,88 @@
+name: Deploy to Fly.io
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:   # allows manual trigger from GitHub UI
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1 — Deploy SQL Server (only when fly-db.toml changes)
+  # ─────────────────────────────────────────────
+  deploy-db:
+    name: Deploy SQL Server
+    runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Create DB app if it doesn't exist
+        run: |
+          flyctl apps list | grep -q "digital-employee-db" \
+            || flyctl apps create digital-employee-db --org personal
+
+      - name: Create persistent volume (skipped if already exists)
+        run: |
+          flyctl volumes list --app digital-employee-db | grep -q "sqlserver_data" \
+            || flyctl volumes create sqlserver_data \
+                 --app digital-employee-db \
+                 --region iad \
+                 --size 5
+
+      - name: Set SQL Server secrets
+        run: |
+          flyctl secrets set \
+            ACCEPT_EULA=Y \
+            SA_PASSWORD="${{ secrets.SA_PASSWORD }}" \
+            MSSQL_PID=Express \
+            MSSQL_MEMORY_LIMIT_MB=512 \
+            --app digital-employee-db
+
+      - name: Deploy SQL Server
+        run: flyctl deploy --config fly-db.toml --app digital-employee-db --remote-only
+
+  # ─────────────────────────────────────────────
+  # Job 2 — Deploy .NET API (runs after DB is up)
+  # ─────────────────────────────────────────────
+  deploy-api:
+    name: Deploy .NET API
+    runs-on: ubuntu-latest
+    needs: deploy-db
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Create API app if it doesn't exist
+        run: |
+          flyctl apps list | grep -q "digital-employee-api" \
+            || flyctl apps create digital-employee-api --org personal
+
+      - name: Set API secrets
+        run: |
+          flyctl secrets set \
+            ConnectionStrings__DefaultConnection="Server=digital-employee-db.internal,1433;Database=DigitalEmployeeDB;User Id=sa;Password=${{ secrets.SA_PASSWORD }};MultipleActiveResultSets=True;TrustServerCertificate=True;Connection Timeout=60;" \
+            JWT__Key="${{ secrets.JWT_KEY }}" \
+            JWT__Issuer="https://digital-employee-api.fly.dev" \
+            JWT__Audience="https://digital-employee-api.fly.dev" \
+            Google__ClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            AI__BaseUrl="${{ secrets.AI_BASE_URL }}" \
+            --app digital-employee-api
+
+      - name: Deploy API
+        run: flyctl deploy --config fly-api.toml --app digital-employee-api --remote-only
+
+      - name: Print live URL
+        run: |
+          echo ""
+          echo "✅ Deployment complete!"
+          echo "🌐 API:     https://digital-employee-api.fly.dev"
+          echo "📖 Swagger: https://digital-employee-api.fly.dev/swagger"
+          echo ""

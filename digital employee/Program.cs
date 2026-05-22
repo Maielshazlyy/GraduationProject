@@ -284,21 +284,29 @@ namespace digital_employee
             var app = builder.Build();
 
             // -------------------------
-            // 9) Swagger in Development
+            // Auto-apply EF migrations on startup
             // -------------------------
-            if (app.Environment.IsDevelopment())
+            using (var scope = app.Services.CreateScope())
             {
-                app.UseSwagger();
-
-                // بيعمل صفحة الويب الملونة
-                app.UseSwaggerUI();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.Migrate();
             }
+
+            // -------------------------
+            // 9) Swagger (all environments)
+            // -------------------------
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Digital Employee API v1");
+                c.RoutePrefix = "swagger";
+            });
 
             // -------------------------
             // 10) Middlewares
             // -------------------------
             app.UseCors("AllowAll");
-            app.UseHttpsRedirection();
+            // Note: HTTPS redirection is handled by Render's load balancer
             app.UseAuthentication();
             app.UseAuthorization();
 
