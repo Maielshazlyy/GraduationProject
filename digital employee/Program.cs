@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Domain_layer.Models;
 using Domain_layer.Constants;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using DAL.UnitOfWork;
@@ -17,6 +16,7 @@ using Service_layer.Services_Interfaces;
 using DAL.Repositories;
 using FluentValidation.AspNetCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace digital_employee
 {
@@ -247,6 +247,15 @@ namespace digital_employee
             builder.Services.AddScoped<IResponseGenerationService, ResponseGenerationService>();
             builder.Services.AddScoped<ICustomerChatService, CustomerChatService>();
             builder.Services.AddScoped<ICustomerVoiceService, CustomerVoiceService>();
+
+            // AI Chat Service (external AI API)
+            var aiApiBaseUrl = builder.Configuration["AiApi:BaseUrl"]
+                ?? "https://anyway-remix-puzzling.ngrok-free.dev";
+            builder.Services.AddHttpClient<IAiChatService, AiChatService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
 
             // Dashboard Services
             builder.Services.AddScoped<IDashboardService, DashboardService>();

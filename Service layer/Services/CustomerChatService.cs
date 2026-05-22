@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Domain_layer.Interfaces;
 using Domain_layer.Models;
 using Domain_layer.enums;
+using Service_layer.DTOS.AiChat;
 using Service_layer.DTOS.Chat;
 using Service_layer.Services_Interfaces;
 
@@ -22,6 +23,7 @@ namespace Service_layer.Services
         private readonly ISettingService _settingService;
         private readonly IAuditLogService? _auditLogService;
         private readonly ISentimentService? _sentimentService;
+        private readonly IAiChatService _aiChatService;
         private readonly CustomerInteractionBusinessLogic _businessLogic;
 
         public CustomerChatService(
@@ -29,6 +31,7 @@ namespace Service_layer.Services
             IIntentDetectionService intentDetectionService,
             IResponseGenerationService responseGenerationService,
             ISettingService settingService,
+            IAiChatService aiChatService,
             IAuditLogService? auditLogService = null,
             ISentimentService? sentimentService = null)
         {
@@ -36,6 +39,7 @@ namespace Service_layer.Services
             _intentDetectionService = intentDetectionService;
             _responseGenerationService = responseGenerationService;
             _settingService = settingService;
+            _aiChatService = aiChatService;
             _auditLogService = auditLogService;
             _sentimentService = sentimentService;
             _businessLogic = new CustomerInteractionBusinessLogic(unitOfWork, auditLogService);
@@ -56,7 +60,7 @@ namespace Service_layer.Services
             }
 
             // 1) Ensure interaction exists
-            var interaction = await GetOrCreateInteractionAsync(request, "WebChat");
+            var interaction = await GetOrCreateInteractionAsync(request, channel);
 
             // 2) Store customer message (text only for Chat)
             var customerMessage = new Message
@@ -214,8 +218,23 @@ namespace Service_layer.Services
             _unitOfWork.Interactions.Update(interaction);
             await _unitOfWork.CompleteAsync();
 
-            // 5.5) AI Response Generation - AI generates the reply based on outcome
-            var replyText = await _responseGenerationService.GenerateResponseAsync(context);
+            // 5.5) AI Response Generation - forward message to external AI API
+            string replyText;
+            try
+            {
+                var aiResponse = await _aiChatService.SendMessageAsync(new AiChatRequestDTO
+                {
+                    Message = request.Message!,
+                    SessionId = interaction.InteractionId
+                });
+                replyText = aiResponse.GetReplyText();
+                if (string.IsNullOrWhiteSpace(replyText))
+                    replyText = await _responseGenerationService.GenerateResponseAsync(context);
+            }
+            catch
+            {
+                replyText = await _responseGenerationService.GenerateResponseAsync(context);
+            }
 
             // 5) Store AI reply message
             var aiMessage = new Message

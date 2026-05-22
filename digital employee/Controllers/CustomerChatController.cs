@@ -108,6 +108,7 @@ namespace digital_employee.Controllers
                 return StatusCode(500, new { Message = "Failed to get recommendations.", Error = ex.Message });
             }
         }
+
     }
 }
 

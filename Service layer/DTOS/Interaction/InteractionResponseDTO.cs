@@ -13,7 +13,7 @@ namespace Service_layer.DTOS.Interaction
         public string BusinessId { get; set; }
         public string BusinessName { get; set; }
         
-        public string AgentName { get; set; }
+        public string HandledByAgentName { get; set; } = string.Empty;
         public string Channel { get; set; }
         public string Status { get; set; }
         public bool? IsEnded { get; set; }
@@ -24,9 +24,7 @@ namespace Service_layer.DTOS.Interaction
         public string CustomerName { get; set; }
         public int MessageCount{ get; set; }
         
-
-        public string? HandledByUserId { get; set; }
-        public string HandledByUserName { get; set; }
+        public string? HandledByAgentId { get; set; }
 
         public List<MessageResponseDTO> Messages { get; set; }
     }
