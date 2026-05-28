@@ -872,12 +872,30 @@
           "response": []
         },
         {
-          "name": "Get Dashboard Overview (one call, per-section filters)",
+          "name": "Get Dashboard Overview (one call, all sections)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code !== 200) {",
+                  "  console.log('Overview failed:', pm.response.code, pm.response.text());",
+                  "} else {",
+                  "  var j = pm.response.json();",
+                  "  console.log('Applied periods:', JSON.stringify(j.appliedPeriods));",
+                  "  console.log('Sections -> insights:', !!j.generalInsights, '| channels:', (j.channelDistribution && j.channelDistribution.channels ? j.channelDistribution.channels.length : 0), '| products:', (j.topProducts ? j.topProducts.length : 0), '| leads:', (j.customerLeads ? j.customerLeads.length : 0));",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/Dashboard/overview?period=30d&insightsPeriod=today&channelsPeriod=all&sentimentPeriod=30d&revenuePeriod=7d&productsPeriod=30d&leadsPeriod=all",
+              "raw": "{{baseUrl}}/api/Dashboard/overview?period=30d",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -890,47 +908,96 @@
                 {
                   "key": "period",
                   "value": "30d",
-                  "description": "Global default for any section param left out. Allowed: today | 7d | 30d | all"
+                  "description": "Global default for any section param left out. Allowed: today | 7d | 30d | all | custom"
                 },
                 {
                   "key": "insightsPeriod",
                   "value": "today",
-                  "description": "General insights window. Allowed: today | 7d | 30d (no 'all' baseline for % change)",
+                  "description": "General insights window. Allowed: today | 7d | 30d | custom",
                   "disabled": true
                 },
                 {
                   "key": "channelsPeriod",
                   "value": "all",
-                  "description": "Channel distribution. Allowed: today | 7d | 30d | all",
+                  "description": "Channel distribution. Allowed: today | 7d | 30d | all | custom",
                   "disabled": true
                 },
                 {
                   "key": "sentimentPeriod",
                   "value": "30d",
-                  "description": "Sentiment analysis. Allowed: today | 7d | 30d | all",
+                  "description": "Sentiment analysis. Allowed: today | 7d | 30d | all | custom",
                   "disabled": true
                 },
                 {
                   "key": "revenuePeriod",
                   "value": "7d",
-                  "description": "Revenue trend buckets: today=hourly, 7d/30d=daily, all=monthly",
+                  "description": "Revenue trend buckets: today=hourly, 7d/30d=daily, all/long-custom=monthly",
                   "disabled": true
                 },
                 {
                   "key": "productsPeriod",
                   "value": "30d",
-                  "description": "Top products window. Allowed: today | 7d | 30d | all",
+                  "description": "Top products window. Allowed: today | 7d | 30d | all | custom",
                   "disabled": true
                 },
                 {
                   "key": "leadsPeriod",
                   "value": "all",
-                  "description": "Customer leads window. Allowed: today | 7d | 30d | all",
+                  "description": "Customer leads window. Allowed: today | 7d | 30d | all | custom",
+                  "disabled": true
+                },
+                {
+                  "key": "customFrom",
+                  "value": "2026-01-01",
+                  "description": "Required when any period=custom. ISO date (UTC), inclusive start.",
+                  "disabled": true
+                },
+                {
+                  "key": "customTo",
+                  "value": "2026-03-31",
+                  "description": "Required when any period=custom. ISO date (UTC), inclusive end. Must be >= customFrom.",
                   "disabled": true
                 }
               ]
             },
-            "description": "Single endpoint that returns the entire dashboard: general insights (with % change), channel distribution, sentiment analysis, revenue trend, top products, recent alerts, and customer leads. Each section can be filtered independently; omitted section params fall back to 'period' (default 30d). Requires Owner or Admin JWT; BusinessId is read from the token."
+            "description": "Single endpoint that returns the entire dashboard in one call: general insights (with % change), channel distribution, sentiment analysis, revenue trend, top products, recent alerts, and customer leads.\n\nEach section can be filtered independently; any section param left out falls back to 'period' (default 30d). Allowed values: today | 7d | 30d | all | custom.\n\nFor custom, set the section(s) to 'custom' and supply customFrom & customTo (enable those two params).\n\nAuth: requires an Owner or Admin Bearer token ({{token}}, set automatically by '01 - Auth > Login'). BusinessId is read from the token, so it is NOT passed as a parameter.\n\nNOTE: log in as an OWNER (Owners carry a businessId). If you get 400 'BusinessId not found in token', your token has no business linked."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Dashboard Overview - Custom Range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Dashboard/overview?period=custom&customFrom=2026-01-01&customTo=2026-03-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Dashboard",
+                "overview"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "custom",
+                  "description": "Applies the custom window to every section."
+                },
+                {
+                  "key": "customFrom",
+                  "value": "2026-01-01",
+                  "description": "Inclusive start (UTC)."
+                },
+                {
+                  "key": "customTo",
+                  "value": "2026-03-31",
+                  "description": "Inclusive end (UTC), must be >= customFrom."
+                }
+              ]
+            },
+            "description": "Same overview endpoint, demonstrating a custom date range across all sections. Change the dates to your data window. Requires an Owner Bearer token."
           },
           "response": []
         },
