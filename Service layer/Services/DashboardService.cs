@@ -225,6 +225,8 @@ namespace Service_layer.Services
                 throw new ArgumentException($"Business with id '{businessId}' not found.");
 
             var now = DateTime.UtcNow;
+            var customFrom = filter?.CustomFrom;
+            var customTo = filter?.CustomTo;
 
             // Resolve per-section periods (null -> "30d" default)
             var insightsPeriod  = Normalize(filter?.InsightsPeriod);
@@ -252,12 +254,15 @@ namespace Service_layer.Services
             var categoryById = menuCategories.ToDictionary(c => c.MenuCategoryId, c => c.Name, StringComparer.Ordinal);
             var menuItemById = menuItems.ToDictionary(m => m.MenuItemId, m => m, StringComparer.Ordinal);
 
-            // Date ranges per section
-            var (insFrom, insPrevFrom, insPrevTo) = GetDateRange(insightsPeriod, now);
-            var (chFrom, _, _) = GetDateRange(channelsPeriod, now);
-            var (sentFrom, _, _) = GetDateRange(sentimentPeriod, now);
-            var (prodFrom, _, _) = GetDateRange(productsPeriod, now);
-            var (leadsFrom, _, _) = GetDateRange(leadsPeriod, now);
+            // Date ranges per section: (from, to, prevFrom, prevTo)
+            var ins   = ResolveRange(insightsPeriod, now, customFrom, customTo);
+            var ch    = ResolveRange(channelsPeriod, now, customFrom, customTo);
+            var sent  = ResolveRange(sentimentPeriod, now, customFrom, customTo);
+            var prod  = ResolveRange(productsPeriod, now, customFrom, customTo);
+            var leads = ResolveRange(leadsPeriod, now, customFrom, customTo);
+
+            var anyCustom = new[] { insightsPeriod, channelsPeriod, sentimentPeriod, revenuePeriod, productsPeriod, leadsPeriod }
+                .Contains("custom");
 
             return new FullDashboardDTO
             {
@@ -268,21 +273,23 @@ namespace Service_layer.Services
                     Sentiment = sentimentPeriod,
                     Revenue = revenuePeriod,
                     Products = productsPeriod,
-                    Leads = leadsPeriod
+                    Leads = leadsPeriod,
+                    CustomFrom = anyCustom ? customFrom : null,
+                    CustomTo = anyCustom ? customTo : null
                 },
-                GeneralInsights = BuildGeneralInsights(orders, tickets, interactions, customers, paidStatuses, insFrom, insPrevFrom, insPrevTo, now),
-                ChannelDistribution = BuildChannelDistribution(interactions, chFrom),
-                SentimentAnalysis = BuildSentimentAnalysis(sentiments, sentFrom),
-                RevenueTrend = BuildRevenueTrend(orders, paidStatuses, now, revenuePeriod),
-                TopProducts = BuildTopProducts(orders, allOrderItems, menuItemById, categoryById, paidStatuses, prodFrom),
+                GeneralInsights = BuildGeneralInsights(orders, tickets, interactions, customers, paidStatuses, ins.from, ins.to, ins.prevFrom, ins.prevTo),
+                ChannelDistribution = BuildChannelDistribution(interactions, ch.from, ch.to),
+                SentimentAnalysis = BuildSentimentAnalysis(sentiments, sent.from, sent.to),
+                RevenueTrend = BuildRevenueTrend(orders, paidStatuses, now, revenuePeriod, customFrom, customTo),
+                TopProducts = BuildTopProducts(orders, allOrderItems, menuItemById, categoryById, paidStatuses, prod.from, prod.to),
                 RecentAlerts = BuildRecentAlerts(tickets),
-                CustomerLeads = BuildCustomerLeads(customers, orders, interactions, paidStatuses, leadsFrom)
+                CustomerLeads = BuildCustomerLeads(customers, orders, interactions, paidStatuses, leads.from, leads.to)
             };
         }
 
         // ─── helpers ──────────────────────────────────────────────────────────────
 
-        private static readonly string[] AllowedPeriods = { "today", "7d", "30d", "all" };
+        private static readonly string[] AllowedPeriods = { "today", "7d", "30d", "all", "custom" };
 
         private static string Normalize(string? period)
         {
@@ -291,15 +298,25 @@ namespace Service_layer.Services
             return AllowedPeriods.Contains(p) ? p : "30d";
         }
 
-        private static (DateTime from, DateTime previousFrom, DateTime previousTo) GetDateRange(string period, DateTime now)
+        private static (DateTime from, DateTime to, DateTime prevFrom, DateTime prevTo) ResolveRange(
+            string period, DateTime now, DateTime? customFrom, DateTime? customTo)
         {
-            return period switch
+            switch (period)
             {
-                "today" => (now.Date, now.Date.AddDays(-1), now.Date),
-                "7d"    => (now.AddDays(-7), now.AddDays(-14), now.AddDays(-7)),
-                "all"   => (DateTime.MinValue, DateTime.MinValue, DateTime.MinValue),   // no date filter, no comparison
-                _       => (now.AddDays(-30), now.AddDays(-60), now.AddDays(-30))       // default: 30d
-            };
+                case "today":
+                    return (now.Date, now, now.Date.AddDays(-1), now.Date);
+                case "7d":
+                    return (now.AddDays(-7), now, now.AddDays(-14), now.AddDays(-7));
+                case "all":
+                    return (DateTime.MinValue, now, DateTime.MinValue, DateTime.MinValue); // no filter, no comparison
+                case "custom" when customFrom.HasValue && customTo.HasValue:
+                    var f = customFrom.Value;
+                    var t = customTo.Value;
+                    var span = t - f;
+                    return (f, t, f - span, f); // previous = equal-length window immediately before
+                default: // 30d (and custom without dates, defensively)
+                    return (now.AddDays(-30), now, now.AddDays(-60), now.AddDays(-30));
+            }
         }
 
         private static MetricWithChangeDTO BuildMetric(double current, double previous)
@@ -323,14 +340,14 @@ namespace Service_layer.Services
             List<Domain_layer.Models.Interaction> interactions,
             List<Domain_layer.Models.Customer> customers,
             OrderStatus[] paidStatuses,
-            DateTime from, DateTime previousFrom, DateTime previousTo, DateTime now)
+            DateTime from, DateTime to, DateTime previousFrom, DateTime previousTo)
         {
             // Current period
-            var curOrders = orders.Where(o => o.CreatedAt >= from && o.CreatedAt <= now).ToList();
+            var curOrders = orders.Where(o => o.CreatedAt >= from && o.CreatedAt <= to).ToList();
             var curPaidOrders = curOrders.Where(o => paidStatuses.Contains(o.Status)).ToList();
-            var curTickets = tickets.Where(t => t.CreatedAt >= from && t.CreatedAt <= now).ToList();
-            var curInteractions = interactions.Where(i => i.StartedAt >= from && i.StartedAt <= now).ToList();
-            var curCustomers = customers.Where(c => c.CreatedAt >= from && c.CreatedAt <= now).ToList();
+            var curTickets = tickets.Where(t => t.CreatedAt >= from && t.CreatedAt <= to).ToList();
+            var curInteractions = interactions.Where(i => i.StartedAt >= from && i.StartedAt <= to).ToList();
+            var curCustomers = customers.Where(c => c.CreatedAt >= from && c.CreatedAt <= to).ToList();
 
             // Previous period
             var prevOrders = orders.Where(o => o.CreatedAt >= previousFrom && o.CreatedAt < previousTo).ToList();
@@ -340,7 +357,7 @@ namespace Service_layer.Services
             var prevCustomers = customers.Where(c => c.CreatedAt >= previousFrom && c.CreatedAt < previousTo).ToList();
 
             // Open tickets is a snapshot (not period-filtered) but we compare counts at period boundaries
-            var openTicketsCurrent = tickets.Count(t => t.Status == "Open" && t.CreatedAt <= now);
+            var openTicketsCurrent = tickets.Count(t => t.Status == "Open" && t.CreatedAt <= to);
             var openTicketsPrev = tickets.Count(t => t.Status == "Open" && t.CreatedAt < previousTo);
 
             // Avg resolution time (hours)
@@ -363,9 +380,9 @@ namespace Service_layer.Services
         }
 
         private static ChannelDistributionDTO BuildChannelDistribution(
-            List<Domain_layer.Models.Interaction> interactions, DateTime from)
+            List<Domain_layer.Models.Interaction> interactions, DateTime from, DateTime to)
         {
-            var filtered = interactions.Where(i => i.StartedAt >= from).ToList();
+            var filtered = interactions.Where(i => i.StartedAt >= from && i.StartedAt <= to).ToList();
             var total = filtered.Count;
 
             var channels = filtered
@@ -383,9 +400,9 @@ namespace Service_layer.Services
         }
 
         private static SentimentAnalysisDTO BuildSentimentAnalysis(
-            List<Sentiment> sentiments, DateTime from)
+            List<Sentiment> sentiments, DateTime from, DateTime to)
         {
-            var filtered = sentiments.Where(s => s.AnalyzedAt >= from).ToList();
+            var filtered = sentiments.Where(s => s.AnalyzedAt >= from && s.AnalyzedAt <= to).ToList();
             var total = filtered.Count;
 
             var satisfied = filtered.Count(s => s.Label.Equals("Positive", StringComparison.OrdinalIgnoreCase));
@@ -407,7 +424,7 @@ namespace Service_layer.Services
         private static List<RevenueTrendPointDTO> BuildRevenueTrend(
             List<Domain_layer.Models.Order> orders,
             OrderStatus[] paidStatuses,
-            DateTime now, string period)
+            DateTime now, string period, DateTime? customFrom, DateTime? customTo)
         {
             var paidOrders = orders.Where(o => paidStatuses.Contains(o.Status)).ToList();
 
@@ -428,26 +445,31 @@ namespace Service_layer.Services
             }
 
             if (period == "all")
+                return MonthlyBuckets(paidOrders);
+
+            // Resolve the window [from, to]
+            DateTime from, to;
+            if (period == "custom" && customFrom.HasValue && customTo.HasValue)
             {
-                // Monthly buckets across all available data
-                if (!paidOrders.Any()) return new List<RevenueTrendPointDTO>();
-                return paidOrders
-                    .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
-                    .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
-                    .Select(g => new RevenueTrendPointDTO
-                    {
-                        Label = $"{g.Key.Year}-{g.Key.Month:00}",
-                        Revenue = g.Sum(o => o.TotalPrice),
-                        OrderCount = g.Count()
-                    })
-                    .ToList();
+                from = customFrom.Value.Date;
+                to = customTo.Value;
+            }
+            else
+            {
+                int days = period == "7d" ? 7 : 30;
+                from = now.AddDays(-days).Date;
+                to = now;
             }
 
-            // Daily buckets for 7d / 30d
-            int days = period == "7d" ? 7 : 30;
-            var from = now.AddDays(-days);
-            var windowed = paidOrders.Where(o => o.CreatedAt >= from && o.CreatedAt <= now).ToList();
-            return Enumerable.Range(0, days).Select(d =>
+            var totalDays = (int)Math.Ceiling((to.Date - from.Date).TotalDays) + 1;
+
+            // For long custom ranges, switch to monthly buckets to keep the series readable
+            if (totalDays > 62)
+                return MonthlyBuckets(paidOrders.Where(o => o.CreatedAt >= from && o.CreatedAt <= to).ToList());
+
+            // Daily buckets across [from, to]
+            var windowed = paidOrders.Where(o => o.CreatedAt >= from && o.CreatedAt <= to).ToList();
+            return Enumerable.Range(0, totalDays).Select(d =>
             {
                 var day = from.AddDays(d).Date;
                 var bucket = windowed.Where(o => o.CreatedAt.Date == day).ToList();
@@ -460,16 +482,31 @@ namespace Service_layer.Services
             }).ToList();
         }
 
+        private static List<RevenueTrendPointDTO> MonthlyBuckets(List<Domain_layer.Models.Order> paidOrders)
+        {
+            if (!paidOrders.Any()) return new List<RevenueTrendPointDTO>();
+            return paidOrders
+                .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
+                .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                .Select(g => new RevenueTrendPointDTO
+                {
+                    Label = $"{g.Key.Year}-{g.Key.Month:00}",
+                    Revenue = g.Sum(o => o.TotalPrice),
+                    OrderCount = g.Count()
+                })
+                .ToList();
+        }
+
         private static List<TopProductDashboardDTO> BuildTopProducts(
             List<Domain_layer.Models.Order> orders,
             List<Domain_layer.Models.OrderItem> orderItems,
             Dictionary<string, Domain_layer.Models.MenuItem> menuItemById,
             Dictionary<string, string> categoryById,
             OrderStatus[] paidStatuses,
-            DateTime from)
+            DateTime from, DateTime to)
         {
             var paidOrderIds = orders
-                .Where(o => paidStatuses.Contains(o.Status) && o.CreatedAt >= from)
+                .Where(o => paidStatuses.Contains(o.Status) && o.CreatedAt >= from && o.CreatedAt <= to)
                 .Select(o => o.OrderId)
                 .ToHashSet(StringComparer.Ordinal);
 
@@ -522,16 +559,16 @@ namespace Service_layer.Services
             List<Domain_layer.Models.Order> orders,
             List<Domain_layer.Models.Interaction> interactions,
             OrderStatus[] paidStatuses,
-            DateTime from)
+            DateTime from, DateTime to)
         {
-            // Active customers: created in period OR had an order in the period
+            // Active customers: created in window OR had an order in the window
             var activeInPeriod = orders
-                .Where(o => o.CreatedAt >= from)
+                .Where(o => o.CreatedAt >= from && o.CreatedAt <= to)
                 .Select(o => o.CustomerId)
                 .ToHashSet(StringComparer.Ordinal);
 
             var periodCustomers = customers
-                .Where(c => c.CreatedAt >= from || activeInPeriod.Contains(c.CustomerId))
+                .Where(c => (c.CreatedAt >= from && c.CreatedAt <= to) || activeInPeriod.Contains(c.CustomerId))
                 .ToList();
 
             // Pre-compute per-customer stats from all-time data

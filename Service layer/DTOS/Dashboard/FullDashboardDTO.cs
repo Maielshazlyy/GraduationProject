@@ -1,8 +1,9 @@
 namespace Service_layer.DTOS.Dashboard
 {
     /// <summary>
-    /// Per-section period filters. Each accepts: "today" | "7d" | "30d" | "all".
+    /// Per-section period filters. Each accepts: "today" | "7d" | "30d" | "all" | "custom".
     /// Null falls back to the global default ("30d"). "all" = all time (no date filter).
+    /// "custom" uses <see cref="CustomFrom"/> / <see cref="CustomTo"/> (required when any section is "custom").
     /// </summary>
     public class DashboardFilterDTO
     {
@@ -12,6 +13,11 @@ namespace Service_layer.DTOS.Dashboard
         public string? RevenuePeriod { get; set; }
         public string? ProductsPeriod { get; set; }
         public string? LeadsPeriod { get; set; }
+
+        /// <summary>Start of the custom window (inclusive, UTC). Used by any section set to "custom".</summary>
+        public DateTime? CustomFrom { get; set; }
+        /// <summary>End of the custom window (inclusive, UTC). Used by any section set to "custom".</summary>
+        public DateTime? CustomTo { get; set; }
     }
 
     public class FullDashboardDTO
@@ -35,6 +41,10 @@ namespace Service_layer.DTOS.Dashboard
         public string Revenue { get; set; } = "30d";
         public string Products { get; set; } = "30d";
         public string Leads { get; set; } = "30d";
+
+        /// <summary>Echoes the custom window when any section uses "custom" (UTC); null otherwise.</summary>
+        public DateTime? CustomFrom { get; set; }
+        public DateTime? CustomTo { get; set; }
     }
 
     public class GeneralInsightsDTO
