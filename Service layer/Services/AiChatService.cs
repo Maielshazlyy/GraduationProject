@@ -18,17 +18,19 @@ namespace Service_layer.Services
 
         public async Task<AiChatResponseDTO> SendMessageAsync(AiChatRequestDTO request)
         {
-            var payload = new
-            {
-                message = request.Message,
-                session_id = request.SessionId
-            };
-
-            var response = await _httpClient.PostAsJsonAsync("/api/v1/chat", payload);
+            // Serialize the DTO directly so [JsonIgnore(WhenWritingNull)] applies —
+            // WebChat requests omit audio fields, Voice requests omit message when null.
+            var response = await _httpClient.PostAsJsonAsync("/api/v1/chat", request);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<AiChatResponseDTO>();
             return result ?? new AiChatResponseDTO { Reply = string.Empty, SessionId = request.SessionId };
+        }
+
+        public async Task InitSessionAsync(AiSessionInitDTO init)
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/v1/session/init", init);
+            response.EnsureSuccessStatusCode();
         }
     }
 }

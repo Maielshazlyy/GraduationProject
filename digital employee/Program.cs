@@ -243,8 +243,6 @@ namespace digital_employee
 
             // Chatbot Services
             builder.Services.AddScoped<IChatbotService, ChatbotService>();
-            builder.Services.AddScoped<IIntentDetectionService, IntentDetectionService>();
-            builder.Services.AddScoped<IResponseGenerationService, ResponseGenerationService>();
             builder.Services.AddScoped<ICustomerChatService, CustomerChatService>();
             builder.Services.AddScoped<ICustomerVoiceService, CustomerVoiceService>();
 
