@@ -1,5 +1,60 @@
 namespace Service_layer.DTOS.Chatbot
 {
+    public class RushBucketDTO
+    {
+        /// <summary>
+        /// Bucket key (e.g., "13" for hour 1PM, "Mon", "Week2", "Q2-M04").
+        /// </summary>
+        public string Key { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Human-readable label (e.g., "13:00–13:59", "Monday").
+        /// </summary>
+        public string Label { get; set; } = string.Empty;
+
+        public int OrdersCount { get; set; }
+        public int CallsCount { get; set; }
+
+        /// <summary>
+        /// Combined load score (orders + calls) used for ranking.
+        /// </summary>
+        public double LoadScore { get; set; }
+    }
+
+    public class RushInsightsDTO
+    {
+        /// <summary>
+        /// Date range used to compute rush buckets (UTC).
+        /// </summary>
+        public DateTime FromUtc { get; set; }
+        public DateTime ToUtc { get; set; }
+
+        /// <summary>
+        /// Top peak hours across the selected range.
+        /// </summary>
+        public List<RushBucketDTO> PeakHoursOfDay { get; set; } = new();
+
+        /// <summary>
+        /// Top peak days across the selected range (Mon..Sun).
+        /// </summary>
+        public List<RushBucketDTO> PeakDaysOfWeek { get; set; } = new();
+
+        /// <summary>
+        /// Top peak weeks within a month (Week1..Week5) across the selected range.
+        /// </summary>
+        public List<RushBucketDTO> PeakWeeksOfMonth { get; set; } = new();
+
+        /// <summary>
+        /// Top peak months within the year/quarter window across the selected range.
+        /// </summary>
+        public List<RushBucketDTO> PeakMonthsOfYear { get; set; } = new();
+
+        /// <summary>
+        /// Simple action hints for the business owner derived from peaks.
+        /// </summary>
+        public List<string> OwnerActionHints { get; set; } = new();
+    }
+
     public class TopOrderedProductDTO
     {
         public string MenuItemId { get; set; } = string.Empty;
@@ -55,6 +110,9 @@ namespace Service_layer.DTOS.Chatbot
 
         // Top ordered products with details (for dashboard)
         public List<TopOrderedProductDTO> TopOrderedProducts { get; set; } = new List<TopOrderedProductDTO>();
+
+        // Rush-time insights (orders + calls)
+        public RushInsightsDTO RushInsights { get; set; } = new RushInsightsDTO();
 
         // Recent Activity
         public DateTime LastOrderDate { get; set; }

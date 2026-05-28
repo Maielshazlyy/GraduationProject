@@ -872,6 +872,69 @@
           "response": []
         },
         {
+          "name": "Get Dashboard Overview (one call, per-section filters)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Dashboard/overview?period=30d&insightsPeriod=today&channelsPeriod=all&sentimentPeriod=30d&revenuePeriod=7d&productsPeriod=30d&leadsPeriod=all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Dashboard",
+                "overview"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "30d",
+                  "description": "Global default for any section param left out. Allowed: today | 7d | 30d | all"
+                },
+                {
+                  "key": "insightsPeriod",
+                  "value": "today",
+                  "description": "General insights window. Allowed: today | 7d | 30d (no 'all' baseline for % change)",
+                  "disabled": true
+                },
+                {
+                  "key": "channelsPeriod",
+                  "value": "all",
+                  "description": "Channel distribution. Allowed: today | 7d | 30d | all",
+                  "disabled": true
+                },
+                {
+                  "key": "sentimentPeriod",
+                  "value": "30d",
+                  "description": "Sentiment analysis. Allowed: today | 7d | 30d | all",
+                  "disabled": true
+                },
+                {
+                  "key": "revenuePeriod",
+                  "value": "7d",
+                  "description": "Revenue trend buckets: today=hourly, 7d/30d=daily, all=monthly",
+                  "disabled": true
+                },
+                {
+                  "key": "productsPeriod",
+                  "value": "30d",
+                  "description": "Top products window. Allowed: today | 7d | 30d | all",
+                  "disabled": true
+                },
+                {
+                  "key": "leadsPeriod",
+                  "value": "all",
+                  "description": "Customer leads window. Allowed: today | 7d | 30d | all",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Single endpoint that returns the entire dashboard: general insights (with % change), channel distribution, sentiment analysis, revenue trend, top products, recent alerts, and customer leads. Each section can be filtered independently; omitted section params fall back to 'period' (default 30d). Requires Owner or Admin JWT; BusinessId is read from the token."
+          },
+          "response": []
+        },
+        {
           "name": "Get Recent Audit Logs",
           "request": {
             "method": "GET",

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Service_layer.DTOS.Dashboard;
 using Service_layer.Services_Interfaces;
 using System.Security.Claims;
 
@@ -81,6 +82,52 @@ namespace digital_employee.Controllers
                     Summary = summary,
                     Analytics = analytics
                 });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        // GET: api/Dashboard/overview?period=30d
+        // Each section can be filtered independently, e.g.
+        //   ?period=30d&insightsPeriod=today&productsPeriod=7d&channelsPeriod=all
+        // Allowed values: today | 7d | 30d | all  (general insights & revenue trend do not support "all")
+        // Any section param left out falls back to "period" (or "30d" if that's omitted too).
+        [HttpGet("overview")]
+        [Authorize(Policy = "OwnerOrAdmin")]
+        public async Task<IActionResult> GetOverview(
+            [FromQuery] string period = "30d",
+            [FromQuery] string? insightsPeriod = null,
+            [FromQuery] string? channelsPeriod = null,
+            [FromQuery] string? sentimentPeriod = null,
+            [FromQuery] string? revenuePeriod = null,
+            [FromQuery] string? productsPeriod = null,
+            [FromQuery] string? leadsPeriod = null)
+        {
+            var allowed = new[] { "today", "7d", "30d", "all" };
+            string? defaultPeriod = string.IsNullOrWhiteSpace(period) ? "30d" : period.Trim().ToLowerInvariant();
+            if (!allowed.Contains(defaultPeriod))
+                return BadRequest(new { Message = "period must be one of: today, 7d, 30d, all" });
+
+            var filter = new DashboardFilterDTO
+            {
+                InsightsPeriod  = insightsPeriod  ?? defaultPeriod,
+                ChannelsPeriod  = channelsPeriod  ?? defaultPeriod,
+                SentimentPeriod = sentimentPeriod ?? defaultPeriod,
+                RevenuePeriod   = revenuePeriod   ?? defaultPeriod,
+                ProductsPeriod  = productsPeriod  ?? defaultPeriod,
+                LeadsPeriod     = leadsPeriod     ?? defaultPeriod
+            };
+
+            try
+            {
+                var businessId = User.FindFirstValue("BusinessId");
+                if (string.IsNullOrEmpty(businessId))
+                    return BadRequest(new { Message = "BusinessId not found in token." });
+
+                var result = await _dashboardService.GetFullDashboardAsync(businessId, filter);
+                return Ok(result);
             }
             catch (ArgumentException ex)
             {

@@ -14,6 +14,7 @@ namespace Service_layer.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private const int DefaultTopProductsCount = 10;
+        private const int DefaultTopRushBuckets = 5;
 
         public BusinessAnalyticsService(IUnitOfWork unitOfWork)
         {
@@ -37,6 +38,7 @@ namespace Service_layer.Services
             var menuItems = (await _unitOfWork.MenuItems.GetByBusinessIdAsync(businessId)).ToList();
 
             var topOrderedProducts = await GetTopOrderedProductsAsync(orders, menuItems, DefaultTopProductsCount);
+            var rushInsights = BuildRushInsights(orders, interactions, topOrderedProducts);
 
             // Calculate analytics
             var analytics = new BusinessAnalyticsDTO
@@ -85,6 +87,9 @@ namespace Service_layer.Services
                 // Top products (dashboard)
                 TopOrderedProducts = topOrderedProducts,
 
+                // Rush insights (orders + calls)
+                RushInsights = rushInsights,
+
                 // Recent Activity
                 LastOrderDate = orders.Any() ? orders.Max(o => o.CreatedAt) : DateTime.MinValue,
                 LastTicketDate = tickets.Any() ? tickets.Max(t => t.CreatedAt) : DateTime.MinValue,
@@ -92,6 +97,145 @@ namespace Service_layer.Services
             };
 
             return analytics;
+        }
+
+        private RushInsightsDTO BuildRushInsights(List<Order> orders, List<Interaction> interactions, List<TopOrderedProductDTO> topOrderedProducts)
+        {
+            // Window used for "rush" computation. Adjust later if you want separate windows per granularity.
+            var toUtc = DateTime.UtcNow;
+            var fromUtc = toUtc.AddDays(-90);
+
+            var windowOrders = orders.Where(o => o.CreatedAt >= fromUtc && o.CreatedAt <= toUtc).ToList();
+            var voiceCalls = interactions
+                .Where(i => i.StartedAt >= fromUtc && i.StartedAt <= toUtc)
+                .Where(i => string.Equals(i.Channel, "Voice", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            // callsWeight: each call consumes time but less than a full order fulfillment; tune as needed.
+            const double callsWeight = 0.7;
+
+            List<RushBucketDTO> TakeTop(IEnumerable<RushBucketDTO> buckets, int take = DefaultTopRushBuckets)
+                => buckets.OrderByDescending(b => b.LoadScore).ThenByDescending(b => b.OrdersCount).Take(take).ToList();
+
+            var peakHours = TakeTop(
+                Enumerable.Range(0, 24).Select(h =>
+                {
+                    var oCount = windowOrders.Count(o => o.CreatedAt.Hour == h);
+                    var cCount = voiceCalls.Count(c => c.StartedAt.Hour == h);
+                    return new RushBucketDTO
+                    {
+                        Key = h.ToString(),
+                        Label = $"{h:00}:00–{h:00}:59",
+                        OrdersCount = oCount,
+                        CallsCount = cCount,
+                        LoadScore = oCount + (cCount * callsWeight)
+                    };
+                })
+            );
+
+            // Monday=1..Sunday=7 for display stability
+            int DayKey(DayOfWeek d) => d == DayOfWeek.Sunday ? 7 : (int)d;
+            string DayLabel(DayOfWeek d) => d.ToString();
+
+            var peakDays = TakeTop(
+                Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>().Select(d =>
+                {
+                    var oCount = windowOrders.Count(o => o.CreatedAt.DayOfWeek == d);
+                    var cCount = voiceCalls.Count(c => c.StartedAt.DayOfWeek == d);
+                    return new RushBucketDTO
+                    {
+                        Key = DayKey(d).ToString(),
+                        Label = DayLabel(d),
+                        OrdersCount = oCount,
+                        CallsCount = cCount,
+                        LoadScore = oCount + (cCount * callsWeight)
+                    };
+                }).OrderBy(b => int.Parse(b.Key))
+            );
+
+            int WeekOfMonth(DateTime dt)
+            {
+                // 1..5 based on day-of-month
+                return ((dt.Day - 1) / 7) + 1;
+            }
+
+            var peakWeeksOfMonth = TakeTop(
+                Enumerable.Range(1, 5).Select(w =>
+                {
+                    var oCount = windowOrders.Count(o => WeekOfMonth(o.CreatedAt) == w);
+                    var cCount = voiceCalls.Count(c => WeekOfMonth(c.StartedAt) == w);
+                    return new RushBucketDTO
+                    {
+                        Key = $"Week{w}",
+                        Label = $"Week {w} of month",
+                        OrdersCount = oCount,
+                        CallsCount = cCount,
+                        LoadScore = oCount + (cCount * callsWeight)
+                    };
+                })
+            );
+
+            var peakMonths = TakeTop(
+                Enumerable.Range(1, 12).Select(m =>
+                {
+                    var oCount = windowOrders.Count(o => o.CreatedAt.Month == m);
+                    var cCount = voiceCalls.Count(c => c.StartedAt.Month == m);
+                    return new RushBucketDTO
+                    {
+                        Key = m.ToString(),
+                        Label = new DateTime(2000, m, 1).ToString("MMMM"),
+                        OrdersCount = oCount,
+                        CallsCount = cCount,
+                        LoadScore = oCount + (cCount * callsWeight)
+                    };
+                })
+            );
+
+            var hints = new List<string>();
+            if (peakHours.Any())
+            {
+                var top = peakHours.First();
+                hints.Add($"Peak hour is {top.Label}. Prepare extra ingredients and schedule more staff around this hour.");
+            }
+            if (peakDays.Any())
+            {
+                var top = peakDays.OrderByDescending(x => x.LoadScore).First();
+                hints.Add($"Peak day is {top.Label}. Plan inventory and staffing for this day (pre-prep and longer coverage).");
+            }
+            if (peakWeeksOfMonth.Any())
+            {
+                var top = peakWeeksOfMonth.First();
+                hints.Add($"Peak period inside the month is {top.Label}. Consider increasing purchasing and prep in the days before it.");
+            }
+            if (peakMonths.Any())
+            {
+                var top = peakMonths.First();
+                hints.Add($"Peak month is {top.Label}. Use it for quarterly planning: suppliers, hiring, and promos timing.");
+            }
+
+            if (topOrderedProducts != null && topOrderedProducts.Count > 0)
+            {
+                var topItems = topOrderedProducts.Take(3).ToList();
+                foreach (var item in topItems)
+                {
+                    if (string.IsNullOrWhiteSpace(item?.Name))
+                        continue;
+
+                    // We don't have explicit ingredient tables yet, so we give an actionable inventory/prep hint per item.
+                    hints.Add($"High-demand item: {item.Name} (qty {item.TotalQuantity}, orders {item.OrdersCount}). Keep its ingredients stocked and do prep before peak hours to avoid running out.");
+                }
+            }
+
+            return new RushInsightsDTO
+            {
+                FromUtc = fromUtc,
+                ToUtc = toUtc,
+                PeakHoursOfDay = peakHours,
+                PeakDaysOfWeek = peakDays,
+                PeakWeeksOfMonth = peakWeeksOfMonth,
+                PeakMonthsOfYear = peakMonths,
+                OwnerActionHints = hints
+            };
         }
 
         private async Task<List<TopOrderedProductDTO>> GetTopOrderedProductsAsync(
