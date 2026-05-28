@@ -85,7 +85,7 @@ jobs:
             --app digital-employee-db
 
       - name: Deploy SQL Server
-        run: flyctl deploy --config fly-db.toml --app digital-employee-db --remote-only
+        run: flyctl deploy --config fly.toml --app digital-employee-db --remote-only
 
   # ─────────────────────────────────────────────
   # Job 2 — Deploy .NET API (runs after DB is up)
@@ -119,7 +119,7 @@ jobs:
             --app graduationproject
 
       - name: Deploy API
-        run: flyctl deploy --config fly.toml --app graduationproject --remote-only
+        run: flyctl deploy --config fly-api.toml --app graduationproject --remote-only
 
       - name: Print live URL
         run: |
