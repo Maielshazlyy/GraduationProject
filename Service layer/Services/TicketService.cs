@@ -88,6 +88,11 @@ namespace Service_layer.Services
             ticket.Subject = dto.Subject;
             ticket.Status = dto.Status;
 
+            // Only overwrite resolution notes when the client actually sends a value,
+            // so a plain status/subject edit doesn't wipe previously saved notes.
+            if (dto.ResolutionNotes != null)
+                ticket.ResolutionNotes = dto.ResolutionNotes;
+
             _ticketRepository.Update(ticket);
             await _unitOfWork.CompleteAsync();
             return ticket;

@@ -47,6 +47,11 @@ namespace Domain_layer.Models
         public string? EscalationReason { get; set; }
 
         /// <summary>
+        /// Free-text notes describing how the ticket was resolved. Entered by an agent on update/close.
+        /// </summary>
+        public string? ResolutionNotes { get; set; }
+
+        /// <summary>
         /// Optional link to the interaction that created this ticket.
         /// </summary>
         public string? InteractionId { get; set; }
