@@ -62,10 +62,11 @@ jobs:
       - name: Setup flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Create DB app if it doesn't exist
+      - name: Ensure DB app exists
         run: |
-          flyctl apps list | grep -q "digital-employee-db" \
-            || flyctl apps create digital-employee-db --org personal
+          flyctl status --app digital-employee-db \
+            || flyctl apps create digital-employee-db --org personal \
+            || true
 
       - name: Create persistent volume (skipped if already exists)
         run: |
@@ -102,10 +103,11 @@ jobs:
       - name: Setup flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Create API app if it doesn't exist
+      - name: Ensure API app exists
         run: |
-          flyctl apps list | grep -q "graduationproject" \
-            || flyctl apps create graduationproject --org personal
+          flyctl status --app graduationproject \
+            || flyctl apps create graduationproject --org personal \
+            || true
 
       - name: Set API secrets
         run: |
