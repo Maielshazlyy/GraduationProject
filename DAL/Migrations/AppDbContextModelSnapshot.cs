@@ -780,6 +780,9 @@ namespace DAL.Migrations
                     b.Property<string>("RelatedOrderId")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ResolutionNotes")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

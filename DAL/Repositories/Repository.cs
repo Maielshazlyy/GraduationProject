@@ -29,15 +29,15 @@ namespace DAL.Repositories
         }
         
         // Basic CRUD Operations
-        public async Task<IEnumerable<T>> GetAllAsync()
+        public virtual async Task<IEnumerable<T>> GetAllAsync()
         {
             return await _dbSet.ToListAsync();
         }
-        
-        public async Task<T?> GetByIdAsync(string id)
+
+        public virtual async Task<T?> GetByIdAsync(string id)
         {
             // Use EF.Property to access the primary key dynamically
-            return await _dbSet.FirstOrDefaultAsync(e => 
+            return await _dbSet.FirstOrDefaultAsync(e =>
                 EF.Property<string>(e, _primaryKeyName) == id);
         }
         

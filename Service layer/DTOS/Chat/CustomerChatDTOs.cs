@@ -67,6 +67,13 @@ namespace Service_layer.DTOS.Chat
         public string? OrderId { get; set; }
         public string? TicketId { get; set; }
 
+        /// <summary>
+        /// True when the AI signalled feedback_requested — the frontend should
+        /// prompt the customer for a rating. The rating itself is submitted later
+        /// via the feedback endpoint; the backend does not create feedback here.
+        /// </summary>
+        public bool FeedbackRequested { get; set; }
+
         public ChatCartSummaryDTO? Cart { get; set; }
 
         public List<RecommendationItemDTO> Recommendations { get; set; } = new();

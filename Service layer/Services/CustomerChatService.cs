@@ -18,8 +18,6 @@ namespace Service_layer.Services
     public class CustomerChatService : ICustomerChatService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IIntentDetectionService _intentDetectionService;
-        private readonly IResponseGenerationService _responseGenerationService;
         private readonly ISettingService _settingService;
         private readonly IAuditLogService? _auditLogService;
         private readonly ISentimentService? _sentimentService;
@@ -28,239 +26,215 @@ namespace Service_layer.Services
 
         public CustomerChatService(
             IUnitOfWork unitOfWork,
-            IIntentDetectionService intentDetectionService,
-            IResponseGenerationService responseGenerationService,
             ISettingService settingService,
             IAiChatService aiChatService,
             IAuditLogService? auditLogService = null,
             ISentimentService? sentimentService = null)
         {
-            _unitOfWork = unitOfWork;
-            _intentDetectionService = intentDetectionService;
-            _responseGenerationService = responseGenerationService;
+            _unitOfWork    = unitOfWork;
             _settingService = settingService;
-            _aiChatService = aiChatService;
+            _aiChatService  = aiChatService;
             _auditLogService = auditLogService;
             _sentimentService = sentimentService;
-            _businessLogic = new CustomerInteractionBusinessLogic(unitOfWork, auditLogService);
+            _businessLogic  = new CustomerInteractionBusinessLogic(unitOfWork, aiChatService, auditLogService);
         }
 
         public async Task<CustomerChatResponseDTO> HandleMessageAsync(CustomerChatRequestDTO request)
         {
-            // Ensure this is a Chat request
             var channel = string.IsNullOrWhiteSpace(request.Channel) ? "WebChat" : request.Channel;
             if (channel != "WebChat")
-            {
                 throw new ArgumentException("This service handles WebChat only. Use ICustomerVoiceService for Voice.");
-            }
 
             if (string.IsNullOrWhiteSpace(request.Message))
-            {
                 throw new ArgumentException("Message is required for Chat.");
+
+            // ── 1) Get or create interaction ────────────────────────────────────
+            var (interaction, isNewSession) = await GetOrCreateInteractionAsync(request, channel);
+
+            // ── 1.5) New session → push the business menu + KB to the AI ─────────
+            if (isNewSession)
+            {
+                try { await _businessLogic.PrimeAiSessionAsync(interaction); }
+                catch (Exception ex)
+                {
+                    // Non-fatal: conversation proceeds even if priming fails
+                    System.Diagnostics.Debug.WriteLine($"AI session prime failed: {ex.Message}");
+                }
             }
 
-            // 1) Ensure interaction exists
-            var interaction = await GetOrCreateInteractionAsync(request, channel);
-
-            // 2) Store customer message (text only for Chat)
+            // ── 2) Persist customer message ─────────────────────────────────────
             var customerMessage = new Message
             {
-                MessageId = Guid.NewGuid().ToString(),
+                MessageId     = Guid.NewGuid().ToString(),
                 InteractionId = interaction.InteractionId,
-                SenderType = "Customer",
-                Content = request.Message,
-                SentAt = DateTime.UtcNow
+                SenderType    = "Customer",
+                Content       = request.Message,
+                SentAt        = DateTime.UtcNow
             };
 
             await _unitOfWork.Messages.AddAsync(customerMessage);
             await _unitOfWork.CompleteAsync();
 
-            // 3) Load recent messages for intent detection
-            var recentMessages = (await _unitOfWork.Messages
-                    .FindAsync(m => m.InteractionId == interaction.InteractionId))
-                .OrderBy(m => m.SentAt)
-                .Select(m => $"{m.SenderType}: {m.Content}")
-                .TakeLast(10)
-                .ToList();
+            // ── 3) Call AI — single round-trip gets reply + all intent signals ──
+            //
+            //  CONTRACT:
+            //    AI  → reply, order_detected, order_finalized, order_details,
+            //           ticket_detected, ticket_details,
+            //           escalation_requested, feedback_requested
+            //    Backend → creates orders/tickets/escalations in DB based on those flags
+            //    Backend → ignores AI-side system_events (AI internal tracking only)
+            //
+            AiChatResponseDTO aiResponse;
+            try
+            {
+                aiResponse = await _aiChatService.SendMessageAsync(new AiChatRequestDTO
+                {
+                    SessionId  = interaction.InteractionId,
+                    BusinessId = interaction.BusinessId,
+                    Channel    = "WebChat",
+                    Message    = request.Message!
+                });
+            }
+            catch
+            {
+                // AI unreachable — fall back to empty response; backend still works
+                aiResponse = new AiChatResponseDTO();
+            }
 
-            var intentResult = await _intentDetectionService
-                .DetectIntentAsync(interaction.BusinessId, interaction.InteractionId, recentMessages);
+            // ── 4) Map AI signals → DetectedIntentResultDTO (for audit/sentiment) ─
+            var intentResult = MapAiResponseToIntent(aiResponse);
 
-            customerMessage.Intent = intentResult.Intent;
+            customerMessage.Intent          = intentResult.Intent;
             customerMessage.ConfidenceScore = intentResult.Confidence;
-            customerMessage.AiMetadataJson = System.Text.Json.JsonSerializer.Serialize(intentResult);
+            customerMessage.AiMetadataJson  = System.Text.Json.JsonSerializer.Serialize(intentResult);
             _unitOfWork.Messages.Update(customerMessage);
             await _unitOfWork.CompleteAsync();
 
-            // 3.5) Analyze sentiment of customer message using AI
-            if (_sentimentService != null && !string.IsNullOrWhiteSpace(request.Message))
+            // ── 4.5) Sentiment analysis ─────────────────────────────────────────
+            if (_sentimentService != null)
             {
                 try
                 {
-                    var language = intentResult.DetectedLanguage ?? "ar";
-                    var sentiment = await _sentimentService.AnalyzeSentimentAsync(
-                        customerMessage.MessageId, 
-                        request.Message, 
-                        language);
-                    // Sentiment is automatically linked to message via MessageId
+                    await _sentimentService.AnalyzeSentimentAsync(
+                        customerMessage.MessageId,
+                        request.Message,
+                        intentResult.DetectedLanguage ?? "ar");
                 }
                 catch (Exception ex)
                 {
-                    // Log error but don't fail the request
-                    // TODO: Add proper logging
                     System.Diagnostics.Debug.WriteLine($"Sentiment analysis failed: {ex.Message}");
                 }
             }
 
-            // 4) Check if this message should be escalated to a human agent
-            var shouldEscalate = ShouldEscalateToHuman(intentResult);
+            // ── 5) Backend DB actions driven purely by AI signal flags ───────────
+            string? orderId          = null;
+            string? ticketId         = null;
+            ChatCartSummaryDTO? cart = null;
+            var recommendations      = new List<RecommendationItemDTO>();
 
-            // 5) Execute business logic based on intent / escalation
-            string? orderId = null;
-            string? ticketId = null;
-            ChatCartSummaryDTO? cartSummary = null;
-            var recommendations = new List<RecommendationItemDTO>();
-            var context = BuildResponseContext(interaction, intentResult, recentMessages, "WebChat");
-
-            if (shouldEscalate)
+            if (aiResponse.EscalationRequested)
             {
-                var ticket = await _businessLogic.HandleTicketAsync(interaction, intentResult);
-                ticketId = ticket.TicketId;
-                context.ActionOutcome = "EscalatedToHuman";
-                context.ActionData["ticketId"] = ticket.TicketId;
+                var ticket = await _businessLogic.HandleTicketAsync(
+                    interaction, intentResult,
+                    aiTicketDetails: null,
+                    isEscalation: true);
 
-                if (_auditLogService != null && ticket.TicketType == "HumanEscalation")
+                ticketId = ticket.TicketId;
+                interaction.Status = "Escalated";
+
+                if (_auditLogService != null)
                 {
                     await _auditLogService.LogInteractionActionAsync(
-                        businessId: interaction.BusinessId,
-                        action: $"EscalateToHuman_{intentResult.Intent}",
+                        businessId:    interaction.BusinessId,
+                        action:        "EscalateToHuman",
                         interactionId: interaction.InteractionId,
-                        userId: null
-                    );
+                        userId:        null);
                 }
             }
-            else
+            else if (aiResponse.TicketDetected && aiResponse.TicketDetails != null)
             {
-                switch (intentResult.Intent)
-                {
-                    case "CreateOrder":
-                        {
-                            var orderResult = await _businessLogic.HandleCreateOrderAsync(interaction, intentResult);
-                            orderId = orderResult.Order?.OrderId;
-                            cartSummary = orderResult.Cart;
-                            recommendations = orderResult.Recommendations;
-                            interaction.InteractionType = "Order";
-                            interaction.RelatedOrderId = orderId;
-                            context.ActionOutcome = "OrderCreated";
-                            context.ActionData["orderId"] = orderId ?? "";
-                            context.ActionData["totalPrice"] = cartSummary?.TotalPrice ?? 0m;
-                            context.ActionData["hasDeliveryDelay"] = false;
-                            context.ActionData["recommendations"] = recommendations;
-                            break;
-                        }
+                var ticket = await _businessLogic.HandleTicketAsync(
+                    interaction, intentResult,
+                    aiTicketDetails: aiResponse.TicketDetails);
 
-                    case "ModifyOrder":
-                        {
-                            var msg = await _businessLogic.HandleModifyOrderAsync(interaction, intentResult);
-                            context.ActionOutcome = "ModifyOrderHandled";
-                            context.ActionData["message"] = msg;
-                            break;
-                        }
-
-                    case "CancelOrder":
-                        {
-                            var msg = await _businessLogic.HandleCancelOrderAsync(interaction, intentResult);
-                            context.ActionOutcome = "OrderCancelled";
-                            context.ActionData["message"] = msg;
-                            break;
-                        }
-
-                    case "Complaint":
-                    case "RequestHumanAgent":
-                        {
-                            var ticket = await _businessLogic.HandleTicketAsync(interaction, intentResult);
-                            ticketId = ticket.TicketId;
-                            interaction.InteractionType = "Ticket";
-                            interaction.RelatedTicketId = ticketId;
-                            if (intentResult.Intent == "RequestHumanAgent")
-                                interaction.Status = "Escalated";
-                            context.ActionOutcome = ticket.TicketType == "HumanEscalation" ? "EscalatedToHuman" : "TicketCreated";
-                            context.ActionData["ticketId"] = ticket.TicketId;
-                            break;
-                        }
-
-                    case "AskAboutOrderStatus":
-                        {
-                            var msg = await _businessLogic.HandleAskOrderStatusAsync(interaction, intentResult);
-                            context.ActionOutcome = "OrderStatusRetrieved";
-                            context.ActionData["message"] = msg;
-                            break;
-                        }
-
-                    case "AskAboutProducts":
-                        {
-                            var msg = await _businessLogic.HandleAskProductsAsync(interaction, intentResult);
-                            context.ActionOutcome = "ProductsListed";
-                            context.ActionData["message"] = msg;
-                            break;
-                        }
-
-                    default:
-                        {
-                            var msg = await _businessLogic.HandleGeneralQuestionAsync(interaction, intentResult);
-                            context.ActionOutcome = "GeneralQuestion";
-                            context.ActionData["message"] = msg;
-                            break;
-                        }
-                }
+                ticketId = ticket.TicketId;
+                interaction.InteractionType = "Ticket";
+                interaction.RelatedTicketId = ticketId;
             }
+            else if (aiResponse.OrderFinalized && aiResponse.OrderDetails != null)
+            {
+                var orderResult = await _businessLogic.HandleCreateOrderAsync(
+                    interaction, aiResponse.OrderDetails);
+
+                orderId         = orderResult.Order?.OrderId;
+                cart            = orderResult.Cart;
+                recommendations = orderResult.Recommendations;
+                interaction.InteractionType = "Order";
+                interaction.RelatedOrderId  = orderId;
+            }
+            // order_detected but NOT order_finalized → cart still being built; no DB action
 
             _unitOfWork.Interactions.Update(interaction);
             await _unitOfWork.CompleteAsync();
 
-            // 5.5) AI Response Generation - forward message to external AI API
-            string replyText;
-            try
-            {
-                var aiResponse = await _aiChatService.SendMessageAsync(new AiChatRequestDTO
-                {
-                    Message = request.Message!,
-                    SessionId = interaction.InteractionId
-                });
-                replyText = aiResponse.GetReplyText();
-                if (string.IsNullOrWhiteSpace(replyText))
-                    replyText = await _responseGenerationService.GenerateResponseAsync(context);
-            }
-            catch
-            {
-                replyText = await _responseGenerationService.GenerateResponseAsync(context);
-            }
+            // ── 6) Reply text — AI owns this entirely ────────────────────────────
+            var replyText = aiResponse.GetReplyText();
 
-            // 5) Store AI reply message
+            // ── 7) Persist AI reply message ──────────────────────────────────────
             var aiMessage = new Message
             {
-                MessageId = Guid.NewGuid().ToString(),
+                MessageId     = Guid.NewGuid().ToString(),
                 InteractionId = interaction.InteractionId,
-                SenderType = "AI",
-                Content = replyText,
-                SentAt = DateTime.UtcNow,
-                Intent = intentResult.Intent,
+                SenderType    = "AI",
+                Content       = replyText,
+                SentAt        = DateTime.UtcNow,
+                Intent        = intentResult.Intent,
                 ConfidenceScore = intentResult.Confidence
             };
 
             await _unitOfWork.Messages.AddAsync(aiMessage);
             await _unitOfWork.CompleteAsync();
 
-            // 6) Return response (text only for Chat)
+            // ── 8) Return ────────────────────────────────────────────────────────
             return new CustomerChatResponseDTO
             {
-                InteractionId = interaction.InteractionId,
-                ReplyText = replyText,
-                OrderId = orderId,
-                TicketId = ticketId,
-                Cart = cartSummary,
-                Recommendations = recommendations,
-                IsInterrupted = false
+                InteractionId     = interaction.InteractionId,
+                ReplyText         = replyText,
+                OrderId           = orderId,
+                TicketId          = ticketId,
+                FeedbackRequested = aiResponse.FeedbackRequested,
+                Cart              = cart,
+                Recommendations   = recommendations,
+                IsInterrupted     = false
+            };
+        }
+
+        /// <summary>
+        /// Maps AI response flags to DetectedIntentResultDTO.
+        /// Used only for audit logging and sentiment analysis compatibility —
+        /// business logic is now driven by AI flags directly, not this DTO.
+        /// </summary>
+        /// <summary>
+        /// Translates AI response flags into DetectedIntentResultDTO.
+        /// Used only for audit logging and sentiment analysis — NOT for any business decisions.
+        /// All values come from the AI response; nothing is guessed or hardcoded.
+        /// </summary>
+        private static DetectedIntentResultDTO MapAiResponseToIntent(AiChatResponseDTO ai)
+        {
+            string intent;
+            if      (ai.EscalationRequested)                intent = "RequestHumanAgent";
+            else if (ai.TicketDetected)                     intent = "Complaint";
+            else if (ai.OrderFinalized || ai.OrderDetected) intent = "CreateOrder";
+            else                                            intent = "GeneralQuestion";
+
+            return new DetectedIntentResultDTO
+            {
+                Intent             = intent,
+                RequiresAction     = ai.EscalationRequested || ai.TicketDetected || ai.OrderFinalized,
+                RequiresEscalation = ai.EscalationRequested,
+                PriorityLevel      = ai.TicketDetails?.Priority,
+                EscalationReason   = ai.EscalationRequested ? ai.TicketDetails?.Description : null,
+                ComplexityLevel    = ai.EscalationRequested ? "High" : null
             };
         }
 
@@ -338,36 +312,14 @@ namespace Service_layer.Services
 
         #region Private Helper Methods
 
-        private static bool ShouldEscalateToHuman(DetectedIntentResultDTO intentResult)
-        {
-            const double confidenceThreshold = 0.6;
-
-            if (intentResult == null)
-                return false;
-
-            if (string.Equals(intentResult.Intent, "RequestHumanAgent", StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            if (intentResult.RequiresEscalation)
-                return true;
-
-            if (!string.IsNullOrWhiteSpace(intentResult.ComplexityLevel) &&
-                string.Equals(intentResult.ComplexityLevel, "High", StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            if (intentResult.Confidence < confidenceThreshold)
-                return true;
-
-            return false;
-        }
-
-        private async Task<Interaction> GetOrCreateInteractionAsync(CustomerChatRequestDTO request, string channel)
+        private async Task<(Interaction interaction, bool isNew)> GetOrCreateInteractionAsync(
+            CustomerChatRequestDTO request, string channel)
         {
             if (!string.IsNullOrWhiteSpace(request.InteractionId))
             {
                 var existing = await _unitOfWork.Interactions.GetByIdAsync(request.InteractionId);
                 if (existing != null)
-                    return existing;
+                    return (existing, false);
             }
 
             var interaction = new Interaction
@@ -383,27 +335,7 @@ namespace Service_layer.Services
             await _unitOfWork.Interactions.AddAsync(interaction);
             await _unitOfWork.CompleteAsync();
 
-            return interaction;
-        }
-
-        private static ResponseGenerationContextDTO BuildResponseContext(
-            Interaction interaction,
-            DetectedIntentResultDTO intentResult,
-            List<string> recentMessages,
-            string channel)
-        {
-            return new ResponseGenerationContextDTO
-            {
-                BusinessId = interaction.BusinessId,
-                InteractionId = interaction.InteractionId,
-                Intent = intentResult.Intent,
-                DetectedLanguage = intentResult.DetectedLanguage,
-                DetectedDialect = intentResult.DetectedDialect,
-                RecentMessages = recentMessages,
-                ActionOutcome = "",
-                ActionData = new Dictionary<string, object>(),
-                Channel = channel
-            };
+            return (interaction, true);
         }
 
         #endregion

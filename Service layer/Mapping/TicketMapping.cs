@@ -37,6 +37,7 @@ namespace Service_layer.Mapping
                 PriorityLevel = t.PriorityLevel,
                 EscalationConfidence = t.EscalationConfidence,
                 EscalationReason = t.EscalationReason,
+                ResolutionNotes = t.ResolutionNotes,
 
                 InteractionId = t.InteractionId,
                 RelatedOrderId = t.RelatedOrderId

@@ -31,6 +31,7 @@ namespace Service_layer.DTOS.Ticket
         public string? PriorityLevel { get; set; }
         public double? EscalationConfidence { get; set; }
         public string? EscalationReason { get; set; }
+        public string? ResolutionNotes { get; set; }
 
         public string? InteractionId { get; set; }
         public string? RelatedOrderId { get; set; }
