@@ -101,6 +101,27 @@ namespace digital_employee.Controllers
             }
         }
 
+        /// <summary>
+        /// One-step signup: creates a Business AND an Owner account together.
+        /// No BusinessId required — it is returned in the response.
+        /// Use this as the main public registration endpoint.
+        /// </summary>
+        // POST: api/Auth/register-business
+        [HttpPost("register-business")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RegisterWithBusiness([FromBody] RegisterWithBusinessDTO model)
+        {
+            try
+            {
+                var result = await _authService.RegisterWithBusinessAsync(model);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
         // POST: api/Auth/promote-to-owner
         [HttpPost("promote-to-owner")]
         [Authorize(Policy = "AdminOnly")] // فقط Admin يمكنه ترقية المستخدمين

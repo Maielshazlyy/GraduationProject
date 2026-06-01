@@ -33,7 +33,8 @@ namespace DAL.UnitOfWork
         public IIntegrationRepository Integrations { get; }
         public IAuditLogRepository AuditLogs { get; }
         public ISentimentRepository Sentiments { get; }
-        
+        public ICallSummaryRepository CallSummaries { get; }
+
         public UnitOfWork(
             AppDbContext context,
             IBusinessRepository businessRepository,
@@ -55,7 +56,8 @@ namespace DAL.UnitOfWork
             ISettingRepository settingRepository,
             IIntegrationRepository integrationRepository,
             IAuditLogRepository auditLogRepository,
-            ISentimentRepository sentimentRepository)
+            ISentimentRepository sentimentRepository,
+            ICallSummaryRepository callSummaryRepository)
         {
             _context = context;
             Businesses = businessRepository;
@@ -78,6 +80,7 @@ namespace DAL.UnitOfWork
             Integrations = integrationRepository;
             AuditLogs = auditLogRepository;
             Sentiments = sentimentRepository;
+            CallSummaries = callSummaryRepository;
         }
         
         public async Task<int> CompleteAsync()

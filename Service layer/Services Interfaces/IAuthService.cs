@@ -12,6 +12,10 @@ namespace Service_layer.ServicesInterfaces
         Task<AuthResponseDTO> RegisterAsync(RegisterDTO model);
         Task<AuthResponseDTO> RegisterAdminAsync(RegisterBootstrapDTO model);
         Task<AuthResponseDTO> RegisterOwnerAsync(RegisterBootstrapDTO model);
+        /// <summary>
+        /// Atomically creates a Business and an Owner account — no BusinessId needed upfront.
+        /// </summary>
+        Task<AuthResponseDTO> RegisterWithBusinessAsync(RegisterWithBusinessDTO model);
         Task<AuthResponseDTO> LoginAsync(LoginDTO model);
         Task<AuthResponseDTO> GoogleLoginAsync(string googleToken);
     }

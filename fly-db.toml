@@ -1,0 +1,26 @@
+app = "digital-employee-db"
+primary_region = "iad"
+
+[build]
+  image = "mcr.microsoft.com/mssql/server:2022-latest"
+
+[env]
+  ACCEPT_EULA          = "Y"
+  MSSQL_PID           = "Express"
+  MSSQL_MEMORY_LIMIT_MB = "2048"
+
+[mounts]
+  source      = "sqlserver_data"
+  destination = "/var/opt/mssql"
+
+[[services]]
+  protocol      = "tcp"
+  internal_port = 1433
+
+  [[services.ports]]
+    port = 1433
+
+[[vm]]
+  memory   = "2gb"
+  cpu_kind = "shared"
+  cpus     = 1
