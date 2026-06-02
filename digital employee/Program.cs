@@ -175,6 +175,7 @@ namespace digital_employee
             builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
             builder.Services.AddScoped<ISentimentRepository, SentimentRepository>();
             builder.Services.AddScoped<IInteractionAnalysisRepository, InteractionAnalysisRepository>();
+            builder.Services.AddScoped<ICallSummaryRepository, CallSummaryRepository>();
             
             // UnitOfWork
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

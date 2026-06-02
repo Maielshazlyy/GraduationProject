@@ -37,6 +37,7 @@ namespace DAL.Context
         public DbSet<KnowledgeBase> KnowledgeBases { get; set; }
         public DbSet<Integration> Integrations { get; set; }
         public DbSet<InteractionAnalysis> InteractionAnalyses { get; set; }
+        public DbSet<CallSummary> CallSummaries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -66,6 +67,7 @@ namespace DAL.Context
             modelBuilder.Entity<KnowledgeBase>().HasKey(k => k.KnowledgeBaseId);
             modelBuilder.Entity<Sentiment>().HasKey(s => s.SentimentId);
             modelBuilder.Entity<InteractionAnalysis>().HasKey(a => a.InteractionAnalysisId);
+            modelBuilder.Entity<CallSummary>().HasKey(c => c.Id);
 
             // ---------------------------
             // Business relations (1:M / 1:1)

@@ -102,6 +102,52 @@
           "response": []
         },
         {
+          "name": "Register Business + Owner [PUBLIC] ⭐",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token)      { pm.collectionVariables.set('token', json.token); }",
+                  "if (json.userId)     { pm.collectionVariables.set('userId', json.userId); }",
+                  "if (json.businessId) { pm.collectionVariables.set('businessId', json.businessId); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Omar Owner\",\n  \"email\": \"omar@mybusiness.com\",\n  \"password\": \"Owner@123\",\n  \"phoneNumber\": \"01012345678\",\n  \"businessName\": \"My Coffee Shop\",\n  \"businessType\": \"Cafe\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/register-business",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Auth",
+                "register-business"
+              ]
+            },
+            "description": "One-step signup: creates a Business AND an Owner account atomically. No BusinessId needed — it is generated server-side and returned in the response. The test script auto-saves token, userId and businessId as collection variables.\n\nUse this as the primary public registration endpoint."
+          },
+          "response": []
+        },
+        {
           "name": "Register Agent [PUBLIC - requires businessId]",
           "event": [
             {

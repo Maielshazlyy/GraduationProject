@@ -22,13 +22,13 @@ namespace Service_layer.Services
     {
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
-        private readonly IBusinessRepository _businessRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AuthService(UserManager<User> userManager, IConfiguration configuration, IBusinessRepository businessRepository)
+        public AuthService(UserManager<User> userManager, IConfiguration configuration, IUnitOfWork unitOfWork)
         {
             _userManager = userManager;
             _configuration = configuration;
-            _businessRepository = businessRepository;
+            _unitOfWork = unitOfWork;
         }
 
         
@@ -37,7 +37,7 @@ namespace Service_layer.Services
             if (string.IsNullOrWhiteSpace(model.BusinessId))
                 throw new Exception("BusinessId is required for agent registration.");
 
-            var business = await _businessRepository.GetByIdAsync(model.BusinessId);
+            var business = await _unitOfWork.Businesses.GetByIdAsync(model.BusinessId);
             if (business == null)
                 throw new Exception($"Business with id '{model.BusinessId}' not found.");
 
@@ -95,7 +95,58 @@ namespace Service_layer.Services
             return GenerateJwtToken(user);
         }
 
-     
+        /// <summary>
+        /// Creates a Business + Owner account in one shot.
+        /// Solves the chicken-and-egg problem: no BusinessId required from the caller.
+        /// </summary>
+        public async Task<AuthResponseDTO> RegisterWithBusinessAsync(RegisterWithBusinessDTO model)
+        {
+            // 1. Guard: email must be unique
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
+                throw new Exception($"Email '{model.Email}' is already registered.");
+
+            // 2. Create the Business first (generates its own Id)
+            var business = new Business
+            {
+                Id          = Guid.NewGuid().ToString(),
+                BusinessId  = Guid.NewGuid().ToString(),
+                Name        = model.BusinessName.Trim(),
+                Type        = model.BusinessType ?? string.Empty,
+                IsActive    = true,
+                IsVerified  = false,
+                CreatedAt   = DateTime.UtcNow,
+            };
+
+            await _unitOfWork.Businesses.AddAsync(business);
+            await _unitOfWork.CompleteAsync();          // persist so the FK exists
+
+            // 3. Create the Owner user linked to that Business
+            var user = new User
+            {
+                UserName   = model.Email,
+                Email      = model.Email,
+                FullName   = model.FullName,
+                PhoneNumber = model.PhoneNumber,
+                BusinessId = business.Id,
+                Role       = Roles.Owner,
+                CreatedAt  = DateTime.UtcNow,
+            };
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+            {
+                // Roll back the orphan business we just created
+                _unitOfWork.Businesses.Delete(business);
+                await _unitOfWork.CompleteAsync();
+
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new Exception(errors);
+            }
+
+            return GenerateJwtToken(user);
+        }
+
         public async Task<AuthResponseDTO> LoginAsync(LoginDTO model)
         {
            
