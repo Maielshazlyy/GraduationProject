@@ -25,23 +25,6 @@ namespace Service_layer.DTOS.AiChat
         [JsonPropertyName("reply")]
         public string? Reply { get; set; }
 
-        // ── Voice (STT/TTS handled by AI) ────────────────────────────────
-
-        /// <summary>
-        /// Speech-to-text transcript of what the customer said (Voice channel).
-        /// Backend stores this as the customer message content.
-        /// </summary>
-        [JsonPropertyName("transcript")]
-        public string? Transcript { get; set; }
-
-        /// <summary>Base64-encoded text-to-speech audio of the reply (Voice channel).</summary>
-        [JsonPropertyName("reply_audio")]
-        public string? ReplyAudio { get; set; }
-
-        /// <summary>Format of <see cref="ReplyAudio"/>, e.g. "audio/wav".</summary>
-        [JsonPropertyName("reply_audio_format")]
-        public string? ReplyAudioFormat { get; set; }
-
         // ── Order signals ────────────────────────────────────────────────
 
         /// <summary>

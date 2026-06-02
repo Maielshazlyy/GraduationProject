@@ -28,7 +28,8 @@ namespace Domain_layer.Interfaces
         IIntegrationRepository Integrations { get; }
         IAuditLogRepository AuditLogs { get; }
         ISentimentRepository Sentiments { get; }
-        
+        IInteractionAnalysisRepository InteractionAnalyses { get; }
+
         Task<int> CompleteAsync();
     }
 }

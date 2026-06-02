@@ -7,6 +7,7 @@ namespace Domain_layer.Interfaces
         Task<IEnumerable<Feedback>> GetByCustomerIdAsync(string customerId);
         Task<IEnumerable<Feedback>> GetByTicketIdAsync(string ticketId);
         Task<double> GetAverageRatingAsync(string businessId);
+        Task<IEnumerable<Feedback>> GetByBusinessIdAsync(string businessId);
     }
 }
 

@@ -4,32 +4,35 @@ using System.Text.Json.Serialization;
 namespace Service_layer.DTOS.AiChat
 {
     /// <summary>
-    /// Sent by the backend to the AI when a NEW conversation starts, to prime the
-    /// session with the business's menu + knowledge base. The AI caches this against
-    /// the session_id so subsequent chat messages stay lightweight.
+    /// Sent by the backend to the AI when a business knowledge base is created or updated.
     ///
-    /// This is a PUSH model: the backend already owns this data in its DB, so it
-    /// hands it to the AI directly — the AI never calls back into the backend
-    /// (no machine-to-machine auth needed).
+    /// CONTRACT:
+    ///   • This is NOT session-based — no session_id.
+    ///   • The AI indexes this data by business_id.
+    ///   • Called once when a business is created, and again on every menu/KB change.
+    ///   • During chat, the AI uses business_id to select the correct indexed knowledge base.
     /// </summary>
-    public class AiSessionInitDTO
+    public class AiKnowledgeSyncDTO
     {
-        [JsonPropertyName("session_id")]
-        public string SessionId { get; set; } = string.Empty;
-
         [JsonPropertyName("business_id")]
         public string BusinessId { get; set; } = string.Empty;
 
         [JsonPropertyName("business_name")]
         public string? BusinessName { get; set; }
 
-        /// <summary>The business menu. AI must echo item Names exactly in order_details.</summary>
-        [JsonPropertyName("menu")]
-        public List<AiMenuItemDTO> Menu { get; set; } = new();
-
-        /// <summary>Internal knowledge base + FAQs for answering business questions.</summary>
         [JsonPropertyName("knowledge_base")]
-        public List<AiKnowledgeEntryDTO> KnowledgeBase { get; set; } = new();
+        public AiKnowledgeBaseDTO KnowledgeBase { get; set; } = new();
+    }
+
+    public class AiKnowledgeBaseDTO
+    {
+        /// <summary>Menu items — used for product answers and order item name extraction.</summary>
+        [JsonPropertyName("menu_items")]
+        public List<AiMenuItemDTO> MenuItems { get; set; } = new();
+
+        /// <summary>FAQs — used to answer customer questions about the business.</summary>
+        [JsonPropertyName("faqs")]
+        public List<AiKnowledgeEntryDTO> Faqs { get; set; } = new();
     }
 
     public class AiMenuItemDTO
@@ -37,6 +40,7 @@ namespace Service_layer.DTOS.AiChat
         [JsonPropertyName("menu_item_id")]
         public string MenuItemId { get; set; } = string.Empty;
 
+        /// <summary>Exact canonical name — the AI must echo this in order_details.items[].name.</summary>
         [JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
 
@@ -61,8 +65,8 @@ namespace Service_layer.DTOS.AiChat
         [JsonPropertyName("answer")]
         public string Answer { get; set; } = string.Empty;
 
-        /// <summary>true = public FAQ, false = internal knowledge base.</summary>
         [JsonPropertyName("is_faq")]
         public bool IsFaq { get; set; }
     }
+
 }

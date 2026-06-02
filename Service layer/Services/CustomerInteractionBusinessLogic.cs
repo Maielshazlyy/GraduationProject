@@ -18,62 +18,14 @@ namespace Service_layer.Services
     public class CustomerInteractionBusinessLogic
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IAiChatService? _aiChatService;
         private readonly IAuditLogService? _auditLogService;
 
         public CustomerInteractionBusinessLogic(
             IUnitOfWork unitOfWork,
-            IAiChatService? aiChatService = null,
             IAuditLogService? auditLogService = null)
         {
-            _unitOfWork = unitOfWork;
-            _aiChatService = aiChatService;
+            _unitOfWork      = unitOfWork;
             _auditLogService = auditLogService;
-        }
-
-        /// <summary>
-        /// Loads the business's menu + knowledge base from the DB and pushes them to
-        /// the AI to prime a new session. Called once when a conversation starts.
-        /// Failure is non-fatal — the conversation proceeds even if priming fails.
-        /// </summary>
-        public async Task PrimeAiSessionAsync(Interaction interaction)
-        {
-            if (_aiChatService == null) return;
-
-            var business  = await _unitOfWork.Businesses.GetByIdAsync(interaction.BusinessId);
-
-            var menuItems = (await _unitOfWork.MenuItems.GetByBusinessIdAsync(interaction.BusinessId))
-                .Select(mi => new AiMenuItemDTO
-                {
-                    MenuItemId  = mi.MenuItemId,
-                    Name        = mi.Name,
-                    Description = mi.Description,
-                    Price       = mi.Price,
-                    Category    = mi.MenuCategory?.Name,
-                    IsAvailable = mi.IsAvailable
-                })
-                .ToList();
-
-            var knowledge = (await _unitOfWork.KnowledgeBases.GetByBusinessIdAsync(interaction.BusinessId))
-                .Where(k => k.IsActive)
-                .Select(k => new AiKnowledgeEntryDTO
-                {
-                    Question = k.Question,
-                    Answer   = k.Answer,
-                    IsFaq    = k.IsFAQ
-                })
-                .ToList();
-
-            var init = new AiSessionInitDTO
-            {
-                SessionId     = interaction.InteractionId,
-                BusinessId    = interaction.BusinessId,
-                BusinessName  = business?.Name,
-                Menu          = menuItems,
-                KnowledgeBase = knowledge
-            };
-
-            await _aiChatService.InitSessionAsync(init);
         }
 
         /// <summary>
@@ -84,9 +36,10 @@ namespace Service_layer.Services
         public async Task<(Order? Order, ChatCartSummaryDTO? Cart, List<RecommendationItemDTO> Recommendations)>
             HandleCreateOrderAsync(Interaction interaction, AiOrderDetailsDTO aiOrderDetails)
         {
+            // The AI is responsible for availability — it only sends items the customer
+            // can order based on the synced knowledge base. Backend matches by name only.
             var menuItems = (await _unitOfWork.MenuItems
                     .GetByBusinessIdAsync(interaction.BusinessId))
-                .Where(mi => mi.IsAvailable)
                 .ToList();
 
             if (!menuItems.Any())
@@ -179,7 +132,6 @@ namespace Service_layer.Services
         {
             var menuItems = (await _unitOfWork.MenuItems
                     .GetByBusinessIdAsync(interaction.BusinessId))
-                .Where(mi => mi.IsAvailable)
                 .ToList();
 
             if (!menuItems.Any())
@@ -444,14 +396,9 @@ namespace Service_layer.Services
             await _unitOfWork.Tickets.AddAsync(ticket);
             await _unitOfWork.CompleteAsync();
 
-            if (isHumanEscalation)
-            {
-                interaction.InteractionType  = "Ticket";
-                interaction.RelatedTicketId  = ticket.TicketId;
-                interaction.Status           = "Escalated";
-                _unitOfWork.Interactions.Update(interaction);
-                await _unitOfWork.CompleteAsync();
-            }
+            // NOTE: interaction fields (InteractionType, RelatedTicketId, Status) are
+            // intentionally NOT updated here. The calling service owns all interaction
+            // mutations and persists them in its unified save at the end of the request.
 
             return ticket;
         }

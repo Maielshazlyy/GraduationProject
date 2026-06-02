@@ -11,15 +11,18 @@ namespace Service_layer.Services
         private readonly IMenuItemRepository _menuItemRepository;
         private readonly IBusinessRepository _businessRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAiKnowledgeSyncService? _aiSync;
 
         public MenuItemService(
             IMenuItemRepository menuItemRepository,
             IBusinessRepository businessRepository,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IAiKnowledgeSyncService? aiSync = null)
         {
             _menuItemRepository = menuItemRepository;
             _businessRepository = businessRepository;
-            _unitOfWork = unitOfWork;
+            _unitOfWork         = unitOfWork;
+            _aiSync             = aiSync;
         }
 
         public async Task<IEnumerable<MenuItem>> GetAllAsync()
@@ -56,6 +59,8 @@ namespace Service_layer.Services
 
             await _menuItemRepository.AddAsync(menuItem);
             await _unitOfWork.CompleteAsync();
+
+            await TrySyncAsync(menuItem.BusinessId);
             return menuItem;
         }
 
@@ -64,14 +69,16 @@ namespace Service_layer.Services
             var menuItem = await _menuItemRepository.GetByIdAsync(id);
             if (menuItem == null) return null;
 
-            menuItem.Name = dto.Name;
-            menuItem.Description = dto.Description;
-            menuItem.Price = dto.Price;
+            menuItem.Name           = dto.Name;
+            menuItem.Description    = dto.Description;
+            menuItem.Price          = dto.Price;
             menuItem.MenuCategoryId = dto.MenuCategoryId;
-            menuItem.IsAvailable = dto.IsAvailable;
+            menuItem.IsAvailable    = dto.IsAvailable;
 
             _menuItemRepository.Update(menuItem);
             await _unitOfWork.CompleteAsync();
+
+            await TrySyncAsync(menuItem.BusinessId);
             return menuItem;
         }
 
@@ -80,9 +87,28 @@ namespace Service_layer.Services
             var menuItem = await _menuItemRepository.GetByIdAsync(id);
             if (menuItem == null) return false;
 
+            var businessId = menuItem.BusinessId;
             _menuItemRepository.Delete(menuItem);
             await _unitOfWork.CompleteAsync();
+
+            await TrySyncAsync(businessId);
             return true;
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Pushes the updated knowledge base to the AI after a menu change.
+        /// Non-fatal — a sync failure must never block the business operation.
+        /// </summary>
+        private async Task TrySyncAsync(string businessId)
+        {
+            if (_aiSync == null) return;
+            try   { await _aiSync.SyncBusinessAsync(businessId); }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AiSync] MenuItemService sync failed for {businessId}: {ex.Message}");
+            }
         }
     }
 }

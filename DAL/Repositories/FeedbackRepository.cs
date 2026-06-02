@@ -30,10 +30,22 @@ namespace DAL.Repositories
                 .Where(f => f.Ticket != null && f.Ticket.BusinessId == businessId)
                 .Select(f => f.Rating)
                 .ToListAsync();
-            
+
             if (feedbacks.Count == 0) return 0;
-            
+
             return feedbacks.Average();
+        }
+
+        /// <summary>
+        /// Returns all feedbacks for a business via the Customer → BusinessId path.
+        /// Includes Customer so callers don't need a second query.
+        /// </summary>
+        public async Task<IEnumerable<Feedback>> GetByBusinessIdAsync(string businessId)
+        {
+            return await _context.Feedbacks
+                .Include(f => f.Customer)
+                .Where(f => f.Customer != null && f.Customer.BusinessId == businessId)
+                .ToListAsync();
         }
     }
 }

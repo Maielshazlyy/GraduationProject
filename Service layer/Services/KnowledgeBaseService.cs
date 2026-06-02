@@ -12,15 +12,18 @@ namespace Service_layer.Services
         private readonly IKnowledgeBaseRepository _knowledgeBaseRepository;
         private readonly IBusinessRepository _businessRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAiKnowledgeSyncService? _aiSync;
 
         public KnowledgeBaseService(
             IKnowledgeBaseRepository knowledgeBaseRepository,
             IBusinessRepository businessRepository,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IAiKnowledgeSyncService? aiSync = null)
         {
             _knowledgeBaseRepository = knowledgeBaseRepository;
-            _businessRepository = businessRepository;
-            _unitOfWork = unitOfWork;
+            _businessRepository      = businessRepository;
+            _unitOfWork              = unitOfWork;
+            _aiSync                  = aiSync;
         }
 
         public async Task<IEnumerable<KnowledgeBase>> GetAllAsync()
@@ -72,6 +75,8 @@ namespace Service_layer.Services
 
             await _knowledgeBaseRepository.AddAsync(kb);
             await _unitOfWork.CompleteAsync();
+
+            await TrySyncAsync(kb.BusinessId);
             return kb;
         }
 
@@ -80,14 +85,16 @@ namespace Service_layer.Services
             var kb = await _knowledgeBaseRepository.GetByIdAsync(id);
             if (kb == null) return null;
 
-            kb.Question = dto.Question;
-            kb.Answer = dto.Answer;
-            kb.IsFAQ = dto.IsFAQ;
+            kb.Question     = dto.Question;
+            kb.Answer       = dto.Answer;
+            kb.IsFAQ        = dto.IsFAQ;
             kb.DisplayOrder = dto.DisplayOrder;
-            kb.IsActive = dto.IsActive;
+            kb.IsActive     = dto.IsActive;
 
             _knowledgeBaseRepository.Update(kb);
             await _unitOfWork.CompleteAsync();
+
+            await TrySyncAsync(kb.BusinessId);
             return kb;
         }
 
@@ -96,9 +103,28 @@ namespace Service_layer.Services
             var kb = await _knowledgeBaseRepository.GetByIdAsync(id);
             if (kb == null) return false;
 
+            var businessId = kb.BusinessId;
             _knowledgeBaseRepository.Delete(kb);
             await _unitOfWork.CompleteAsync();
+
+            await TrySyncAsync(businessId);
             return true;
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Pushes the updated knowledge base to the AI after a KB change.
+        /// Non-fatal — a sync failure must never block the business operation.
+        /// </summary>
+        private async Task TrySyncAsync(string businessId)
+        {
+            if (_aiSync == null) return;
+            try   { await _aiSync.SyncBusinessAsync(businessId); }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AiSync] KnowledgeBaseService sync failed for {businessId}: {ex.Message}");
+            }
         }
     }
 }

@@ -947,6 +947,18 @@
                   "disabled": true
                 },
                 {
+                  "key": "chatAnalysisPeriod",
+                  "value": "30d",
+                  "description": "AI chat analysis section (intents, topics, key moments, recent sessions). Allowed: today | 7d | 30d | all | custom",
+                  "disabled": true
+                },
+                {
+                  "key": "feedbacksPeriod",
+                  "value": "30d",
+                  "description": "Customer feedback ratings summary (avg rating, positive/neutral/negative). Allowed: today | 7d | 30d | all | custom",
+                  "disabled": true
+                },
+                {
                   "key": "customFrom",
                   "value": "2026-01-01",
                   "description": "Required when any period=custom. ISO date (UTC), inclusive start.",
@@ -960,7 +972,7 @@
                 }
               ]
             },
-            "description": "Single endpoint that returns the entire dashboard in one call: general insights (with % change), channel distribution, sentiment analysis, revenue trend, top products, recent alerts, and customer leads.\n\nEach section can be filtered independently; any section param left out falls back to 'period' (default 30d). Allowed values: today | 7d | 30d | all | custom.\n\nFor custom, set the section(s) to 'custom' and supply customFrom & customTo (enable those two params).\n\nAuth: requires an Owner or Admin Bearer token ({{token}}, set automatically by '01 - Auth > Login'). BusinessId is read from the token, so it is NOT passed as a parameter.\n\nNOTE: log in as an OWNER (Owners carry a businessId). If you get 400 'BusinessId not found in token', your token has no business linked."
+            "description": "Single endpoint returning the full dashboard: general insights, channel distribution, sentiment, revenue trend, top products, alerts, customer leads, AI chat analysis (intents/topics/key moments/recent sessions), and feedback summary.\n\nEach section has its own optional period filter; any omitted section falls back to `period` (default 30d). Allowed values: today | 7d | 30d | all | custom.\n\nFor custom, set the relevant section(s) to 'custom' and supply customFrom & customTo.\n\nAuth: Owner or Admin Bearer token. BusinessId is read from the token."
           },
           "response": []
         },
@@ -3919,8 +3931,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"customerId\": null,\n  \"message\": \"What are your opening hours?\",\n  \"channel\": \"WebChat\",\n  \"sessionId\": \"session-001\"\n}"
+              "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"customerId\": null,\n  \"interactionId\": null,\n  \"message\": \"What are your opening hours?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
+            "description": "Send a text message to the AI chatbot.\n\n- `interactionId`: null on first message (backend creates a new interaction). On subsequent messages pass the interactionId returned in the first response.\n- `customerId`: null for anonymous/guest customers.\n- Channel is always WebChat — no need to send it.",
             "url": {
               "raw": "{{baseUrl}}/api/CustomerChat/message",
               "host": [
@@ -4018,8 +4036,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"customerId\": null,\n  \"message\": \"I want to place an order\",\n  \"audioData\": null,\n  \"channel\": \"Voice\",\n  \"sessionId\": \"call-session-001\"\n}"
+              "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"customerId\": null,\n  \"interactionId\": null,\n  \"callSessionId\": \"call-session-001\",\n  \"message\": \"I want to place an order\",\n  \"audioData\": null,\n  \"audioFormat\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
+            "description": "Send a voice message (audio or text fallback) to the AI.\n\n- `interactionId`: null on first message; pass the returned interactionId on subsequent messages.\n- `callSessionId`: telephony provider session ID.\n- `audioData`: base64-encoded audio. Use `message` as text fallback when audio is not available.\n- Channel is always Voice — no need to send it.\n\n⚠️ This REST endpoint is a placeholder. Real implementation uses WebSocket (SignalR).",
             "url": {
               "raw": "{{baseUrl}}/api/CustomerVoice/message",
               "host": [

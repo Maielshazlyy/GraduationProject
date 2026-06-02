@@ -174,6 +174,7 @@ namespace digital_employee
             builder.Services.AddScoped<IIntegrationRepository, IntegrationRepository>();
             builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
             builder.Services.AddScoped<ISentimentRepository, SentimentRepository>();
+            builder.Services.AddScoped<IInteractionAnalysisRepository, InteractionAnalysisRepository>();
             
             // UnitOfWork
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -246,10 +247,23 @@ namespace digital_employee
             builder.Services.AddScoped<ICustomerChatService, CustomerChatService>();
             builder.Services.AddScoped<ICustomerVoiceService, CustomerVoiceService>();
 
-            // AI Chat Service (external AI API)
+            // AI Services (external AI API)
             var aiApiBaseUrl = builder.Configuration["AiApi:BaseUrl"]
                 ?? "https://anyway-remix-puzzling.ngrok-free.dev";
+
             builder.Services.AddHttpClient<IAiChatService, AiChatService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            builder.Services.AddHttpClient<IAiKnowledgeSyncService, AiKnowledgeSyncService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            builder.Services.AddHttpClient<IAiAnalysisService, AiAnalysisService>(client =>
             {
                 client.BaseAddress = new Uri(aiApiBaseUrl);
                 client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");

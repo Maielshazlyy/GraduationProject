@@ -31,14 +31,33 @@ namespace Service_layer.Services
             var orders = (await _unitOfWork.Orders.GetByBusinessIdAsync(businessId)).ToList();
             var customers = (await _unitOfWork.Customers.GetByBusinessIdAsync(businessId)).ToList();
             var tickets = (await _unitOfWork.Tickets.GetByBusinessIdAsync(businessId)).ToList();
-            var feedbacks = (await _unitOfWork.Feedbacks.GetAllAsync())
-                .Where(f => f.Customer != null && f.Customer.BusinessId == businessId).ToList();
+            var feedbacks = (await _unitOfWork.Feedbacks.GetByBusinessIdAsync(businessId)).ToList();
             var sentiments = (await _unitOfWork.Sentiments.GetByBusinessIdAsync(businessId)).ToList();
             var interactions = (await _unitOfWork.Interactions.GetByBusinessIdAsync(businessId)).ToList();
             var menuItems = (await _unitOfWork.MenuItems.GetByBusinessIdAsync(businessId)).ToList();
 
+            var analyses  = (await _unitOfWork.InteractionAnalyses.GetByBusinessIdAsync(businessId)).ToList();
             var topOrderedProducts = await GetTopOrderedProductsAsync(orders, menuItems, DefaultTopProductsCount);
             var rushInsights = BuildRushInsights(orders, interactions, topOrderedProducts);
+
+            // ── Sentiment: prefer AI session-level analyses, fall back to keyword-based ──
+            int positiveSentiments, negativeSentiments, neutralSentiments;
+            double avgSentimentScore;
+
+            if (analyses.Any())
+            {
+                positiveSentiments = analyses.Count(a => a.SentimentLabel.Equals("Positive", StringComparison.OrdinalIgnoreCase));
+                negativeSentiments = analyses.Count(a => a.SentimentLabel.Equals("Negative", StringComparison.OrdinalIgnoreCase));
+                neutralSentiments  = analyses.Count(a => a.SentimentLabel.Equals("Neutral",  StringComparison.OrdinalIgnoreCase));
+                avgSentimentScore  = analyses.Average(a => a.SentimentScore);
+            }
+            else
+            {
+                positiveSentiments = sentiments.Count(s => s.Label.Equals("Positive", StringComparison.OrdinalIgnoreCase));
+                negativeSentiments = sentiments.Count(s => s.Label.Equals("Negative", StringComparison.OrdinalIgnoreCase));
+                neutralSentiments  = sentiments.Count(s => s.Label.Equals("Neutral",  StringComparison.OrdinalIgnoreCase));
+                avgSentimentScore  = sentiments.Any() ? sentiments.Average(s => s.Score) : 0;
+            }
 
             // Calculate analytics
             var analytics = new BusinessAnalyticsDTO
@@ -64,17 +83,17 @@ namespace Service_layer.Services
                 InProgressTickets = tickets.Count(t => t.Status == "In Progress"),
                 AverageTicketResolutionTime = CalculateAverageResolutionTime(tickets),
 
-                // Feedback
+                // Feedback — now loaded directly by businessId (no more GetAllAsync)
                 TotalFeedbacks = feedbacks.Count,
                 AverageRating = feedbacks.Any() ? feedbacks.Average(f => f.Rating) : 0,
                 PositiveFeedbacks = feedbacks.Count(f => f.Rating >= 4),
                 NegativeFeedbacks = feedbacks.Count(f => f.Rating <= 2),
 
-                // Sentiment
-                PositiveSentiments = sentiments.Count(s => s.Label.Equals("Positive", StringComparison.OrdinalIgnoreCase)),
-                NegativeSentiments = sentiments.Count(s => s.Label.Equals("Negative", StringComparison.OrdinalIgnoreCase)),
-                NeutralSentiments = sentiments.Count(s => s.Label.Equals("Neutral", StringComparison.OrdinalIgnoreCase)),
-                AverageSentimentScore = sentiments.Any() ? sentiments.Average(s => s.Score) : 0,
+                // Sentiment — AI analyses preferred, keyword fallback
+                PositiveSentiments    = positiveSentiments,
+                NegativeSentiments    = negativeSentiments,
+                NeutralSentiments     = neutralSentiments,
+                AverageSentimentScore = avgSentimentScore,
 
                 // Interactions
                 TotalInteractions = interactions.Count,

@@ -106,6 +106,8 @@ namespace digital_employee.Controllers
             [FromQuery] string? revenuePeriod = null,
             [FromQuery] string? productsPeriod = null,
             [FromQuery] string? leadsPeriod = null,
+            [FromQuery] string? chatAnalysisPeriod = null,
+            [FromQuery] string? feedbacksPeriod = null,
             [FromQuery] DateTime? customFrom = null,
             [FromQuery] DateTime? customTo = null)
         {
@@ -116,21 +118,24 @@ namespace digital_employee.Controllers
 
             var filter = new DashboardFilterDTO
             {
-                InsightsPeriod  = insightsPeriod  ?? defaultPeriod,
-                ChannelsPeriod  = channelsPeriod  ?? defaultPeriod,
-                SentimentPeriod = sentimentPeriod ?? defaultPeriod,
-                RevenuePeriod   = revenuePeriod   ?? defaultPeriod,
-                ProductsPeriod  = productsPeriod  ?? defaultPeriod,
-                LeadsPeriod     = leadsPeriod     ?? defaultPeriod,
-                CustomFrom      = customFrom,
-                CustomTo        = customTo
+                InsightsPeriod     = insightsPeriod     ?? defaultPeriod,
+                ChannelsPeriod     = channelsPeriod     ?? defaultPeriod,
+                SentimentPeriod    = sentimentPeriod    ?? defaultPeriod,
+                RevenuePeriod      = revenuePeriod      ?? defaultPeriod,
+                ProductsPeriod     = productsPeriod     ?? defaultPeriod,
+                LeadsPeriod        = leadsPeriod        ?? defaultPeriod,
+                ChatAnalysisPeriod = chatAnalysisPeriod ?? defaultPeriod,
+                FeedbacksPeriod    = feedbacksPeriod    ?? defaultPeriod,
+                CustomFrom         = customFrom,
+                CustomTo           = customTo
             };
 
             // If any section resolves to "custom", a valid date window is required
             var usesCustom = new[]
             {
                 filter.InsightsPeriod, filter.ChannelsPeriod, filter.SentimentPeriod,
-                filter.RevenuePeriod, filter.ProductsPeriod, filter.LeadsPeriod
+                filter.RevenuePeriod, filter.ProductsPeriod, filter.LeadsPeriod,
+                filter.ChatAnalysisPeriod, filter.FeedbacksPeriod
             }.Any(p => string.Equals(p, "custom", StringComparison.OrdinalIgnoreCase));
 
             if (usesCustom)

@@ -36,6 +36,7 @@ namespace DAL.Context
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<KnowledgeBase> KnowledgeBases { get; set; }
         public DbSet<Integration> Integrations { get; set; }
+        public DbSet<InteractionAnalysis> InteractionAnalyses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -64,6 +65,7 @@ namespace DAL.Context
             modelBuilder.Entity<AuditLog>().HasKey(a => a.AuditLogId);
             modelBuilder.Entity<KnowledgeBase>().HasKey(k => k.KnowledgeBaseId);
             modelBuilder.Entity<Sentiment>().HasKey(s => s.SentimentId);
+            modelBuilder.Entity<InteractionAnalysis>().HasKey(a => a.InteractionAnalysisId);
 
             // ---------------------------
             // Business relations (1:M / 1:1)
@@ -265,6 +267,21 @@ namespace DAL.Context
                 .WithMany(i => i.Messages)
                 .HasForeignKey(m => m.InteractionId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // ---------------------------
+            // InteractionAnalysis (1:1 with Interaction)
+            // ---------------------------
+            modelBuilder.Entity<InteractionAnalysis>()
+                .HasOne(a => a.Interaction)
+                .WithOne()
+                .HasForeignKey<InteractionAnalysis>(a => a.InteractionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<InteractionAnalysis>()
+                .HasOne(a => a.Business)
+                .WithMany()
+                .HasForeignKey(a => a.BusinessId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // ---------------------------
             // Message <-> Sentiment (1:1)

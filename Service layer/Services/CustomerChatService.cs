@@ -36,31 +36,17 @@ namespace Service_layer.Services
             _aiChatService  = aiChatService;
             _auditLogService = auditLogService;
             _sentimentService = sentimentService;
-            _businessLogic  = new CustomerInteractionBusinessLogic(unitOfWork, aiChatService, auditLogService);
+            _businessLogic  = new CustomerInteractionBusinessLogic(unitOfWork, auditLogService);
         }
 
         public async Task<CustomerChatResponseDTO> HandleMessageAsync(CustomerChatRequestDTO request)
         {
-            var channel = string.IsNullOrWhiteSpace(request.Channel) ? "WebChat" : request.Channel;
-            if (channel != "WebChat")
-                throw new ArgumentException("This service handles WebChat only. Use ICustomerVoiceService for Voice.");
-
+            // channel is always forced to "WebChat" by the controller — no need to re-check here
             if (string.IsNullOrWhiteSpace(request.Message))
                 throw new ArgumentException("Message is required for Chat.");
 
             // ── 1) Get or create interaction ────────────────────────────────────
-            var (interaction, isNewSession) = await GetOrCreateInteractionAsync(request, channel);
-
-            // ── 1.5) New session → push the business menu + KB to the AI ─────────
-            if (isNewSession)
-            {
-                try { await _businessLogic.PrimeAiSessionAsync(interaction); }
-                catch (Exception ex)
-                {
-                    // Non-fatal: conversation proceeds even if priming fails
-                    System.Diagnostics.Debug.WriteLine($"AI session prime failed: {ex.Message}");
-                }
-            }
+            var (interaction, _) = await GetOrCreateInteractionAsync(request, "WebChat");
 
             // ── 2) Persist customer message ─────────────────────────────────────
             var customerMessage = new Message
@@ -91,14 +77,16 @@ namespace Service_layer.Services
                 {
                     SessionId  = interaction.InteractionId,
                     BusinessId = interaction.BusinessId,
-                    Channel    = "WebChat",
                     Message    = request.Message!
                 });
             }
-            catch
+            catch (Exception ex)
             {
-                // AI unreachable — fall back to empty response; backend still works
-                aiResponse = new AiChatResponseDTO();
+                System.Diagnostics.Debug.WriteLine($"[CustomerChatService] AI call failed: {ex.Message}");
+                aiResponse = new AiChatResponseDTO
+                {
+                    Reply = "عذراً، حدث خطأ مؤقت. يرجى المحاولة مرة أخرى."
+                };
             }
 
             // ── 4) Map AI signals → DetectedIntentResultDTO (for audit/sentiment) ─
@@ -140,7 +128,10 @@ namespace Service_layer.Services
                     isEscalation: true);
 
                 ticketId = ticket.TicketId;
-                interaction.Status = "Escalated";
+                // Caller owns all interaction mutations — set them here after HandleTicketAsync
+                interaction.InteractionType = "Ticket";
+                interaction.RelatedTicketId = ticketId;
+                interaction.Status          = "Escalated";
 
                 if (_auditLogService != null)
                 {
@@ -151,11 +142,11 @@ namespace Service_layer.Services
                         userId:        null);
                 }
             }
-            else if (aiResponse.TicketDetected && aiResponse.TicketDetails != null)
+            else if (aiResponse.TicketDetected)
             {
                 var ticket = await _businessLogic.HandleTicketAsync(
                     interaction, intentResult,
-                    aiTicketDetails: aiResponse.TicketDetails);
+                    aiTicketDetails: aiResponse.TicketDetails); // null-safe; HandleTicketAsync uses defaults
 
                 ticketId = ticket.TicketId;
                 interaction.InteractionType = "Ticket";
@@ -166,11 +157,18 @@ namespace Service_layer.Services
                 var orderResult = await _businessLogic.HandleCreateOrderAsync(
                     interaction, aiResponse.OrderDetails);
 
-                orderId         = orderResult.Order?.OrderId;
+                // Only tag the interaction as an order when one was actually created.
+                // If ALL cart items were unavailable/unmatched, HandleCreateOrderAsync
+                // returns a null Order — setting InteractionType then would be wrong.
+                if (orderResult.Order != null)
+                {
+                    orderId = orderResult.Order.OrderId;
+                    interaction.InteractionType = "Order";
+                    interaction.RelatedOrderId  = orderId;
+                }
+
                 cart            = orderResult.Cart;
                 recommendations = orderResult.Recommendations;
-                interaction.InteractionType = "Order";
-                interaction.RelatedOrderId  = orderId;
             }
             // order_detected but NOT order_finalized → cart still being built; no DB action
 
@@ -315,27 +313,69 @@ namespace Service_layer.Services
         private async Task<(Interaction interaction, bool isNew)> GetOrCreateInteractionAsync(
             CustomerChatRequestDTO request, string channel)
         {
+            // ── Validate business exists before creating any records ────────────
+            var business = await _unitOfWork.Businesses.GetByIdAsync(request.BusinessId);
+            if (business == null)
+                throw new ArgumentException($"Business '{request.BusinessId}' not found.");
+
+            // ── Resume existing interaction (must belong to this business) ──────
             if (!string.IsNullOrWhiteSpace(request.InteractionId))
             {
                 var existing = await _unitOfWork.Interactions.GetByIdAsync(request.InteractionId);
-                if (existing != null)
+                if (existing != null && existing.BusinessId == request.BusinessId)
+                {
+                    // Reject messages on a closed interaction — session_id must never be reused
+                    if (existing.IsEnded == true)
+                        throw new InvalidOperationException(
+                            $"Interaction '{request.InteractionId}' is already ended. Start a new interaction.");
+
                     return (existing, false);
+                }
+                // wrong id or wrong business → fall through and create a new interaction
             }
+
+            var customerId = await EnsureCustomerAsync(request.BusinessId, request.CustomerId);
 
             var interaction = new Interaction
             {
                 InteractionId = Guid.NewGuid().ToString(),
-                BusinessId = request.BusinessId,
-                CustomerId = request.CustomerId ?? Guid.NewGuid().ToString(),
-                Channel = channel,
-                Status = "Open",
-                StartedAt = DateTime.UtcNow
+                BusinessId    = request.BusinessId,
+                CustomerId    = customerId,
+                Channel       = channel,
+                Status        = "Open",
+                StartedAt     = DateTime.UtcNow
             };
 
             await _unitOfWork.Interactions.AddAsync(interaction);
             await _unitOfWork.CompleteAsync();
 
             return (interaction, true);
+        }
+
+        /// <summary>
+        /// Returns the existing customer id if valid, otherwise creates a guest Customer
+        /// record so the Interaction FK constraint is always satisfied.
+        /// </summary>
+        private async Task<string> EnsureCustomerAsync(string businessId, string? customerId)
+        {
+            if (!string.IsNullOrWhiteSpace(customerId))
+            {
+                var existing = await _unitOfWork.Customers.GetByIdAsync(customerId);
+                if (existing != null) return customerId;
+            }
+
+            var guest = new Customer
+            {
+                CustomerId = Guid.NewGuid().ToString(),
+                BusinessId = businessId,
+                FullName   = "Guest",
+                Email      = string.Empty,
+                Phone      = string.Empty,
+                CreatedAt  = DateTime.UtcNow
+            };
+            await _unitOfWork.Customers.AddAsync(guest);
+            await _unitOfWork.CompleteAsync();
+            return guest.CustomerId;
         }
 
         #endregion

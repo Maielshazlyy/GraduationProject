@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Extensions.DependencyInjection;
 using Domain_layer.Interfaces;
 using Domain_layer.Models;
 using Service_layer.DTOS.Interaction;
@@ -13,19 +14,22 @@ namespace Service_layer.Services
         private readonly ICustomerRepository _customerRepository;
         private readonly IRepository<User> _userRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IServiceScopeFactory _scopeFactory;
 
         public InteractionService(
             IInteractionRepository interactionRepository,
             IBusinessRepository businessRepository,
             ICustomerRepository customerRepository,
             IRepository<User> userRepository,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IServiceScopeFactory scopeFactory)
         {
             _interactionRepository = interactionRepository;
-            _businessRepository = businessRepository;
-            _customerRepository = customerRepository;
-            _userRepository = userRepository;
-            _unitOfWork = unitOfWork;
+            _businessRepository    = businessRepository;
+            _customerRepository    = customerRepository;
+            _userRepository        = userRepository;
+            _unitOfWork            = unitOfWork;
+            _scopeFactory          = scopeFactory;
         }
 
         public async Task<IEnumerable<Interaction>> GetAllAsync()
@@ -99,6 +103,28 @@ namespace Service_layer.Services
 
             _interactionRepository.Update(interaction);
             await _unitOfWork.CompleteAsync();
+
+            // ── Trigger post-session AI analysis ─────────────────────────────
+            // Runs in a NEW scope so the background task has its own DbContext
+            // and is not affected by the current request scope being disposed.
+            // Non-fatal: analysis failure must never block the close operation.
+            var interactionId = interaction.InteractionId;
+            _ = Task.Run(async () =>
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var analysisService = scope.ServiceProvider
+                    .GetRequiredService<IAiAnalysisService>();
+                try
+                {
+                    await analysisService.AnalyzeSessionAsync(interactionId);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[AiAnalysis] Analysis failed for {interactionId}: {ex.Message}");
+                }
+            });
+
             return interaction;
         }
 
