@@ -29,5 +29,15 @@ namespace DAL.Repositories
                     .ThenInclude(i => i.Customer)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<InteractionAnalysis>> GetByBusinessIdAndDateRangeAsync(
+            string businessId, DateTime from, DateTime to)
+        {
+            return await _context.InteractionAnalyses
+                .Where(a => a.BusinessId == businessId &&
+                            a.AnalyzedAt >= from &&
+                            a.AnalyzedAt <= to)
+                .ToListAsync();
+        }
     }
 }

@@ -22,7 +22,7 @@ namespace digital_employee
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -281,6 +281,14 @@ namespace digital_employee
                 client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
             });
 
+            // AI Report Service
+            builder.Services.AddHttpClient<IAiReportService, AiReportService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+            builder.Services.AddScoped<IBusinessReportGenerationService, BusinessReportGenerationService>();
+
             // -------------------------
             // 8) FluentValidation Registration
             // -------------------------
@@ -320,6 +328,11 @@ namespace digital_employee
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.Migrate();
             }
+
+            // -------------------------
+            // Seed dummy data (runs once per business, skips if already seeded)
+            // -------------------------
+            await DataSeeder.SeedAllAsync(app.Services);
 
             // -------------------------
             // 9) Swagger (all environments)

@@ -4183,6 +4183,149 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "27 - Owner Chat [AI]",
+      "item": [
+        {
+          "name": "Send Message [Owner/Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"message\": \"كام شكوى عندنا الشهر ده؟\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/OwnerChat/message",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "OwnerChat",
+                "message"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Report [Owner/Admin]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/OwnerChat/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "OwnerChat",
+                "report"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reload Analytics [Owner/Admin]",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/OwnerChat/reload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "OwnerChat",
+                "reload"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "28 - Business Report Generation [Owner]",
+      "item": [
+        {
+          "name": "Generate AI Report [Owner/Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"2026-06-01T00:00:00Z\",\n  \"to\": \"2026-06-30T23:59:59Z\",\n  \"language\": \"ar\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/businesses/{{businessId}}/reports/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "businesses",
+                "{{businessId}}",
+                "reports",
+                "generate"
+              ]
+            },
+            "description": "Generate AI report from stored interaction analyses.\n\nReplace {{businessId}} with actual business ID.\n\nRequires Owner or Admin token.\n\nReturns structured report with summary, highlights, problems, recommendations, and suggested actions."
+          }
+        }
+      ]
     }
   ],
   "auth": {
