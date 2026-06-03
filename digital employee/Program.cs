@@ -274,6 +274,13 @@ namespace digital_employee
             builder.Services.AddScoped<IDashboardService, DashboardService>();
             builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 
+            // AI Owner Chat Service (analytics assistant)
+            builder.Services.AddHttpClient<IAiOwnerChatService, AiOwnerChatService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
             // -------------------------
             // 8) FluentValidation Registration
             // -------------------------
