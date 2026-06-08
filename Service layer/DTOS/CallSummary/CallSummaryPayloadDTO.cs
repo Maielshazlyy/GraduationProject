@@ -142,8 +142,6 @@ namespace Service_layer.DTOS.CallSummary
         [JsonPropertyName("keyMoments")]
         public List<KeyMomentDTO> KeyMoments { get; set; } = new();
 
-        [JsonPropertyName("modelsUsed")]
-        public List<string> ModelsUsed { get; set; } = new();
     }
 
     public class SentimentResultDTO

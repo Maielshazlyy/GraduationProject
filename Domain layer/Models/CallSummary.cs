@@ -4,6 +4,15 @@ namespace Domain_layer.Models
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
+        // --- Links ---
+        /// <summary>The Interaction this call belongs to.</summary>
+        public string? InteractionId { get; set; }
+        public Interaction? Interaction { get; set; }
+
+        /// <summary>The Business this call belongs to.</summary>
+        public string BusinessId { get; set; } = string.Empty;
+        public Business? Business { get; set; }
+
         // --- Call Data ---
         public string CallId { get; set; } = string.Empty;
         public DateTime StartTime { get; set; }
@@ -28,7 +37,6 @@ namespace Domain_layer.Models
         public string IntentsDetectedJson { get; set; } = "[]";
         public string ActionsPerformedJson { get; set; } = "[]";
         public string KeyMomentsJson { get; set; } = "[]";
-        public string ModelsUsedJson { get; set; } = "[]";
 
         public bool EscalationRequired { get; set; }
         public string? EscalationReason { get; set; }

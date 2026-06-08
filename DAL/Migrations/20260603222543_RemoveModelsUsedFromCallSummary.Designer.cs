@@ -4,6 +4,7 @@ using DAL.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260603222543_RemoveModelsUsedFromCallSummary")]
+    partial class RemoveModelsUsedFromCallSummary
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -177,10 +180,6 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("BusinessId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("CallId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -207,9 +206,6 @@ namespace DAL.Migrations
                     b.Property<string>("IntentsDetectedJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("InteractionId")
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("KeyMomentsJson")
                         .IsRequired()
@@ -248,10 +244,6 @@ namespace DAL.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BusinessId");
-
-                    b.HasIndex("InteractionId");
 
                     b.ToTable("CallSummaries");
                 });
@@ -839,9 +831,6 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("MeetingUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("PushNotifications")
                         .HasColumnType("bit");
 
@@ -1255,24 +1244,6 @@ namespace DAL.Migrations
                     b.Navigation("Business");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain_layer.Models.CallSummary", b =>
-                {
-                    b.HasOne("Domain_layer.Models.Business", "Business")
-                        .WithMany()
-                        .HasForeignKey("BusinessId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("Domain_layer.Models.Interaction", "Interaction")
-                        .WithMany()
-                        .HasForeignKey("InteractionId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Business");
-
-                    b.Navigation("Interaction");
                 });
 
             modelBuilder.Entity("Domain_layer.Models.Customer", b =>

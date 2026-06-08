@@ -271,6 +271,22 @@ namespace DAL.Context
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ---------------------------
+            // CallSummary
+            // ---------------------------
+            modelBuilder.Entity<CallSummary>()
+                .HasOne(cs => cs.Interaction)
+                .WithMany()
+                .HasForeignKey(cs => cs.InteractionId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<CallSummary>()
+                .HasOne(cs => cs.Business)
+                .WithMany()
+                .HasForeignKey(cs => cs.BusinessId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // ---------------------------
             // InteractionAnalysis (1:1 with Interaction)
             // ---------------------------
             modelBuilder.Entity<InteractionAnalysis>()

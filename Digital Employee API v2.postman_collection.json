@@ -4036,39 +4036,22 @@
       "name": "26 - Customer Voice [Public]",
       "item": [
         {
-          "name": "Initialize Voice Session",
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          "name": "Start Call",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.interactionId) {",
+                  "    pm.collectionVariables.set(\"interactionId\", json.interactionId);",
+                  "    console.log(\"interactionId saved:\", json.interactionId);",
+                  "}"
+                ]
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"customerId\": null,\n  \"callSessionId\": \"call-session-001\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/CustomerVoice/session/initialize",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "CustomerVoice",
-                "session",
-                "initialize"
-              ]
             }
-          },
-          "response": []
-        },
-        {
-          "name": "Send Voice Message",
+          ],
           "request": {
             "auth": {
               "type": "noauth"
@@ -4080,56 +4063,33 @@
                 "value": "application/json"
               }
             ],
+            "description": "يتبعت لما الـ Customer يدوس Call.\nالـ Backend ينشئ Interaction ويبلغ الـ AI تنضم للـ meeting.\nالـ interactionId بيتحفظ تلقائياً.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"customerId\": null,\n  \"interactionId\": null,\n  \"callSessionId\": \"call-session-001\",\n  \"message\": \"I want to place an order\",\n  \"audioData\": null,\n  \"audioFormat\": null\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
-              }
+              },
+              "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"meetingUrl\": \"https://meet.example.com/room-abc\",\n  \"customerId\": null\n}"
             },
-            "description": "Send a voice message (audio or text fallback) to the AI.\n\n- `interactionId`: null on first message; pass the returned interactionId on subsequent messages.\n- `callSessionId`: telephony provider session ID.\n- `audioData`: base64-encoded audio. Use `message` as text fallback when audio is not available.\n- Channel is always Voice — no need to send it.\n\n⚠️ This REST endpoint is a placeholder. Real implementation uses WebSocket (SignalR).",
             "url": {
-              "raw": "{{baseUrl}}/api/CustomerVoice/message",
+              "raw": "{{baseUrl}}/api/CustomerVoice/call/start",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "CustomerVoice",
-                "message"
+                "call",
+                "start"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Mark Interaction Interrupted",
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/CustomerVoice/interaction/{{interactionId}}/interrupt",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "CustomerVoice",
-                "interaction",
-                "{{interactionId}}",
-                "interrupt"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Submit Voice Feedback",
+          "name": "Call Completed [AI Webhook]",
           "request": {
             "auth": {
               "type": "noauth"
@@ -4141,42 +4101,25 @@
                 "value": "application/json"
               }
             ],
+            "description": "بيتبعت من الـ Voice AI بعد ما المكالمة تخلص.\nالـ Backend بيخزن الـ CallSummary ويـ close الـ Interaction.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"interactionId\": \"{{interactionId}}\",\n  \"rating\": 5,\n  \"comment\": \"Very helpful voice assistant!\"\n}"
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"interaction_id\": \"{{interactionId}}\",\n  \"business_id\": \"{{businessId}}\",\n  \"customer_identifier\": null,\n  \"queued_at\": \"2026-01-01T10:00:00Z\",\n  \"call_data\": {\n    \"call_id\": \"call-001\",\n    \"start_time\": \"2026-01-01T10:00:00Z\",\n    \"end_time\": \"2026-01-01T10:05:00Z\",\n    \"duration_seconds\": 300,\n    \"messages_count\": 4,\n    \"full_transcript\": \"Customer: عايز أطلب بيتزا\\nAgent: حاضر، أي نوع؟\",\n    \"messages\": [\n      {\n        \"turnIndex\": 0,\n        \"timestamp\": \"2026-01-01T10:00:05Z\",\n        \"speaker\": \"Customer\",\n        \"transcript\": \"عايز أطلب بيتزا\",\n        \"audioLengthMs\": 1500,\n        \"language\": \"ar\",\n        \"dialect\": \"Egyptian\",\n        \"intentDetected\": null,\n        \"actionTaken\": null,\n        \"sentiment\": {\n          \"score\": 0.5,\n          \"label\": \"Positive\"\n        }\n      },\n      {\n        \"turnIndex\": 1,\n        \"timestamp\": \"2026-01-01T10:00:08Z\",\n        \"speaker\": \"Agent\",\n        \"transcript\": \"حاضر، أي نوع بيتزا تحب؟\",\n        \"audioLengthMs\": 2000,\n        \"language\": \"ar\",\n        \"dialect\": \"Egyptian\",\n        \"intentDetected\": \"CreateOrder\",\n        \"actionTaken\": null,\n        \"sentiment\": null\n      }\n    ],\n    \"audio_files\": {\n      \"customer\": null,\n      \"agent\": null,\n      \"stereo\": null\n    },\n    \"audio_info\": {\n      \"sample_rate\": 16000,\n      \"bit_depth\": 16,\n      \"customer_duration_sec\": 120,\n      \"agent_duration_sec\": 180\n    }\n  },\n  \"analysis\": {\n    \"callId\": \"call-001\",\n    \"durationSeconds\": 300,\n    \"analyzedAt\": \"2026-01-01T10:05:30Z\",\n    \"summary\": \"Customer ordered a pizza successfully.\",\n    \"summaryAr\": \"الكاستمر طلب بيتزا وتم إنشاء الطلب بنجاح.\",\n    \"overallSentiment\": {\n      \"score\": 0.7,\n      \"label\": \"Positive\"\n    },\n    \"mainTopics\": [\n      \"order\",\n      \"pizza\"\n    ],\n    \"intentsDetected\": [\n      \"CreateOrder\"\n    ],\n    \"actionsPerformed\": [\n      {\n        \"type\": \"OrderCreated\",\n        \"referenceId\": \"order-123\",\n        \"details\": {\n          \"items\": [\n            \"Pepperoni Pizza\"\n          ],\n          \"totalPrice\": 85\n        }\n      }\n    ],\n    \"escalationRequired\": false,\n    \"escalationReason\": null,\n    \"keyMoments\": [\n      {\n        \"turnIndex\": 3,\n        \"description\": \"Customer confirmed the order\"\n      }\n    ]\n  }\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/CustomerVoice/feedback",
+              "raw": "{{baseUrl}}/api/voice/call-completed",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "CustomerVoice",
-                "feedback"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Voice Settings",
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/CustomerVoice/settings/{{businessId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "CustomerVoice",
-                "settings",
-                "{{businessId}}"
+                "voice",
+                "call-completed"
               ]
             }
           },
@@ -4341,7 +4284,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:9875",
+      "value": "https://graduationproject.fly.dev",
       "description": "IIS Express: http://localhost:9875 or https://localhost:44361. Kestrel (dotnet run): http://localhost:5157"
     },
     {

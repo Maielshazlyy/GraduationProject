@@ -281,6 +281,22 @@ namespace digital_employee
                 client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
             });
 
+            // AI Voice Services
+            var aiVoiceApiBaseUrl = builder.Configuration["AiVoiceApi:BaseUrl"]
+                ?? "https://anyway-remix-puzzling.ngrok-free.dev";
+
+            builder.Services.AddHttpClient<IAiVoiceKnowledgeSyncService, AiVoiceKnowledgeSyncService>(client =>
+            {
+                client.BaseAddress = new Uri(aiVoiceApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            builder.Services.AddHttpClient<IAiVoiceJoinService, AiVoiceJoinService>(client =>
+            {
+                client.BaseAddress = new Uri(aiVoiceApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
             // AI Report Service
             builder.Services.AddHttpClient<IAiReportService, AiReportService>(client =>
             {

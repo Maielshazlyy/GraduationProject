@@ -14,9 +14,13 @@ namespace Service_layer.DTOS.Voice
     public class VoiceCallCompletedDTO
     {
         /// <summary>
-        /// Which business the call belongs to. Not in the sample payload yet —
-        /// the AI team must add this so the backend can attribute the call.
+        /// The Interaction created by the backend when the call was started.
+        /// The AI receives this in the join request and must echo it back here.
         /// </summary>
+        [JsonPropertyName("interaction_id")]
+        public string InteractionId { get; set; } = string.Empty;
+
+        /// <summary>Which business the call belongs to.</summary>
         [JsonPropertyName("business_id")]
         public string? BusinessId { get; set; }
 

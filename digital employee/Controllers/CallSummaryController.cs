@@ -46,7 +46,6 @@ namespace digital_employee.Controllers
                 IntentsDetectedJson  = JsonSerializer.Serialize(payload.Analysis.IntentsDetected, options),
                 ActionsPerformedJson = JsonSerializer.Serialize(payload.Analysis.ActionsPerformed, options),
                 KeyMomentsJson    = JsonSerializer.Serialize(payload.Analysis.KeyMoments, options),
-                ModelsUsedJson    = JsonSerializer.Serialize(payload.Analysis.ModelsUsed, options),
                 EscalationRequired = payload.Analysis.EscalationRequired,
                 EscalationReason  = payload.Analysis.EscalationReason,
                 AnalyzedAt        = payload.Analysis.AnalyzedAt,

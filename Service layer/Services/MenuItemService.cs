@@ -12,17 +12,20 @@ namespace Service_layer.Services
         private readonly IBusinessRepository _businessRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAiKnowledgeSyncService? _aiSync;
+        private readonly IAiVoiceKnowledgeSyncService? _aiVoiceSync;
 
         public MenuItemService(
             IMenuItemRepository menuItemRepository,
             IBusinessRepository businessRepository,
             IUnitOfWork unitOfWork,
-            IAiKnowledgeSyncService? aiSync = null)
+            IAiKnowledgeSyncService? aiSync = null,
+            IAiVoiceKnowledgeSyncService? aiVoiceSync = null)
         {
             _menuItemRepository = menuItemRepository;
             _businessRepository = businessRepository;
             _unitOfWork         = unitOfWork;
             _aiSync             = aiSync;
+            _aiVoiceSync        = aiVoiceSync;
         }
 
         public async Task<IEnumerable<MenuItem>> GetAllAsync()
@@ -103,11 +106,22 @@ namespace Service_layer.Services
         /// </summary>
         private async Task TrySyncAsync(string businessId)
         {
-            if (_aiSync == null) return;
-            try   { await _aiSync.SyncBusinessAsync(businessId); }
-            catch (Exception ex)
+            if (_aiSync != null)
             {
-                System.Diagnostics.Debug.WriteLine($"[AiSync] MenuItemService sync failed for {businessId}: {ex.Message}");
+                try   { await _aiSync.SyncBusinessAsync(businessId); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AiSync] MenuItemService chat sync failed for {businessId}: {ex.Message}");
+                }
+            }
+
+            if (_aiVoiceSync != null)
+            {
+                try   { await _aiVoiceSync.SyncBusinessAsync(businessId); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AiVoiceSync] MenuItemService voice sync failed for {businessId}: {ex.Message}");
+                }
             }
         }
     }
