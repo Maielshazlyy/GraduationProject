@@ -243,8 +243,6 @@ namespace digital_employee
             // Business Analytics Services
             builder.Services.AddScoped<IBusinessAnalyticsService, BusinessAnalyticsService>();
 
-            // Chatbot Services
-            builder.Services.AddScoped<IChatbotService, ChatbotService>();
             builder.Services.AddScoped<ICustomerChatService, CustomerChatService>();
             builder.Services.AddScoped<ICustomerVoiceService, CustomerVoiceService>();
 
