@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a35c7b55-a62c-4138-9b9f-91972d828fa4",
     "name": "Digital Employee API v2",
-    "description": "Complete & updated Postman collection for the Digital Employee ASP.NET Core API.\n\n--- SWAGGER (same host as baseUrl; path /swagger only in browser) ---\nIIS Express: http://localhost:9875/swagger/index.html  |  https://localhost:44361/swagger/index.html\nKestrel: http://localhost:5157/swagger/index.html\n\n--- BASE URL ---\nDefault: http://localhost:9875 (IIS Express HTTP). Also: https://localhost:44361 (IIS HTTPS), http://localhost:5157 (Kestrel).\nTROUBLESHOOTING: Postman Environment OVERRIDES collection variables — set baseUrl there or No Environment. Save after edits.\n\n--- RECOMMENDED TEST FLOW ---\n1. Register Admin   → POST /api/Auth/register-admin   (no token needed)\n2. Register Owner   → POST /api/Auth/register-owner   (no token needed)\n3. Login as Owner   → POST /api/Auth/login            (token auto-saved)\n4. Create Business  → POST /api/Business              (save businessId)\n5. Login as Admin   → POST /api/Auth/login            (token auto-saved)\n6. Register Agent   → POST /api/Auth/register         (requires businessId)\n7. Create Menu Category → POST /api/MenuCategory\n8. Create Menu Item     → POST /api/MenuItem\n9. Create Customer      → POST /api/Customer\n10. Create Order        → POST /api/Order\n\n--- ROLES ---\n- Admin:  Full system access\n- Owner:  Manage their own business\n- Agent:  Handle tickets, chat, orders (default role for /register)\n- User:   Reserved (not used in normal registration flow)\n\n--- AUTH ---\nAll protected endpoints use Bearer token from {{token}} variable.\nPublic endpoints have auth set to noauth.",
+    "description": "Complete & updated Postman collection for the Digital Employee ASP.NET Core API.\n\n--- SWAGGER (same host as baseUrl; path /swagger only in browser) ---\nIIS Express: http://localhost:9875/swagger/index.html  |  https://localhost:44361/swagger/index.html\nKestrel: http://localhost:5157/swagger/index.html\n\n--- BASE URL ---\nDefault: http://localhost:9875 (IIS Express HTTP). Also: https://localhost:44361 (IIS HTTPS), http://localhost:5157 (Kestrel).\nTROUBLESHOOTING: Postman Environment OVERRIDES collection variables — set baseUrl there or No Environment. Save after edits.\n\n--- RECOMMENDED TEST FLOW ---\n1. Register Admin   → POST /api/Auth/register-admin   (no token needed)\n2. Register Owner   → POST /api/Auth/register-owner   (no token needed)\n   OR use register-business to create Business + Owner in one step ⭐\n3. Login            → POST /api/Auth/login            (token auto-saved)\n4. Create Business  → POST /api/Business              (save businessId)\n5. Register Agent   → POST /api/Auth/register         (no token, requires businessId)\n6. Create Menu Category → POST /api/MenuCategory      (requires token)\n7. Create Menu Item     → POST /api/MenuItem          (requires token)\n8. Create Customer      → POST /api/Customer          (requires token)\n9. Start Voice Call     → POST /api/CustomerVoice/call/start (no token, requires customerId)\n10. Create Order        → POST /api/Order\n\n--- ROLES ---\n- Admin:  Full system access\n- Owner:  Manage their own business\n- Agent:  Handle tickets, chat, orders (default role for /register)\n- User:   Reserved (not used in normal registration flow)\n\n--- AUTH ---\nAll protected endpoints use Bearer token from {{token}} variable.\nPublic endpoints (register-admin, register-owner, register-business, register, login, google-login) have auth set to noauth.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "44658298",
     "_collection_link": "https://go.postman.co/collection/44658298-a35c7b55-a62c-4138-9b9f-91972d828fa4?source=collection_link"
@@ -326,7 +326,7 @@
           "response": []
         }
       ],
-      "description": "Authentication endpoints. register-admin and register-owner are public (no token needed). Regular register requires a valid businessId and creates an Agent."
+      "description": "Authentication endpoints. register-admin, register-owner, register-business, login, google-login, and register are all public (no token needed). promote-to-owner and promote-to-admin require AdminOnly token."
     },
     {
       "name": "02 - Business",
@@ -3885,59 +3885,7 @@
       ]
     },
     {
-      "name": "24 - Chatbot [AI]",
-      "item": [
-        {
-          "name": "Ask Question [Owner/Admin]",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"question\": \"What is my business performance overview?\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/Chatbot/ask",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "Chatbot",
-                "ask"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Suggestions [Owner/Admin]",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/Chatbot/suggestions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "Chatbot",
-                "suggestions"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "25 - Customer Chat [Public]",
+      "name": "24 - Customer Chat [Public]",
       "item": [
         {
           "name": "Get Business Capabilities",
@@ -4033,7 +3981,7 @@
       ]
     },
     {
-      "name": "26 - Customer Voice [Public]",
+      "name": "25 - Customer Voice [Public]",
       "item": [
         {
           "name": "Start Call",
@@ -4150,7 +4098,7 @@
       ]
     },
     {
-      "name": "27 - Owner Chat [AI]",
+      "name": "26 - Owner Chat [AI]",
       "item": [
         {
           "name": "Send Message [Owner/Admin]",
@@ -4248,7 +4196,7 @@
       ]
     },
     {
-      "name": "28 - Business Report Generation [Owner]",
+      "name": "27 - Business Report Generation [Owner]",
       "item": [
         {
           "name": "Generate AI Report [Owner/Admin]",
