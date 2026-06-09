@@ -103,7 +103,7 @@ namespace Service_layer.Services
             {
                 Id             = Guid.NewGuid().ToString(),
                 InteractionId  = interaction?.InteractionId,
-                BusinessId     = interaction?.BusinessId ?? string.Empty,
+                BusinessId     = interaction?.BusinessId ?? payload.BusinessId ?? string.Empty,
                 CallId         = callData.CallId,
                 StartTime      = callData.StartTime,
                 EndTime        = callData.EndTime,

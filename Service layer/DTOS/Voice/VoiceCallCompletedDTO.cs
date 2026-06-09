@@ -17,6 +17,10 @@ namespace Service_layer.DTOS.Voice
         /// call_data.call_id == the interaction_id the backend sent in the join request.
         /// The backend uses it to look up the Interaction and derive the business_id.
         /// </summary>
+
+        [JsonPropertyName("business_id")]
+        public string? BusinessId { get; set; }
+
         [JsonPropertyName("call_data")]
         public VoiceCallDataDTO CallData { get; set; } = new();
 
