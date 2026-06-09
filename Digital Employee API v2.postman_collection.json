@@ -4043,11 +4043,19 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
                   "var json = pm.response.json();",
                   "if (json.interactionId) {",
                   "    pm.collectionVariables.set(\"interactionId\", json.interactionId);",
-                  "    console.log(\"interactionId saved:\", json.interactionId);",
-                  "}"
+                  "    console.log(\"✅ interactionId saved:\", json.interactionId);",
+                  "}",
+                  "if (json.meetingUrl) {",
+                  "    pm.collectionVariables.set(\"meetingUrl\", json.meetingUrl);",
+                  "    console.log(\"✅ meetingUrl saved:\", json.meetingUrl);",
+                  "}",
+                  "pm.test(\"Has interactionId\", function () { pm.expect(json.interactionId).to.be.a(\"string\").and.not.empty; });",
+                  "pm.test(\"Has meetingUrl\", function () { pm.expect(json.meetingUrl).to.be.a(\"string\").and.not.empty; });",
+                  "pm.test(\"Status is connecting\", function () { pm.expect(json.status).to.eql(\"connecting\"); });"
                 ]
               }
             }
@@ -4071,7 +4079,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"meetingUrl\": \"https://meet.example.com/room-abc\",\n  \"customerId\": null\n}"
+              "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"customerId\": \"{{customerId}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/CustomerVoice/call/start",
@@ -4090,6 +4098,20 @@
         },
         {
           "name": "Call Completed [AI Webhook]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Call summary stored\", function () { pm.expect(json.message).to.eql(\"Call summary stored.\"); });",
+                  "console.log(\"✅ Call completed stored for interactionId:\", pm.collectionVariables.get(\"interactionId\"));"
+                ]
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "noauth"
@@ -4109,7 +4131,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"interaction_id\": \"{{interactionId}}\",\n  \"business_id\": \"{{businessId}}\",\n  \"customer_identifier\": null,\n  \"queued_at\": \"2026-01-01T10:00:00Z\",\n  \"call_data\": {\n    \"call_id\": \"call-001\",\n    \"start_time\": \"2026-01-01T10:00:00Z\",\n    \"end_time\": \"2026-01-01T10:05:00Z\",\n    \"duration_seconds\": 300,\n    \"messages_count\": 4,\n    \"full_transcript\": \"Customer: عايز أطلب بيتزا\\nAgent: حاضر، أي نوع؟\",\n    \"messages\": [\n      {\n        \"turnIndex\": 0,\n        \"timestamp\": \"2026-01-01T10:00:05Z\",\n        \"speaker\": \"Customer\",\n        \"transcript\": \"عايز أطلب بيتزا\",\n        \"audioLengthMs\": 1500,\n        \"language\": \"ar\",\n        \"dialect\": \"Egyptian\",\n        \"intentDetected\": null,\n        \"actionTaken\": null,\n        \"sentiment\": {\n          \"score\": 0.5,\n          \"label\": \"Positive\"\n        }\n      },\n      {\n        \"turnIndex\": 1,\n        \"timestamp\": \"2026-01-01T10:00:08Z\",\n        \"speaker\": \"Agent\",\n        \"transcript\": \"حاضر، أي نوع بيتزا تحب؟\",\n        \"audioLengthMs\": 2000,\n        \"language\": \"ar\",\n        \"dialect\": \"Egyptian\",\n        \"intentDetected\": \"CreateOrder\",\n        \"actionTaken\": null,\n        \"sentiment\": null\n      }\n    ],\n    \"audio_files\": {\n      \"customer\": null,\n      \"agent\": null,\n      \"stereo\": null\n    },\n    \"audio_info\": {\n      \"sample_rate\": 16000,\n      \"bit_depth\": 16,\n      \"customer_duration_sec\": 120,\n      \"agent_duration_sec\": 180\n    }\n  },\n  \"analysis\": {\n    \"callId\": \"call-001\",\n    \"durationSeconds\": 300,\n    \"analyzedAt\": \"2026-01-01T10:05:30Z\",\n    \"summary\": \"Customer ordered a pizza successfully.\",\n    \"summaryAr\": \"الكاستمر طلب بيتزا وتم إنشاء الطلب بنجاح.\",\n    \"overallSentiment\": {\n      \"score\": 0.7,\n      \"label\": \"Positive\"\n    },\n    \"mainTopics\": [\n      \"order\",\n      \"pizza\"\n    ],\n    \"intentsDetected\": [\n      \"CreateOrder\"\n    ],\n    \"actionsPerformed\": [\n      {\n        \"type\": \"OrderCreated\",\n        \"referenceId\": \"order-123\",\n        \"details\": {\n          \"items\": [\n            \"Pepperoni Pizza\"\n          ],\n          \"totalPrice\": 85\n        }\n      }\n    ],\n    \"escalationRequired\": false,\n    \"escalationReason\": null,\n    \"keyMoments\": [\n      {\n        \"turnIndex\": 3,\n        \"description\": \"Customer confirmed the order\"\n      }\n    ]\n  }\n}"
+              "raw": "{\n  \"call_data\": {\n    \"call_id\": \"{{interactionId}}\",\n    \"start_time\": \"2026-05-29T20:54:37Z\",\n    \"end_time\": \"2026-05-29T20:57:52Z\",\n    \"duration_seconds\": 195.17,\n    \"messages_count\": 4,\n    \"full_transcript\": \"Agent: أهلاً بيك، قولي طلبك.\\nCustomer: عايزة شيش طاووق على الفحم مع سلطة خضرا.\\nAgent: تمام، هضيف كمان مياه معدنية؟\\nCustomer: تمام، سلام.\",\n    \"messages\": [\n      {\n        \"turnIndex\": 1,\n        \"timestamp\": \"2026-05-29T20:54:50Z\",\n        \"speaker\": \"Agent\",\n        \"transcript\": \"أهلاً بيك، قولي طلبك.\",\n        \"audioLengthMs\": 3000,\n        \"language\": \"ar\",\n        \"dialect\": \"Egyptian\",\n        \"intentDetected\": null,\n        \"actionTaken\": null\n      },\n      {\n        \"turnIndex\": 2,\n        \"timestamp\": \"2026-05-29T20:55:10Z\",\n        \"speaker\": \"Customer\",\n        \"transcript\": \"عايزة شيش طاووق على الفحم مع سلطة خضرا.\",\n        \"audioLengthMs\": 2500,\n        \"language\": \"ar\",\n        \"dialect\": \"Egyptian\",\n        \"sentiment\": { \"score\": 0.8, \"label\": \"Positive\" }\n      },\n      {\n        \"turnIndex\": 3,\n        \"timestamp\": \"2026-05-29T20:55:30Z\",\n        \"speaker\": \"Agent\",\n        \"transcript\": \"تمام، هضيف كمان مياه معدنية؟\",\n        \"audioLengthMs\": 2000,\n        \"language\": \"ar\",\n        \"dialect\": \"Egyptian\",\n        \"intentDetected\": \"CreateOrder\",\n        \"actionTaken\": null\n      },\n      {\n        \"turnIndex\": 4,\n        \"timestamp\": \"2026-05-29T20:57:46Z\",\n        \"speaker\": \"Customer\",\n        \"transcript\": \"تمام، سلام.\",\n        \"audioLengthMs\": 800,\n        \"language\": \"ar\",\n        \"dialect\": \"Egyptian\",\n        \"sentiment\": { \"score\": 0.9, \"label\": \"Positive\" }\n      }\n    ],\n    \"audio_files\": {\n      \"customer\": \"customer.wav\",\n      \"agent\": \"agent.wav\",\n      \"stereo\": \"full_call_stereo.wav\"\n    },\n    \"audio_info\": {\n      \"sample_rate\": 24000,\n      \"bit_depth\": 16,\n      \"customer_duration_sec\": 194.6,\n      \"agent_duration_sec\": 131.1\n    }\n  },\n  \"analysis\": {\n    \"callId\": \"{{interactionId}}\",\n    \"durationSeconds\": 195.17,\n    \"analyzedAt\": \"2026-05-29T20:57:52Z\",\n    \"summary\": \"Customer ordered shish tawook with salad and water.\",\n    \"summaryAr\": \"طلب العميل شيش طاووق على الفحم مع سلطة خضراء ومياه معدنية.\",\n    \"overallSentiment\": {\n      \"score\": 0.8,\n      \"label\": \"Positive\"\n    },\n    \"mainTopics\": [\"Food Order\", \"Product Inquiry\"],\n    \"intentsDetected\": [\"AskAboutProducts\", \"CreateOrder\"],\n    \"actionsPerformed\": [\n      {\n        \"type\": \"OrderCreated\",\n        \"referenceId\": null,\n        \"details\": {\n          \"items\": [\"شيش طاووق على الفحم\", \"سلطة خضرا\", \"مياه معدنية\"],\n          \"totalPrice\": 245\n        }\n      }\n    ],\n    \"escalationRequired\": false,\n    \"escalationReason\": null,\n    \"keyMoments\": [\n      {\n        \"turnIndex\": 2,\n        \"description\": \"Customer specified their order.\"\n      },\n      {\n        \"turnIndex\": 4,\n        \"description\": \"Customer confirmed the order.\"\n      }\n    ]\n  },\n  \"queued_at\": \"2026-05-29T20:58:05Z\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/voice/call-completed",
@@ -4314,6 +4336,10 @@
     },
     {
       "key": "interactionId",
+      "value": ""
+    },
+    {
+      "key": "meetingUrl",
       "value": ""
     },
     {
