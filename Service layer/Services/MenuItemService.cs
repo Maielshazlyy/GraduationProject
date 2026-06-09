@@ -12,20 +12,17 @@ namespace Service_layer.Services
         private readonly IBusinessRepository _businessRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAiKnowledgeSyncService? _aiSync;
-        private readonly IAiVoiceKnowledgeSyncService? _aiVoiceSync;
 
         public MenuItemService(
             IMenuItemRepository menuItemRepository,
             IBusinessRepository businessRepository,
             IUnitOfWork unitOfWork,
-            IAiKnowledgeSyncService? aiSync = null,
-            IAiVoiceKnowledgeSyncService? aiVoiceSync = null)
+            IAiKnowledgeSyncService? aiSync = null)
         {
             _menuItemRepository = menuItemRepository;
             _businessRepository = businessRepository;
             _unitOfWork         = unitOfWork;
             _aiSync             = aiSync;
-            _aiVoiceSync        = aiVoiceSync;
         }
 
         public async Task<IEnumerable<MenuItem>> GetAllAsync()
@@ -111,16 +108,7 @@ namespace Service_layer.Services
                 try   { await _aiSync.SyncBusinessAsync(businessId); }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[AiSync] MenuItemService chat sync failed for {businessId}: {ex.Message}");
-                }
-            }
-
-            if (_aiVoiceSync != null)
-            {
-                try   { await _aiVoiceSync.SyncBusinessAsync(businessId); }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[AiVoiceSync] MenuItemService voice sync failed for {businessId}: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[AiSync] MenuItemService sync failed for {businessId}: {ex.Message}");
                 }
             }
         }

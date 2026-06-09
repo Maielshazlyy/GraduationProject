@@ -11,11 +11,8 @@ namespace Service_layer.DTOS.Voice
     {
         public string BusinessId { get; set; } = string.Empty;
 
-        /// <summary>The fixed meeting URL the frontend already has.</summary>
-        public string MeetingUrl { get; set; } = string.Empty;
-
-        /// <summary>Optional — if the customer is identified (logged in / known phone).</summary>
-        public string? CustomerId { get; set; }
+        /// <summary>Required — the customer must have an existing account in the system.</summary>
+        public string CustomerId { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -24,6 +21,9 @@ namespace Service_layer.DTOS.Voice
     public class StartVoiceCallResponseDTO
     {
         public string InteractionId { get; set; } = string.Empty;
+
+        /// <summary>The meeting URL the frontend should open for the customer.</summary>
+        public string MeetingUrl { get; set; } = string.Empty;
 
         /// <summary>"connecting" — AI has been notified; call is being set up.</summary>
         public string Status { get; set; } = "connecting";

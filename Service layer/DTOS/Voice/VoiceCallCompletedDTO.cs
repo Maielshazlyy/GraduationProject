@@ -14,23 +14,9 @@ namespace Service_layer.DTOS.Voice
     public class VoiceCallCompletedDTO
     {
         /// <summary>
-        /// The Interaction created by the backend when the call was started.
-        /// The AI receives this in the join request and must echo it back here.
+        /// call_data.call_id == the interaction_id the backend sent in the join request.
+        /// The backend uses it to look up the Interaction and derive the business_id.
         /// </summary>
-        [JsonPropertyName("interaction_id")]
-        public string InteractionId { get; set; } = string.Empty;
-
-        /// <summary>Which business the call belongs to.</summary>
-        [JsonPropertyName("business_id")]
-        public string? BusinessId { get; set; }
-
-        /// <summary>
-        /// Optional caller identifier (phone/email). If absent, the call is
-        /// treated as an anonymous customer.
-        /// </summary>
-        [JsonPropertyName("customer_identifier")]
-        public string? CustomerIdentifier { get; set; }
-
         [JsonPropertyName("call_data")]
         public VoiceCallDataDTO CallData { get; set; } = new();
 
@@ -186,9 +172,6 @@ namespace Service_layer.DTOS.Voice
         [JsonPropertyName("keyMoments")]
         public List<VoiceKeyMomentDTO> KeyMoments { get; set; } = new();
 
-        /// <summary>AI models used (e.g. whisper, gpt-4o, tts).</summary>
-        [JsonPropertyName("modelsUsed")]
-        public List<string> ModelsUsed { get; set; } = new();
     }
 
     /// <summary>Sentiment score + label, used both per-turn and overall.</summary>

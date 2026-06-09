@@ -24,13 +24,5 @@ namespace Service_layer.Services
             return result ?? new AiChatResponseDTO { Reply = string.Empty, SessionId = request.SessionId };
         }
 
-        public async Task<AiVoiceResponseDTO> SendVoiceAsync(AiVoiceRequestDTO request)
-        {
-            var response = await _httpClient.PostAsJsonAsync("/api/v1/chat", request);
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadFromJsonAsync<AiVoiceResponseDTO>();
-            return result ?? new AiVoiceResponseDTO { Reply = string.Empty, SessionId = request.SessionId };
-        }
     }
 }

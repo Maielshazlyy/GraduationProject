@@ -29,24 +29,27 @@ namespace Service_layer.Services
 
         public async Task<StartVoiceCallResponseDTO> StartCallAsync(StartVoiceCallRequestDTO request)
         {
-            // Validate
-            if (string.IsNullOrWhiteSpace(request.MeetingUrl))
-                throw new ArgumentException("meetingUrl is required.");
-
+            // Validate business exists
             var business = await _unitOfWork.Businesses.GetByIdAsync(request.BusinessId)
                 ?? throw new ArgumentException($"Business '{request.BusinessId}' not found.");
 
-            var meetingUrl = request.MeetingUrl;
+            // Validate customer exists
+            var customer = await _unitOfWork.Customers.GetByIdAsync(request.CustomerId)
+                ?? throw new ArgumentException($"Customer '{request.CustomerId}' not found.");
 
-            // Ensure customer record exists
-            var customerId = await EnsureCustomerAsync(request.BusinessId, request.CustomerId);
+            // Read MeetingUrl from Settings
+            var settings = await _unitOfWork.Settings.GetByBusinessIdAsync(request.BusinessId);
+            var meetingUrl = settings?.MeetingUrl;
+
+            if (string.IsNullOrWhiteSpace(meetingUrl))
+                throw new ArgumentException("MeetingUrl is not configured for this business. Please set it in Settings.");
 
             // Create Interaction
             var interaction = new Interaction
             {
                 InteractionId = Guid.NewGuid().ToString(),
                 BusinessId    = request.BusinessId,
-                CustomerId    = customerId,
+                CustomerId    = request.CustomerId,
                 Channel       = "Voice",
                 Status        = "Open",
                 StartedAt     = DateTime.UtcNow
@@ -77,6 +80,7 @@ namespace Service_layer.Services
             return new StartVoiceCallResponseDTO
             {
                 InteractionId = interaction.InteractionId,
+                MeetingUrl    = meetingUrl,
                 Status        = "connecting"
             };
         }
@@ -85,26 +89,21 @@ namespace Service_layer.Services
 
         public async Task HandleCallCompletedAsync(VoiceCallCompletedDTO payload)
         {
-            // Find the Interaction (must exist — created at call start)
-            Interaction? interaction = null;
-
-            if (!string.IsNullOrWhiteSpace(payload.InteractionId))
-                interaction = await _unitOfWork.Interactions.GetByIdAsync(payload.InteractionId);
-
-            if (interaction == null)
-            {
-                Debug.WriteLine($"[CustomerVoiceService] call-completed: interaction '{payload.InteractionId}' not found — storing orphan summary.");
-            }
-
             var callData = payload.CallData;
             var analysis = payload.Analysis;
+
+            // call_id == interaction_id sent in the join request
+            var interaction = await _unitOfWork.Interactions.GetByIdAsync(callData.CallId);
+
+            if (interaction == null)
+                Debug.WriteLine($"[CustomerVoiceService] call-completed: interaction '{callData.CallId}' not found — storing orphan summary.");
 
             // Build + persist CallSummary
             var summary = new CallSummary
             {
                 Id             = Guid.NewGuid().ToString(),
                 InteractionId  = interaction?.InteractionId,
-                BusinessId     = payload.BusinessId ?? interaction?.BusinessId ?? string.Empty,
+                BusinessId     = interaction?.BusinessId ?? string.Empty,
                 CallId         = callData.CallId,
                 StartTime      = callData.StartTime,
                 EndTime        = callData.EndTime,
@@ -142,30 +141,6 @@ namespace Service_layer.Services
             }
 
             await _unitOfWork.CompleteAsync();
-        }
-
-        // ── Helpers ───────────────────────────────────────────────────────────
-
-        private async Task<string> EnsureCustomerAsync(string businessId, string? customerId)
-        {
-            if (!string.IsNullOrWhiteSpace(customerId))
-            {
-                var existing = await _unitOfWork.Customers.GetByIdAsync(customerId);
-                if (existing != null) return customerId;
-            }
-
-            var guest = new Customer
-            {
-                CustomerId = Guid.NewGuid().ToString(),
-                BusinessId = businessId,
-                FullName   = "Guest",
-                Email      = string.Empty,
-                Phone      = string.Empty,
-                CreatedAt  = DateTime.UtcNow
-            };
-            await _unitOfWork.Customers.AddAsync(guest);
-            await _unitOfWork.CompleteAsync();
-            return guest.CustomerId;
         }
 
     }

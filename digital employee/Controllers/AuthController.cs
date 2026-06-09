@@ -71,7 +71,7 @@ namespace digital_employee.Controllers
 
         // POST: api/Auth/register-admin
         [HttpPost("register-admin")]
-        [AllowAnonymous]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> RegisterAdmin([FromBody] RegisterBootstrapDTO model)
         {
             try
@@ -87,7 +87,7 @@ namespace digital_employee.Controllers
 
         // POST: api/Auth/register-owner
         [HttpPost("register-owner")]
-        [AllowAnonymous]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> RegisterOwner([FromBody] RegisterBootstrapDTO model)
         {
             try

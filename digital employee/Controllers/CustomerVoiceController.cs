@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service_layer.DTOS.Chat;
 using Service_layer.DTOS.Voice;
@@ -24,11 +25,15 @@ namespace digital_employee.Controllers
         //
         // POST api/CustomerVoice/call/start
         [HttpPost("call/start")]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(StartVoiceCallResponseDTO), 200)]
         public async Task<IActionResult> StartCall([FromBody] StartVoiceCallRequestDTO request)
         {
             if (string.IsNullOrWhiteSpace(request.BusinessId))
                 return BadRequest(new { Message = "BusinessId is required." });
+
+            if (string.IsNullOrWhiteSpace(request.CustomerId))
+                return BadRequest(new { Message = "CustomerId is required." });
 
             try
             {
@@ -67,11 +72,12 @@ namespace digital_employee.Controllers
         }
 
         [HttpPost("call-completed")]
+        [AllowAnonymous]
         [ProducesResponseType(200)]
         public async Task<IActionResult> CallCompleted([FromBody] VoiceCallCompletedDTO payload)
         {
-            if (string.IsNullOrWhiteSpace(payload.InteractionId))
-                return BadRequest(new { Message = "interaction_id is required." });
+            if (string.IsNullOrWhiteSpace(payload.CallData?.CallId))
+                return BadRequest(new { Message = "call_data.call_id is required." });
 
             try
             {

@@ -13,8 +13,5 @@ namespace Service_layer.Services_Interfaces
     {
         /// <summary>Sends a text message (WebChat) to the AI.</summary>
         Task<AiChatResponseDTO> SendMessageAsync(AiChatRequestDTO request);
-
-        /// <summary>Sends a voice request (audio/text) to the AI and gets back transcript + reply audio.</summary>
-        Task<AiVoiceResponseDTO> SendVoiceAsync(AiVoiceRequestDTO request);
     }
 }
