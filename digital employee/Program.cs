@@ -27,6 +27,19 @@ namespace digital_employee
             var builder = WebApplication.CreateBuilder(args);
 
             // -------------------------
+            // 0) Kestrel limits (file uploads, e.g. call recordings)
+            // -------------------------
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                // Disable the minimum data-rate guard so large/slow uploads
+                // (call .wav recordings) don't time out behind the Fly.io proxy.
+                options.Limits.MinRequestBodyDataRate = null;
+
+                // Allow request bodies up to 50 MB (Kestrel default is ~28 MB).
+                options.Limits.MaxRequestBodySize = 52_428_800; // 50 MB
+            });
+
+            // -------------------------
             // 1) Controllers
             // -------------------------
             builder.Services.AddControllers();
