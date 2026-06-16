@@ -52,12 +52,13 @@ namespace digital_employee.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Upload(
-            [FromForm] IFormFile file,
-            [FromForm] string callId,
-            [FromForm] string? speaker = null,
-            [FromForm] IFormFile? photo = null)
+        public async Task<IActionResult> Upload([FromForm] CallRecordingUploadRequest request)
         {
+            var file = request.File;
+            var callId = request.CallId;
+            var speaker = request.Speaker;
+            var photo = request.Photo;
+
             if (file == null || file.Length == 0)
                 return BadRequest(new { message = "A non-empty 'file' is required." });
 
@@ -174,5 +175,25 @@ namespace digital_employee.Controllers
             var stream = System.IO.File.OpenRead(fullPath);
             return File(stream, contentType, fileName);
         }
+    }
+
+    /// <summary>
+    /// Multipart/form-data payload for uploading a call recording.
+    /// Bound as a single model so Swashbuckle can generate the schema
+    /// (it rejects [FromForm] applied directly to IFormFile parameters).
+    /// </summary>
+    public class CallRecordingUploadRequest
+    {
+        /// <summary>The .wav recording of the chat/call (required).</summary>
+        public IFormFile File { get; set; } = default!;
+
+        /// <summary>Call/session id this recording belongs to (required).</summary>
+        public string CallId { get; set; } = string.Empty;
+
+        /// <summary>Optional: "customer" | "agent" | "stereo".</summary>
+        public string? Speaker { get; set; }
+
+        /// <summary>Optional image snapshot (jpg/png/webp); returned as photoUrl.</summary>
+        public IFormFile? Photo { get; set; }
     }
 }
