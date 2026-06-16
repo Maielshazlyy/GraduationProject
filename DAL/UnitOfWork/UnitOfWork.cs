@@ -33,6 +33,7 @@ namespace DAL.UnitOfWork
         public IIntegrationRepository Integrations { get; }
         public IAuditLogRepository AuditLogs { get; }
         public ISentimentRepository Sentiments { get; }
+        public IInteractionAnalysisRepository InteractionAnalyses { get; }
         public ICallSummaryRepository CallSummaries { get; }
 
         public UnitOfWork(
@@ -57,6 +58,7 @@ namespace DAL.UnitOfWork
             IIntegrationRepository integrationRepository,
             IAuditLogRepository auditLogRepository,
             ISentimentRepository sentimentRepository,
+            IInteractionAnalysisRepository interactionAnalysisRepository,
             ICallSummaryRepository callSummaryRepository)
         {
             _context = context;
@@ -80,6 +82,7 @@ namespace DAL.UnitOfWork
             Integrations = integrationRepository;
             AuditLogs = auditLogRepository;
             Sentiments = sentimentRepository;
+            InteractionAnalyses = interactionAnalysisRepository;
             CallSummaries = callSummaryRepository;
         }
         

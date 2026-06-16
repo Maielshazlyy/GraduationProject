@@ -1,355 +1,147 @@
 using System;
-using System.Linq;
+using System.Diagnostics;
+using System.Text.Json;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Domain_layer.Interfaces;
 using Domain_layer.Models;
-using Domain_layer.enums;
-using Service_layer.DTOS.AiChat;
-using Service_layer.DTOS.Chat;
+using Service_layer.DTOS.Voice;
 using Service_layer.Services_Interfaces;
 
 namespace Service_layer.Services
 {
-    /// <summary>
-    /// Service for handling customer voice call interactions (Voice channel).
-    /// Handles audio messages, speech-to-text, text-to-speech, call sessions,
-    /// delivery delays, recovery, and feedback collection.
-    /// 
-    /// ⚠️ NOTE: This REST API endpoint is a PLACEHOLDER.
-    /// The actual Voice implementation will use WebSocket (SignalR) for real-time streaming.
-    /// Audio will be streamed directly from the device, not saved as files.
-    /// </summary>
     public class CustomerVoiceService : ICustomerVoiceService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ISettingService _settingService;
+        private readonly IAiVoiceJoinService _aiVoiceJoin;
         private readonly IAuditLogService? _auditLogService;
-        private readonly ISentimentService? _sentimentService;
-        private readonly IAiChatService _aiChatService;
-        private readonly CustomerInteractionBusinessLogic _businessLogic;
 
         public CustomerVoiceService(
             IUnitOfWork unitOfWork,
-            ISettingService settingService,
-            IAiChatService aiChatService,
-            IAuditLogService? auditLogService = null,
-            ISentimentService? sentimentService = null)
+            IAiVoiceJoinService aiVoiceJoin,
+            IAuditLogService? auditLogService = null)
         {
             _unitOfWork      = unitOfWork;
-            _settingService  = settingService;
-            _aiChatService   = aiChatService;
+            _aiVoiceJoin     = aiVoiceJoin;
             _auditLogService = auditLogService;
-            _sentimentService = sentimentService;
-            _businessLogic   = new CustomerInteractionBusinessLogic(unitOfWork, auditLogService: auditLogService);
         }
 
-        public async Task<CustomerChatResponseDTO> HandleVoiceMessageAsync(CustomerChatRequestDTO request)
+        // ── 1. Start Call ──────────────────────────────────────────────────────
+
+        public async Task<StartVoiceCallResponseDTO> StartCallAsync(StartVoiceCallRequestDTO request)
         {
-            // Ensure this is a Voice request
-            var channel = string.IsNullOrWhiteSpace(request.Channel) ? "Voice" : request.Channel;
-            if (channel != "Voice")
+            // Validate business exists
+            var business = await _unitOfWork.Businesses.GetByIdAsync(request.BusinessId)
+                ?? throw new ArgumentException($"Business '{request.BusinessId}' not found.");
+
+            // Validate customer exists
+            var customer = await _unitOfWork.Customers.GetByIdAsync(request.CustomerId)
+                ?? throw new ArgumentException($"Customer '{request.CustomerId}' not found.");
+
+            // Read MeetingUrl from Settings
+            var settings = await _unitOfWork.Settings.GetByBusinessIdAsync(request.BusinessId);
+            var meetingUrl = settings?.MeetingUrl;
+
+            if (string.IsNullOrWhiteSpace(meetingUrl))
+                throw new ArgumentException("MeetingUrl is not configured for this business. Please set it in Settings.");
+
+            // Create Interaction
+            var interaction = new Interaction
             {
-                throw new ArgumentException("This service handles Voice only. Use ICustomerChatService for Chat.");
-            }
-
-            if (string.IsNullOrWhiteSpace(request.AudioData) && string.IsNullOrWhiteSpace(request.Message))
-            {
-                throw new ArgumentException("AudioData or Message is required for Voice.");
-            }
-
-            // 1) Ensure interaction exists (with CallSessionId for Voice)
-            var interaction = await GetOrCreateInteractionAsync(request, "Voice");
-
-            // 2) Call AI — STT/TTS are handled by the AI.
-            //    Backend sends the raw audio (or text); AI returns the transcript,
-            //    the reply text, the reply audio, and all the business signals
-            //    (same contract as Chat — see CustomerChatService).
-            AiChatResponseDTO aiResponse;
-            try
-            {
-                aiResponse = await _aiChatService.SendMessageAsync(new AiChatRequestDTO
-                {
-                    SessionId   = interaction.InteractionId,
-                    BusinessId  = interaction.BusinessId,
-                    Channel     = "Voice",
-                    Message     = request.Message,
-                    AudioData   = request.AudioData,
-                    AudioFormat = request.AudioFormat
-                });
-            }
-            catch
-            {
-                aiResponse = new AiChatResponseDTO();
-            }
-
-            // 3) Resolve the customer's words: AI transcript first, then any text sent
-            var messageText = !string.IsNullOrWhiteSpace(aiResponse.Transcript)
-                ? aiResponse.Transcript!
-                : (request.Message ?? string.Empty);
-
-            // 4) Map AI signals → intent DTO (audit/sentiment only)
-            var intentResult = MapAiResponseToIntent(aiResponse);
-
-            // 5) Store the customer message (transcribed by AI)
-            var customerMessage = new Message
-            {
-                MessageId       = Guid.NewGuid().ToString(),
-                InteractionId   = interaction.InteractionId,
-                SenderType      = "Customer",
-                Content         = messageText,
-                SentAt          = DateTime.UtcNow,
-                Intent          = intentResult.Intent,
-                ConfidenceScore = intentResult.Confidence,
-                AiMetadataJson  = System.Text.Json.JsonSerializer.Serialize(intentResult)
+                InteractionId = Guid.NewGuid().ToString(),
+                BusinessId    = request.BusinessId,
+                CustomerId    = request.CustomerId,
+                Channel       = "Voice",
+                Status        = "Open",
+                StartedAt     = DateTime.UtcNow
             };
 
-            await _unitOfWork.Messages.AddAsync(customerMessage);
+            await _unitOfWork.Interactions.AddAsync(interaction);
             await _unitOfWork.CompleteAsync();
 
-            // 5.5) Sentiment analysis
-            if (_sentimentService != null && !string.IsNullOrWhiteSpace(messageText))
+            // Notify AI to join (non-fatal)
+            await _aiVoiceJoin.JoinCallAsync(interaction.InteractionId, request.BusinessId, meetingUrl);
+
+            if (_auditLogService != null)
             {
                 try
                 {
-                    await _sentimentService.AnalyzeSentimentAsync(
-                        customerMessage.MessageId,
-                        messageText,
-                        intentResult.DetectedLanguage ?? "ar");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Sentiment analysis failed: {ex.Message}");
-                }
-            }
-
-            // 5) Backend DB actions driven purely by AI signal flags
-            string? orderId = null;
-            string? ticketId = null;
-            ChatCartSummaryDTO? cartSummary = null;
-            var recommendations = new List<RecommendationItemDTO>();
-            bool hasDeliveryDelay = false;
-            List<string>? alternativeTimeSlots = null;
-
-            if (aiResponse.EscalationRequested)
-            {
-                var ticket = await _businessLogic.HandleTicketAsync(
-                    interaction, intentResult,
-                    aiTicketDetails: null,
-                    isEscalation: true);
-
-                ticketId = ticket.TicketId;
-                interaction.Status = "Escalated";
-
-                if (_auditLogService != null)
-                {
                     await _auditLogService.LogInteractionActionAsync(
-                        businessId:    interaction.BusinessId,
-                        action:        "EscalateToHuman",
+                        businessId:    request.BusinessId,
+                        action:        "StartVoiceCall",
                         interactionId: interaction.InteractionId,
                         userId:        null);
                 }
-            }
-            else if (aiResponse.TicketDetected && aiResponse.TicketDetails != null)
-            {
-                var ticket = await _businessLogic.HandleTicketAsync(
-                    interaction, intentResult,
-                    aiTicketDetails: aiResponse.TicketDetails);
-
-                ticketId = ticket.TicketId;
-                interaction.InteractionType = "Ticket";
-                interaction.RelatedTicketId = ticketId;
-            }
-            else if (aiResponse.OrderFinalized && aiResponse.OrderDetails != null)
-            {
-                var orderResult = await _businessLogic.HandleCreateOrderWithDeliveryCheckAsync(
-                    interaction, aiResponse.OrderDetails);
-
-                orderId              = orderResult.Order?.OrderId;
-                cartSummary          = orderResult.Cart;
-                recommendations      = orderResult.Recommendations;
-                hasDeliveryDelay     = orderResult.HasDeliveryDelay;
-                alternativeTimeSlots = orderResult.AlternativeTimeSlots;
-                interaction.InteractionType = "Order";
-                interaction.RelatedOrderId  = orderId;
-            }
-            // order_detected but NOT order_finalized → cart still being built; no DB action
-
-            _unitOfWork.Interactions.Update(interaction);
-            await _unitOfWork.CompleteAsync();
-
-            // 6) Reply — AI owns both the text and the TTS audio
-            var replyText = aiResponse.GetReplyText();
-
-            // 7) Store AI reply message
-            var aiMessage = new Message
-            {
-                MessageId       = Guid.NewGuid().ToString(),
-                InteractionId   = interaction.InteractionId,
-                SenderType      = "AI",
-                Content         = replyText,
-                SentAt          = DateTime.UtcNow,
-                Intent          = intentResult.Intent,
-                ConfidenceScore = intentResult.Confidence
-            };
-
-            await _unitOfWork.Messages.AddAsync(aiMessage);
-            await _unitOfWork.CompleteAsync();
-
-            // 8) Return response — reply audio comes straight from the AI (no backend TTS)
-            return new CustomerChatResponseDTO
-            {
-                InteractionId        = interaction.InteractionId,
-                ReplyText            = replyText,
-                ReplyAudio           = aiResponse.ReplyAudio,
-                ReplyAudioFormat     = aiResponse.ReplyAudioFormat,
-                OrderId              = orderId,
-                TicketId             = ticketId,
-                FeedbackRequested    = aiResponse.FeedbackRequested,
-                Cart                 = cartSummary,
-                Recommendations      = recommendations,
-                HasDeliveryDelay     = hasDeliveryDelay,
-                AlternativeTimeSlots = alternativeTimeSlots,
-                IsInterrupted        = interaction.Status == "Interrupted"
-            };
-        }
-
-        public async Task<Interaction> InitializeVoiceSessionAsync(string businessId, string? customerId, string callSessionId)
-        {
-            var interaction = new Interaction
-            {
-                InteractionId = Guid.NewGuid().ToString(),
-                BusinessId = businessId,
-                CustomerId = customerId ?? Guid.NewGuid().ToString(),
-                Channel = "Voice",
-                CallSessionId = callSessionId,
-                Status = "Open",
-                StartedAt = DateTime.UtcNow
-            };
-
-            await _unitOfWork.Interactions.AddAsync(interaction);
-            await _unitOfWork.CompleteAsync();
-
-            return interaction;
-        }
-
-        public async Task MarkInteractionInterruptedAsync(string interactionId)
-        {
-            var interaction = await _unitOfWork.Interactions.GetByIdAsync(interactionId);
-            if (interaction == null)
-                throw new ArgumentException($"Interaction with id '{interactionId}' not found.");
-
-            interaction.Status = "Interrupted";
-            _unitOfWork.Interactions.Update(interaction);
-            await _unitOfWork.CompleteAsync();
-        }
-
-        public async Task<Feedback> SubmitFeedbackAsync(VoiceFeedbackDTO feedbackDto)
-        {
-            var interaction = await _unitOfWork.Interactions.GetByIdAsync(feedbackDto.InteractionId);
-            if (interaction == null)
-                throw new ArgumentException($"Interaction with id '{feedbackDto.InteractionId}' not found.");
-
-            var feedback = new Feedback
-            {
-                FeedbackId = Guid.NewGuid().ToString(),
-                InteractionId = feedbackDto.InteractionId,
-                CustomerId = interaction.CustomerId,
-                Rating = feedbackDto.Rating,
-                Comment = feedbackDto.Comment ?? string.Empty,
-                CreatedAt = DateTime.UtcNow,
-                SentimentScore = MapRatingToSentiment(feedbackDto.Rating)
-            };
-
-            await _unitOfWork.Feedbacks.AddAsync(feedback);
-            await _unitOfWork.CompleteAsync();
-
-            return feedback;
-        }
-
-        public async Task<VoiceSettingsDTO?> GetVoiceSettingsAsync(string businessId)
-        {
-            var settings = await _settingService.GetByBusinessIdAsync(businessId);
-            if (settings == null)
-                return null;
-
-            return new VoiceSettingsDTO
-            {
-                AgentVoice = settings.AgentVoice,
-                AgentVoiceProvider = settings.AgentVoiceProvider,
-                AgentVoiceSpeed = settings.AgentVoiceSpeed,
-                AgentVoicePitch = settings.AgentVoicePitch,
-                AgentVoiceLanguage = settings.AgentVoiceLanguage
-            };
-        }
-
-        #region Private Helper Methods
-
-        /// <summary>
-        /// Translates AI response flags into DetectedIntentResultDTO.
-        /// Used only for audit logging and sentiment analysis — NOT for business decisions.
-        /// </summary>
-        private static DetectedIntentResultDTO MapAiResponseToIntent(AiChatResponseDTO ai)
-        {
-            string intent;
-            if      (ai.EscalationRequested)                intent = "RequestHumanAgent";
-            else if (ai.TicketDetected)                     intent = "Complaint";
-            else if (ai.OrderFinalized || ai.OrderDetected) intent = "CreateOrder";
-            else                                            intent = "GeneralQuestion";
-
-            return new DetectedIntentResultDTO
-            {
-                Intent             = intent,
-                RequiresAction     = ai.EscalationRequested || ai.TicketDetected || ai.OrderFinalized,
-                RequiresEscalation = ai.EscalationRequested,
-                PriorityLevel      = ai.TicketDetails?.Priority,
-                EscalationReason   = ai.EscalationRequested ? ai.TicketDetails?.Description : null,
-                ComplexityLevel    = ai.EscalationRequested ? "High" : null
-            };
-        }
-
-        private async Task<Interaction> GetOrCreateInteractionAsync(CustomerChatRequestDTO request, string channel)
-        {
-            if (!string.IsNullOrWhiteSpace(request.InteractionId))
-            {
-                var existing = await _unitOfWork.Interactions.GetByIdAsync(request.InteractionId);
-                if (existing != null)
+                catch (Exception ex)
                 {
-                    // Update CallSessionId if provided
-                    if (!string.IsNullOrWhiteSpace(request.CallSessionId))
-                    {
-                        existing.CallSessionId = request.CallSessionId;
-                        _unitOfWork.Interactions.Update(existing);
-                        await _unitOfWork.CompleteAsync();
-                    }
-                    return existing;
+                    Debug.WriteLine($"[CustomerVoiceService] Audit log failed: {ex.Message}");
                 }
             }
 
-            var interaction = new Interaction
+            return new StartVoiceCallResponseDTO
             {
-                InteractionId = Guid.NewGuid().ToString(),
-                BusinessId = request.BusinessId,
-                CustomerId = request.CustomerId ?? Guid.NewGuid().ToString(),
-                Channel = channel,
-                CallSessionId = request.CallSessionId, // For Voice calls
-                Status = "Open",
-                StartedAt = DateTime.UtcNow
+                InteractionId = interaction.InteractionId,
+                MeetingUrl    = meetingUrl,
+                Status        = "connecting"
+            };
+        }
+
+        // ── 2. Handle Call Completed (called by AI after the call ends) ────────
+
+        public async Task HandleCallCompletedAsync(VoiceCallCompletedDTO payload)
+        {
+            var callData = payload.CallData;
+            var analysis = payload.Analysis;
+
+            // call_id == interaction_id sent in the join request
+            var interaction = await _unitOfWork.Interactions.GetByIdAsync(callData.CallId);
+
+            if (interaction == null)
+                Debug.WriteLine($"[CustomerVoiceService] call-completed: interaction '{callData.CallId}' not found — storing orphan summary.");
+
+            // Build + persist CallSummary
+            var summary = new CallSummary
+            {
+                Id             = Guid.NewGuid().ToString(),
+                InteractionId  = interaction?.InteractionId,
+                BusinessId     = interaction?.BusinessId ?? payload.BusinessId ?? string.Empty,
+                CallId         = callData.CallId,
+                StartTime      = callData.StartTime,
+                EndTime        = callData.EndTime,
+                DurationSeconds = callData.DurationSeconds,
+                MessagesCount  = callData.MessagesCount,
+                FullTranscript = callData.FullTranscript ?? string.Empty,
+                MessagesJson   = JsonSerializer.Serialize(callData.Messages),
+                AudioFilesJson = JsonSerializer.Serialize(callData.AudioFiles),
+                AudioInfoJson  = JsonSerializer.Serialize(callData.AudioInfo),
+
+                Summary          = analysis.Summary ?? string.Empty,
+                SummaryAr        = analysis.SummaryAr ?? string.Empty,
+                SentimentScore   = analysis.OverallSentiment?.Score ?? 0.0,
+                SentimentLabel   = analysis.OverallSentiment?.Label ?? "Neutral",
+                MainTopicsJson   = JsonSerializer.Serialize(analysis.MainTopics),
+                IntentsDetectedJson = JsonSerializer.Serialize(analysis.IntentsDetected),
+                ActionsPerformedJson = JsonSerializer.Serialize(analysis.ActionsPerformed),
+                KeyMomentsJson   = JsonSerializer.Serialize(analysis.KeyMoments),
+                EscalationRequired = analysis.EscalationRequired,
+                EscalationReason = analysis.EscalationReason,
+                AnalyzedAt       = analysis.AnalyzedAt ?? DateTime.UtcNow,
+                QueuedAt         = payload.QueuedAt ?? DateTime.UtcNow,
+                CreatedAt        = DateTime.UtcNow
             };
 
-            await _unitOfWork.Interactions.AddAsync(interaction);
+            await _unitOfWork.CallSummaries.AddAsync(summary);
+
+            // Close the Interaction
+            if (interaction != null)
+            {
+                interaction.Status  = analysis.EscalationRequired ? "Escalated" : "Closed";
+                interaction.IsEnded = true;
+                interaction.EndedAt = callData.EndTime;
+                _unitOfWork.Interactions.Update(interaction);
+            }
+
             await _unitOfWork.CompleteAsync();
-
-            return interaction;
         }
 
-        private double MapRatingToSentiment(int rating)
-        {
-            // Map 1-5 rating to sentiment score (-1 to 1)
-            return (rating - 3) / 2.0; // 1 -> -1, 2 -> -0.5, 3 -> 0, 4 -> 0.5, 5 -> 1
-        }
-
-        #endregion
     }
 }
-

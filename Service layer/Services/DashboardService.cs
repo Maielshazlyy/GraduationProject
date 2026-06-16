@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Domain_layer.Interfaces;
+using Domain_layer.Models;
 using Domain_layer.enums;
+using Feedback = Domain_layer.Models.Feedback;
+using Service_layer.DTOS.AiAnalysis;
 using Service_layer.DTOS.Dashboard;
 using Service_layer.DTOS.AuditLog;
 using Service_layer.Services_Interfaces;
@@ -103,7 +107,7 @@ namespace Service_layer.Services
                 TotalFAQs = faqs.Count,
 
                 // Recent Activity
-                LastMenuUpdate = null, // MenuItem doesn't have CreatedAt field
+                LastMenuUpdate = menuItems.Any() ? menuItems.Max(m => m.CreatedAt) : null,
                 LastKnowledgeBaseUpdate = knowledgeBase.Any() ? knowledgeBase.Max(k => k.CreatedAt) : null,
 
                 // Setup Status
@@ -229,12 +233,14 @@ namespace Service_layer.Services
             var customTo = filter?.CustomTo;
 
             // Resolve per-section periods (null -> "30d" default)
-            var insightsPeriod  = Normalize(filter?.InsightsPeriod);
-            var channelsPeriod  = Normalize(filter?.ChannelsPeriod);
-            var sentimentPeriod = Normalize(filter?.SentimentPeriod);
-            var revenuePeriod   = Normalize(filter?.RevenuePeriod);
-            var productsPeriod  = Normalize(filter?.ProductsPeriod);
-            var leadsPeriod     = Normalize(filter?.LeadsPeriod);
+            var insightsPeriod      = Normalize(filter?.InsightsPeriod);
+            var channelsPeriod      = Normalize(filter?.ChannelsPeriod);
+            var sentimentPeriod     = Normalize(filter?.SentimentPeriod);
+            var revenuePeriod       = Normalize(filter?.RevenuePeriod);
+            var productsPeriod      = Normalize(filter?.ProductsPeriod);
+            var leadsPeriod         = Normalize(filter?.LeadsPeriod);
+            var chatAnalysisPeriod  = Normalize(filter?.ChatAnalysisPeriod);
+            var feedbacksPeriod     = Normalize(filter?.FeedbacksPeriod);
 
             // Load all data once
             var orders = (await _unitOfWork.Orders.GetByBusinessIdAsync(businessId)).ToList();
@@ -244,6 +250,8 @@ namespace Service_layer.Services
             var sentiments = (await _unitOfWork.Sentiments.GetByBusinessIdAsync(businessId)).ToList();
             var menuItems = (await _unitOfWork.MenuItems.GetByBusinessIdAsync(businessId)).ToList();
             var menuCategories = (await _unitOfWork.MenuCategories.GetByBusinessIdAsync(businessId)).ToList();
+            var analyses = (await _unitOfWork.InteractionAnalyses.GetByBusinessIdAsync(businessId)).ToList();
+            var feedbacks = (await _unitOfWork.Feedbacks.GetByBusinessIdAsync(businessId)).ToList();
 
             var businessOrderIds = orders.Select(o => o.OrderId).ToHashSet(StringComparer.Ordinal);
             var allOrderItems = (await _unitOfWork.OrderItems.GetAllAsync())
@@ -255,35 +263,41 @@ namespace Service_layer.Services
             var menuItemById = menuItems.ToDictionary(m => m.MenuItemId, m => m, StringComparer.Ordinal);
 
             // Date ranges per section: (from, to, prevFrom, prevTo)
-            var ins   = ResolveRange(insightsPeriod, now, customFrom, customTo);
-            var ch    = ResolveRange(channelsPeriod, now, customFrom, customTo);
-            var sent  = ResolveRange(sentimentPeriod, now, customFrom, customTo);
-            var prod  = ResolveRange(productsPeriod, now, customFrom, customTo);
-            var leads = ResolveRange(leadsPeriod, now, customFrom, customTo);
+            var ins      = ResolveRange(insightsPeriod, now, customFrom, customTo);
+            var ch       = ResolveRange(channelsPeriod, now, customFrom, customTo);
+            var sent     = ResolveRange(sentimentPeriod, now, customFrom, customTo);
+            var prod     = ResolveRange(productsPeriod, now, customFrom, customTo);
+            var leads    = ResolveRange(leadsPeriod, now, customFrom, customTo);
+            var chatAnal = ResolveRange(chatAnalysisPeriod, now, customFrom, customTo);
+            var fb       = ResolveRange(feedbacksPeriod, now, customFrom, customTo);
 
-            var anyCustom = new[] { insightsPeriod, channelsPeriod, sentimentPeriod, revenuePeriod, productsPeriod, leadsPeriod }
+            var anyCustom = new[] { insightsPeriod, channelsPeriod, sentimentPeriod, revenuePeriod, productsPeriod, leadsPeriod, chatAnalysisPeriod, feedbacksPeriod }
                 .Contains("custom");
 
             return new FullDashboardDTO
             {
                 AppliedPeriods = new AppliedPeriodsDTO
                 {
-                    Insights = insightsPeriod,
-                    Channels = channelsPeriod,
-                    Sentiment = sentimentPeriod,
-                    Revenue = revenuePeriod,
-                    Products = productsPeriod,
-                    Leads = leadsPeriod,
-                    CustomFrom = anyCustom ? customFrom : null,
-                    CustomTo = anyCustom ? customTo : null
+                    Insights     = insightsPeriod,
+                    Channels     = channelsPeriod,
+                    Sentiment    = sentimentPeriod,
+                    Revenue      = revenuePeriod,
+                    Products     = productsPeriod,
+                    Leads        = leadsPeriod,
+                    ChatAnalysis = chatAnalysisPeriod,
+                    Feedbacks    = feedbacksPeriod,
+                    CustomFrom   = anyCustom ? customFrom : null,
+                    CustomTo     = anyCustom ? customTo : null
                 },
                 GeneralInsights = BuildGeneralInsights(orders, tickets, interactions, customers, paidStatuses, ins.from, ins.to, ins.prevFrom, ins.prevTo),
                 ChannelDistribution = BuildChannelDistribution(interactions, ch.from, ch.to),
-                SentimentAnalysis = BuildSentimentAnalysis(sentiments, sent.from, sent.to),
+                SentimentAnalysis = BuildSentimentAnalysis(sentiments, analyses, sent.from, sent.to),
                 RevenueTrend = BuildRevenueTrend(orders, paidStatuses, now, revenuePeriod, customFrom, customTo),
                 TopProducts = BuildTopProducts(orders, allOrderItems, menuItemById, categoryById, paidStatuses, prod.from, prod.to),
                 RecentAlerts = BuildRecentAlerts(tickets),
-                CustomerLeads = BuildCustomerLeads(customers, orders, interactions, paidStatuses, leads.from, leads.to)
+                CustomerLeads = BuildCustomerLeads(customers, orders, interactions, paidStatuses, leads.from, leads.to),
+                ChatAnalysis    = BuildChatAnalysis(analyses, chatAnal.from, chatAnal.to),
+                FeedbackSummary = BuildFeedbackSummary(feedbacks, fb.from, fb.to)
             };
         }
 
@@ -400,24 +414,189 @@ namespace Service_layer.Services
         }
 
         private static SentimentAnalysisDTO BuildSentimentAnalysis(
-            List<Sentiment> sentiments, DateTime from, DateTime to)
+            List<Sentiment> sentiments,
+            List<InteractionAnalysis> analyses,
+            DateTime from, DateTime to)
         {
-            var filtered = sentiments.Where(s => s.AnalyzedAt >= from && s.AnalyzedAt <= to).ToList();
-            var total = filtered.Count;
+            // Prefer AI session-level sentiment (InteractionAnalysis) when available,
+            // fall back to keyword-based per-message sentiment (Sentiments table).
+            if (analyses.Any(a => a.AnalyzedAt >= from && a.AnalyzedAt <= to))
+            {
+                var filtered = analyses.Where(a => a.AnalyzedAt >= from && a.AnalyzedAt <= to).ToList();
+                var total    = filtered.Count;
 
-            var satisfied = filtered.Count(s => s.Label.Equals("Positive", StringComparison.OrdinalIgnoreCase));
-            var neutral   = filtered.Count(s => s.Label.Equals("Neutral",  StringComparison.OrdinalIgnoreCase));
-            var angry     = filtered.Count(s => s.Label.Equals("Negative", StringComparison.OrdinalIgnoreCase));
+                var satisfied = filtered.Count(a => a.SentimentLabel.Equals("Positive", StringComparison.OrdinalIgnoreCase));
+                var neutral   = filtered.Count(a => a.SentimentLabel.Equals("Neutral",  StringComparison.OrdinalIgnoreCase));
+                var angry     = filtered.Count(a => a.SentimentLabel.Equals("Negative", StringComparison.OrdinalIgnoreCase));
+
+                return new SentimentAnalysisDTO
+                {
+                    Satisfied           = satisfied,
+                    Neutral             = neutral,
+                    Angry               = angry,
+                    Total               = total,
+                    SatisfiedPercentage = total == 0 ? 0 : Math.Round(satisfied * 100.0 / total, 1),
+                    NeutralPercentage   = total == 0 ? 0 : Math.Round(neutral   * 100.0 / total, 1),
+                    AngryPercentage     = total == 0 ? 0 : Math.Round(angry     * 100.0 / total, 1)
+                };
+            }
+
+            // Fallback: keyword-based per-message sentiment
+            var msgs  = sentiments.Where(s => s.AnalyzedAt >= from && s.AnalyzedAt <= to).ToList();
+            var total2     = msgs.Count;
+            var satisfied2 = msgs.Count(s => s.Label.Equals("Positive", StringComparison.OrdinalIgnoreCase));
+            var neutral2   = msgs.Count(s => s.Label.Equals("Neutral",  StringComparison.OrdinalIgnoreCase));
+            var angry2     = msgs.Count(s => s.Label.Equals("Negative", StringComparison.OrdinalIgnoreCase));
 
             return new SentimentAnalysisDTO
             {
-                Satisfied           = satisfied,
-                Neutral             = neutral,
-                Angry               = angry,
-                Total               = total,
-                SatisfiedPercentage = total == 0 ? 0 : Math.Round(satisfied * 100.0 / total, 1),
-                NeutralPercentage   = total == 0 ? 0 : Math.Round(neutral   * 100.0 / total, 1),
-                AngryPercentage     = total == 0 ? 0 : Math.Round(angry     * 100.0 / total, 1)
+                Satisfied           = satisfied2,
+                Neutral             = neutral2,
+                Angry               = angry2,
+                Total               = total2,
+                SatisfiedPercentage = total2 == 0 ? 0 : Math.Round(satisfied2 * 100.0 / total2, 1),
+                NeutralPercentage   = total2 == 0 ? 0 : Math.Round(neutral2   * 100.0 / total2, 1),
+                AngryPercentage     = total2 == 0 ? 0 : Math.Round(angry2     * 100.0 / total2, 1)
+            };
+        }
+
+        private static ChatAnalysisDTO BuildChatAnalysis(
+            List<InteractionAnalysis> analyses, DateTime from, DateTime to)
+        {
+            var filtered = analyses
+                .Where(a => a.AnalyzedAt >= from && a.AnalyzedAt <= to)
+                .ToList();
+
+            if (!filtered.Any())
+                return new ChatAnalysisDTO();
+
+            var total = filtered.Count;
+
+            // ── Sentiment ─────────────────────────────────────────────────────
+            var avgScore = filtered.Average(a => a.SentimentScore);
+            var overallLabel = avgScore >= 0.2 ? "Positive" : avgScore <= -0.2 ? "Negative" : "Neutral";
+
+            // ── Intents — parse JSON from each session ─────────────────────────
+            var intentCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var a in filtered.Where(a => !string.IsNullOrWhiteSpace(a.IntentsDetectedJson)))
+            {
+                try
+                {
+                    var intents = JsonSerializer.Deserialize<List<AiIntentResultDTO>>(a.IntentsDetectedJson!);
+                    if (intents == null) continue;
+                    foreach (var intent in intents)
+                    {
+                        if (string.IsNullOrWhiteSpace(intent.Name)) continue;
+                        intentCounts.TryGetValue(intent.Name, out var existing);
+                        intentCounts[intent.Name] = existing + intent.Count;
+                    }
+                }
+                catch { /* skip malformed JSON */ }
+            }
+
+            var totalIntentCount = intentCounts.Values.Sum();
+            var topIntents = intentCounts
+                .OrderByDescending(kv => kv.Value)
+                .Take(8)
+                .Select(kv => new IntentDistributionDTO
+                {
+                    Intent     = kv.Key,
+                    Count      = kv.Value,
+                    Percentage = totalIntentCount == 0 ? 0 : Math.Round(kv.Value * 100.0 / totalIntentCount, 1)
+                })
+                .ToList();
+
+            // ── Topics — parse JSON from each session ──────────────────────────
+            var topicCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var a in filtered.Where(a => !string.IsNullOrWhiteSpace(a.MainTopicsJson)))
+            {
+                try
+                {
+                    var topics = JsonSerializer.Deserialize<List<string>>(a.MainTopicsJson!);
+                    if (topics == null) continue;
+                    foreach (var topic in topics.Where(t => !string.IsNullOrWhiteSpace(t)))
+                    {
+                        topicCounts.TryGetValue(topic, out var existing);
+                        topicCounts[topic] = existing + 1;
+                    }
+                }
+                catch { /* skip malformed JSON */ }
+            }
+
+            var topTopics = topicCounts
+                .OrderByDescending(kv => kv.Value)
+                .Take(10)
+                .Select(kv => new TopicCountDTO { Topic = kv.Key, Count = kv.Value })
+                .ToList();
+
+            // ── Key moments — aggregate across sessions (most recent sessions first) ──
+            var topKeyMoments = new List<string>();
+            foreach (var a in filtered.OrderByDescending(a => a.AnalyzedAt))
+            {
+                if (string.IsNullOrWhiteSpace(a.KeyMomentsJson)) continue;
+                try
+                {
+                    var moments = JsonSerializer.Deserialize<List<string>>(a.KeyMomentsJson!);
+                    if (moments == null) continue;
+                    topKeyMoments.AddRange(moments.Where(m => !string.IsNullOrWhiteSpace(m)));
+                    if (topKeyMoments.Count >= 10) break;
+                }
+                catch { /* skip malformed JSON */ }
+            }
+            topKeyMoments = topKeyMoments.Take(10).ToList();
+
+            // ── Recent sessions ────────────────────────────────────────────────
+            var recentSessions = filtered
+                .OrderByDescending(a => a.AnalyzedAt)
+                .Take(5)
+                .Select(a => new RecentSessionInsightDTO
+                {
+                    InteractionId  = a.InteractionId,
+                    CustomerId     = a.Interaction?.CustomerId,
+                    CustomerName   = a.Interaction?.Customer?.FullName,
+                    MainIntent     = a.MainIntent,
+                    Summary        = a.Summary,
+                    SummaryAr      = a.SummaryAr,
+                    SentimentLabel = a.SentimentLabel,
+                    SentimentScore = a.SentimentScore,
+                    AnalyzedAt     = a.AnalyzedAt
+                })
+                .ToList();
+
+            return new ChatAnalysisDTO
+            {
+                TotalAnalyzedSessions = total,
+                AvgSentimentScore     = Math.Round(avgScore, 2),
+                OverallSentimentLabel = overallLabel,
+                TopIntents            = topIntents,
+                TopTopics             = topTopics,
+                TopKeyMoments         = topKeyMoments,
+                RecentSessions        = recentSessions
+            };
+        }
+
+        private static FeedbackSummaryDTO BuildFeedbackSummary(
+            List<Feedback> feedbacks, DateTime from, DateTime to)
+        {
+            var filtered = feedbacks.Where(f => f.CreatedAt >= from && f.CreatedAt <= to).ToList();
+            var total = filtered.Count;
+
+            if (total == 0) return new FeedbackSummaryDTO();
+
+            var positive = filtered.Count(f => f.Rating >= 4);
+            var neutral  = filtered.Count(f => f.Rating == 3);
+            var negative = filtered.Count(f => f.Rating <= 2);
+
+            return new FeedbackSummaryDTO
+            {
+                Total              = total,
+                AverageRating      = Math.Round(filtered.Average(f => f.Rating), 1),
+                PositiveCount      = positive,
+                NeutralCount       = neutral,
+                NegativeCount      = negative,
+                PositivePercentage = Math.Round(positive * 100.0 / total, 1),
+                NeutralPercentage  = Math.Round(neutral  * 100.0 / total, 1),
+                NegativePercentage = Math.Round(negative * 100.0 / total, 1)
             };
         }
 

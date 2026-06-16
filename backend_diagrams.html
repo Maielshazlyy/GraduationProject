@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Digital Employee — Backend Diagrams</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222536;
+    --border: #2e3347;
+    --accent: #6c8ef0;
+    --accent2: #5ccfb0;
+    --accent3: #f0a06c;
+    --accent4: #e06c8e;
+    --text: #e8eaf0;
+    --text2: #9ba3be;
+    --green: #4ec994;
+    --red: #e05c5c;
+    --yellow: #f0c060;
+    --blue: #5ca8e0;
+    --purple: #a070e0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #1a1d27 0%, #16192a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-logo {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .header h1 { font-size: 20px; font-weight: 700; color: var(--text); }
+  .header p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* ── Nav Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    padding: 12px 32px 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 10px 18px;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    border: 1px solid transparent;
+    border-bottom: none;
+    white-space: nowrap;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text); background: var(--surface2); }
+  .tab.active {
+    color: var(--accent);
+    background: var(--bg);
+    border-color: var(--border);
+    border-bottom-color: var(--bg);
+  }
+
+  /* ── Content ── */
+  .content { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+  .diagram-section { display: none; }
+  .diagram-section.active { display: block; }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--text);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--accent);
+    color: white;
+  }
+  .section-desc { color: var(--text2); font-size: 13px; margin-bottom: 24px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    overflow: auto;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 16px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  /* ── Mermaid override ── */
+  .mermaid { background: transparent !important; }
+
+  /* ── Architecture SVG ── */
+  .arch-svg { width: 100%; height: auto; }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    margin-top: 16px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── ERD / Services Grid ── */
+  .entities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 12px;
+  }
+  .entity-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .entity-header {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+  }
+  .entity-body { padding: 8px 12px; }
+  .entity-field {
+    display: flex; justify-content: space-between;
+    font-size: 11px;
+    padding: 2px 0;
+    color: var(--text2);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .entity-field:last-child { border-bottom: none; }
+  .entity-field .fname { color: var(--text); }
+  .entity-field .ftype { color: var(--text2); font-family: monospace; font-size: 10px; }
+  .entity-field .pk { color: var(--yellow); }
+  .entity-field .fk { color: var(--accent2); }
+
+  /* ── Services grid ── */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .service-group {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .service-group-header {
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: white;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .service-item {
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--text2);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .service-item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">🤖</div>
+  <div>
+    <h1>Digital Employee — Backend Diagrams</h1>
+    <p>System Architecture · Database ERD · AI Chat Flow · AI Voice Flow · Services Overview</p>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('arch')">🏗 System Architecture</div>
+  <div class="tab" onclick="showTab('erd')">🗄 Database ERD</div>
+  <div class="tab" onclick="showTab('chat')">💬 AI Chat Flow</div>
+  <div class="tab" onclick="showTab('voice')">🎤 AI Voice Flow</div>
+  <div class="tab" onclick="showTab('services')">⚙️ Services Overview</div>
+  <div class="tab" onclick="showTab('deploy')">🚀 Deployment</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TAB 1 — SYSTEM ARCHITECTURE
+═══════════════════════════════════════════════════ -->
+<div class="content">
+<div class="diagram-section active" id="tab-arch">
+  <div class="section-title">🏗 System Architecture <span class="badge">Clean Architecture</span></div>
+  <div class="section-desc">4-layer clean architecture with AI integration and external services.</div>
+
+  <div class="card">
+    <div class="card-title">Layered Architecture Overview</div>
+    <svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" class="arch-svg">
+      <defs>
+        <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#6c8ef0"/>
+        </marker>
+        <marker id="arrow2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#5ccfb0"/>
+        </marker>
+        <marker id="arrow3" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#f0a06c"/>
+        </marker>
+      </defs>
+
+      <!-- Background -->
+      <rect width="900" height="620" fill="#0f1117" rx="12"/>
+
+      <!-- Title -->
+      <text x="450" y="32" text-anchor="middle" fill="#e8eaf0" font-size="16" font-weight="700" font-family="Segoe UI,sans-serif">Digital Employee — System Architecture</text>
+
+      <!-- ── LAYER LABELS on left ── -->
+      <text x="24" y="115" fill="#9ba3be" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif" transform="rotate(-90,24,115)" text-anchor="middle">PRESENTATION</text>
+      <text x="24" y="230" fill="#9ba3be" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif" transform="rotate(-90,24,230)" text-anchor="middle">SERVICE</text>
+      <text x="24" y="355" fill="#9ba3be" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif" transform="rotate(-90,24,355)" text-anchor="middle">DATA ACCESS</text>
+      <text x="24" y="470" fill="#9ba3be" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif" transform="rotate(-90,24,470)" text-anchor="middle">DOMAIN</text>
+
+      <!-- ── LAYER BANDS ── -->
+      <!-- Presentation Layer -->
+      <rect x="44" y="56" width="520" height="110" rx="10" fill="rgba(108,142,240,0.08)" stroke="#6c8ef0" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <text x="60" y="76" fill="#6c8ef0" font-size="11" font-weight="600" font-family="Segoe UI,sans-serif">API / PRESENTATION LAYER</text>
+
+      <!-- Service Layer -->
+      <rect x="44" y="176" width="520" height="130" rx="10" fill="rgba(92,204,176,0.08)" stroke="#5ccfb0" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <text x="60" y="196" fill="#5ccfb0" font-size="11" font-weight="600" font-family="Segoe UI,sans-serif">SERVICE LAYER — Business Logic</text>
+
+      <!-- DAL Layer -->
+      <rect x="44" y="316" width="520" height="110" rx="10" fill="rgba(240,160,108,0.08)" stroke="#f0a06c" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <text x="60" y="336" fill="#f0a06c" font-size="11" font-weight="600" font-family="Segoe UI,sans-serif">DATA ACCESS LAYER (DAL) — EF Core + Repositories</text>
+
+      <!-- Domain Layer -->
+      <rect x="44" y="436" width="520" height="100" rx="10" fill="rgba(160,112,224,0.08)" stroke="#a070e0" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <text x="60" y="456" fill="#a070e0" font-size="11" font-weight="600" font-family="Segoe UI,sans-serif">DOMAIN LAYER — Models / Entities</text>
+
+      <!-- ── API Controllers ── -->
+      <rect x="62" y="86" width="108" height="64" rx="8" fill="#1a2040" stroke="#6c8ef0" stroke-width="1.5"/>
+      <text x="116" y="110" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Customer</text>
+      <text x="116" y="125" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">ChatController</text>
+      <text x="116" y="139" text-anchor="middle" fill="#6c8ef0" font-size="9" font-family="monospace">POST /api/chat</text>
+
+      <rect x="180" y="86" width="108" height="64" rx="8" fill="#1a2040" stroke="#6c8ef0" stroke-width="1.5"/>
+      <text x="234" y="110" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Customer</text>
+      <text x="234" y="125" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">VoiceController</text>
+      <text x="234" y="139" text-anchor="middle" fill="#6c8ef0" font-size="9" font-family="monospace">WS /voice</text>
+
+      <rect x="298" y="86" width="108" height="64" rx="8" fill="#1a2040" stroke="#6c8ef0" stroke-width="1.5"/>
+      <text x="352" y="110" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Business</text>
+      <text x="352" y="125" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">Controller</text>
+      <text x="352" y="139" text-anchor="middle" fill="#6c8ef0" font-size="9" font-family="monospace">REST CRUD</text>
+
+      <rect x="416" y="86" width="130" height="64" rx="8" fill="#1a2040" stroke="#6c8ef0" stroke-width="1.5"/>
+      <text x="481" y="107" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Auth / Dashboard</text>
+      <text x="481" y="122" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">Order / Ticket</text>
+      <text x="481" y="137" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">+ 12 more controllers</text>
+
+      <!-- ── Service Layer boxes ── -->
+      <rect x="62" y="206" width="116" height="80" rx="8" fill="#152030" stroke="#5ccfb0" stroke-width="1.5"/>
+      <text x="120" y="228" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">AI Services</text>
+      <text x="120" y="244" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">CustomerChatService</text>
+      <text x="120" y="258" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">CustomerVoiceService</text>
+      <text x="120" y="272" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">IntentDetectionService</text>
+
+      <rect x="188" y="206" width="116" height="80" rx="8" fill="#152030" stroke="#5ccfb0" stroke-width="1.5"/>
+      <text x="246" y="228" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Business Ops</text>
+      <text x="246" y="244" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">OrderService</text>
+      <text x="246" y="258" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">TicketService</text>
+      <text x="246" y="272" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">MenuItemService</text>
+
+      <rect x="314" y="206" width="116" height="80" rx="8" fill="#152030" stroke="#5ccfb0" stroke-width="1.5"/>
+      <text x="372" y="228" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Analytics</text>
+      <text x="372" y="244" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">DashboardService</text>
+      <text x="372" y="258" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">ReportService</text>
+      <text x="372" y="272" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">AiAnalysisService</text>
+
+      <rect x="440" y="206" width="116" height="80" rx="8" fill="#152030" stroke="#5ccfb0" stroke-width="1.5"/>
+      <text x="498" y="228" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Auth / User</text>
+      <text x="498" y="244" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">AuthService</text>
+      <text x="498" y="258" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">UserService</text>
+      <text x="498" y="272" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">SubscriptionService</text>
+
+      <!-- ── DAL boxes ── -->
+      <rect x="62" y="346" width="140" height="64" rx="8" fill="#201a10" stroke="#f0a06c" stroke-width="1.5"/>
+      <text x="132" y="368" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Repositories</text>
+      <text x="132" y="384" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">BusinessRepository</text>
+      <text x="132" y="398" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">CustomerRepository + 14 more</text>
+
+      <rect x="212" y="346" width="140" height="64" rx="8" fill="#201a10" stroke="#f0a06c" stroke-width="1.5"/>
+      <text x="282" y="368" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">EF Core Context</text>
+      <text x="282" y="384" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">AppDbContext</text>
+      <text x="282" y="398" text-anchor="middle" fill="#f0a06c" font-size="9" font-family="Segoe UI,sans-serif">IdentityDbContext&lt;User&gt;</text>
+
+      <rect x="362" y="346" width="190" height="64" rx="8" fill="#201a10" stroke="#f0a06c" stroke-width="1.5"/>
+      <text x="457" y="368" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Migrations</text>
+      <text x="457" y="384" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">12 migration files</text>
+      <text x="457" y="398" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">Identity · Voice · Analysis · CallSummary</text>
+
+      <!-- ── Domain boxes ── -->
+      <rect x="62" y="466" width="130" height="54" rx="8" fill="#1a1030" stroke="#a070e0" stroke-width="1.5"/>
+      <text x="127" y="488" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Core Models</text>
+      <text x="127" y="504" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">Business · User · Customer</text>
+
+      <rect x="202" y="466" width="130" height="54" rx="8" fill="#1a1030" stroke="#a070e0" stroke-width="1.5"/>
+      <text x="267" y="488" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Interaction Models</text>
+      <text x="267" y="504" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">Interaction · Message · Ticket</text>
+
+      <rect x="342" y="466" width="130" height="54" rx="8" fill="#1a1030" stroke="#a070e0" stroke-width="1.5"/>
+      <text x="407" y="488" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Analytics Models</text>
+      <text x="407" y="504" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">Sentiment · Analysis · Report</text>
+
+      <rect x="482" y="466" width="80" height="54" rx="8" fill="#1a1030" stroke="#a070e0" stroke-width="1.5"/>
+      <text x="522" y="488" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Enums</text>
+      <text x="522" y="504" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">OrderStatus</text>
+
+      <!-- ── EXTERNAL: AI FastAPI ── -->
+      <rect x="596" y="176" width="160" height="280" rx="12" fill="rgba(240,96,110,0.08)" stroke="#e05c5c" stroke-width="2"/>
+      <text x="676" y="200" text-anchor="middle" fill="#e05c5c" font-size="12" font-weight="700" font-family="Segoe UI,sans-serif">AI FastAPI Server</text>
+      <text x="676" y="216" text-anchor="middle" fill="#9ba3be" font-size="10" font-family="Segoe UI,sans-serif">Python · FastAPI</text>
+
+      <rect x="612" y="228" width="128" height="38" rx="6" fill="#2a1820" stroke="#e05c5c" stroke-width="1"/>
+      <text x="676" y="244" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Intent Detection</text>
+      <text x="676" y="258" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="monospace">POST /detect-intent</text>
+
+      <rect x="612" y="276" width="128" height="38" rx="6" fill="#2a1820" stroke="#e05c5c" stroke-width="1"/>
+      <text x="676" y="292" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Sentiment Analysis</text>
+      <text x="676" y="306" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="monospace">POST /analyze-sentiment</text>
+
+      <rect x="612" y="324" width="128" height="38" rx="6" fill="#2a1820" stroke="#e05c5c" stroke-width="1"/>
+      <text x="676" y="340" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Response Generation</text>
+      <text x="676" y="354" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="monospace">POST /generate-response</text>
+
+      <rect x="612" y="372" width="128" height="38" rx="6" fill="#2a1820" stroke="#e05c5c" stroke-width="1"/>
+      <text x="676" y="388" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Speech-to-Text</text>
+      <text x="676" y="402" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="monospace">POST /stt (Voice only)</text>
+
+      <rect x="612" y="420" width="128" height="24" rx="6" fill="#2a1820" stroke="#e05c5c" stroke-width="1"/>
+      <text x="676" y="436" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">Text-to-Speech (TTS)</text>
+
+      <!-- ── EXTERNAL: Azure SQL ── -->
+      <rect x="596" y="56" width="160" height="106" rx="12" fill="rgba(92,168,224,0.08)" stroke="#5ca8e0" stroke-width="2"/>
+      <text x="676" y="78" text-anchor="middle" fill="#5ca8e0" font-size="12" font-weight="700" font-family="Segoe UI,sans-serif">Azure SQL / Postgres</text>
+      <text x="676" y="94" text-anchor="middle" fill="#9ba3be" font-size="10" font-family="Segoe UI,sans-serif">Hosted on Render / Fly.io</text>
+      <rect x="612" y="104" width="128" height="26" rx="6" fill="#10202a" stroke="#5ca8e0" stroke-width="1"/>
+      <text x="676" y="121" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">22 Tables · 12 Migrations</text>
+      <rect x="612" y="136" width="128" height="18" rx="6" fill="#10202a" stroke="#5ca8e0" stroke-width="1"/>
+      <text x="676" y="148" text-anchor="middle" fill="#5ca8e0" font-size="10" font-family="Segoe UI,sans-serif">ASP.NET Identity built-in</text>
+
+      <!-- ── Arrows: between layers ── -->
+      <!-- Presentation → Service -->
+      <line x1="300" y1="150" x2="300" y2="174" stroke="#6c8ef0" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <!-- Service → DAL -->
+      <line x1="300" y1="306" x2="300" y2="314" stroke="#5ccfb0" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow2)"/>
+      <!-- DAL → Domain -->
+      <line x1="300" y1="410" x2="300" y2="434" stroke="#f0a06c" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow3)"/>
+      <!-- DAL → Azure SQL -->
+      <line x1="564" y1="380" x2="594" y2="120" stroke="#5ca8e0" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow2)"/>
+      <!-- Service → AI -->
+      <line x1="564" y1="260" x2="594" y2="320" stroke="#e05c5c" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+      <!-- Labels for arrows -->
+      <text x="313" y="165" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">depends on</text>
+      <text x="313" y="323" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">depends on</text>
+      <text x="313" y="424" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">depends on</text>
+
+      <!-- .NET label -->
+      <rect x="44" y="556" width="520" height="28" rx="6" fill="#1a1d27" stroke="#2e3347" stroke-width="1"/>
+      <text x="304" y="575" text-anchor="middle" fill="#9ba3be" font-size="11" font-weight="600" font-family="Segoe UI,sans-serif">ASP.NET Core 9.0 · Entity Framework Core · ASP.NET Identity · SignalR (WebSocket)</text>
+
+      <!-- Frontend label -->
+      <text x="760" y="480" text-anchor="middle" fill="#5ccfb0" font-size="12" font-weight="700" font-family="Segoe UI,sans-serif" transform="rotate(-90,760,480)">EXTERNAL SERVICES</text>
+
+    </svg>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#6c8ef0"></div>Presentation Layer</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5ccfb0"></div>Service Layer</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f0a06c"></div>Data Access Layer</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#a070e0"></div>Domain Layer</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e05c5c"></div>AI FastAPI Server</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5ca8e0"></div>Azure SQL Database</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TAB 2 — DATABASE ERD
+═══════════════════════════════════════════════════ -->
+<div class="diagram-section" id="tab-erd">
+  <div class="section-title">🗄 Database ERD <span class="badge">23 Entities</span></div>
+  <div class="section-desc">All 23 entities from AppDbContext.cs, split into 5 domain groups for clarity. Business is the central multi-tenant anchor.</div>
+
+  <!-- GROUP 1: Core -->
+  <div class="card">
+    <div class="card-title">① Core — Business, User, Customer, Setting, WorkingHours</div>
+    <div class="mermaid">
+erDiagram
+    Business {
+        string Id PK
+        string Name
+        string Type
+        string Phone
+        string Email
+        string Website
+        string City
+        string Country
+        double Latitude
+        double Longitude
+        string Description
+        string CuisineType
+        string PriceRange
+        string LogoUrl
+        bool HasDelivery
+        bool HasWiFi
+        bool HasParking
+        bool AcceptsReservations
+        string PaymentMethods
+        bool IsActive
+        bool IsVerified
+        DateTime CreatedAt
+    }
+    User {
+        string Id PK
+        string FullName
+        string Email
+        string Role
+        string BusinessId FK
+        DateTime CreatedAt
+    }
+    Customer {
+        string CustomerId PK
+        string FullName
+        string Email
+        string Phone
+        string BusinessId FK
+        DateTime CreatedAt
+    }
+    Setting {
+        string SettingId PK
+        string BusinessId FK
+        bool AutoAssignTickets
+        bool ChatbotEnabled
+        string ChatbotWelcomeMessage
+        string ChatbotPersonality
+        string AgentVoice
+        string AgentVoiceProvider
+        double AgentVoiceSpeed
+        double AgentVoicePitch
+        string AgentVoiceLanguage
+        string MeetingUrl
+        string CustomSystemPrompt
+        bool EmailNotifications
+        bool SmsNotifications
+        bool PushNotifications
+    }
+    WorkingHours {
+        string WorkingHoursId PK
+        string BusinessId FK
+        string DayOfWeek
+        string OpenTime
+        string CloseTime
+    }
+
+    Business ||--o{ User : "employs"
+    Business ||--o{ Customer : "serves"
+    Business ||--|| Setting : "configured-by"
+    Business ||--o{ WorkingHours : "has"
+    </div>
+  </div>
+
+  <!-- GROUP 2: Chat & Interactions -->
+  <div class="card">
+    <div class="card-title">② Chat &amp; Interactions — Interaction, Message, Sentiment, InteractionAnalysis, CallSummary</div>
+    <div class="mermaid">
+erDiagram
+    Interaction {
+        string InteractionId PK
+        string Channel
+        string InteractionType
+        string Status
+        bool IsEnded
+        string BusinessId FK
+        string CustomerId FK
+        string HandledByUserId FK
+        string RelatedOrderId
+        string RelatedTicketId
+        string CallSessionId
+        DateTime StartedAt
+        DateTime EndedAt
+    }
+    Message {
+        string MessageId PK
+        string InteractionId FK
+        string UserId FK
+        string Content
+        string SenderType
+        string Intent
+        DateTime SentAt
+    }
+    Sentiment {
+        string SentimentId PK
+        string MessageId FK
+        string SourceText
+        decimal Score
+        string Label
+        DateTime AnalyzedAt
+    }
+    InteractionAnalysis {
+        string InteractionAnalysisId PK
+        string InteractionId FK
+        string BusinessId FK
+        string MainIntent
+        float SentimentScore
+        string Summary
+        DateTime AnalyzedAt
+    }
+    CallSummary {
+        string Id PK
+        string InteractionId FK
+        string BusinessId FK
+        string Summary
+        string KeyTopics
+        DateTime CreatedAt
+    }
+
+    Interaction ||--o{ Message : "contains"
+    Message ||--o| Sentiment : "scored-by 1to1"
+    Interaction ||--o| InteractionAnalysis : "analyzed-as 1to1"
+    Interaction ||--o| CallSummary : "summarized-as"
+    </div>
+  </div>
+
+  <!-- GROUP 3: Orders & Menu -->
+  <div class="card">
+    <div class="card-title">③ Orders &amp; Menu — Order, OrderItem, MenuItem, MenuCategory</div>
+    <div class="mermaid">
+erDiagram
+    Order {
+        string OrderId PK
+        string CustomerId FK
+        string BusinessId FK
+        decimal TotalPrice
+        string Status
+        DateTime CreatedAt
+    }
+    OrderItem {
+        string OrderItemId PK
+        string OrderId FK
+        string MenuItemId FK
+        int Quantity
+        decimal UnitPrice
+    }
+    MenuItem {
+        string MenuItemId PK
+        string BusinessId FK
+        string MenuCategoryId FK
+        string Name
+        string Description
+        decimal Price
+        bool IsAvailable
+        DateTime CreatedAt
+    }
+    MenuCategory {
+        string MenuCategoryId PK
+        string BusinessId FK
+        string Name
+    }
+
+    Order ||--o{ OrderItem : "contains"
+    MenuItem ||--o{ OrderItem : "used-in"
+    MenuCategory ||--o{ MenuItem : "groups"
+    </div>
+  </div>
+
+  <!-- GROUP 4: Support -->
+  <div class="card">
+    <div class="card-title">④ Support — Ticket, Feedback, Notification</div>
+    <div class="mermaid">
+erDiagram
+    Ticket {
+        string Id PK
+        string Subject
+        string Status
+        bool IsEnded
+        string TicketType
+        string PriorityLevel
+        double EscalationConfidence
+        string EscalationReason
+        string ResolutionNotes
+        string InteractionId
+        string RelatedOrderId
+        string BusinessId FK
+        string CustomerId FK
+        string AssignedToUserId FK
+        DateTime CreatedAt
+        DateTime ClosedAt
+    }
+    Feedback {
+        string FeedbackId PK
+        string CustomerId FK
+        string TicketId FK
+        string InteractionId FK
+        string Comment
+        int Rating
+        double SentimentScore
+        DateTime CreatedAt
+    }
+    Notification {
+        string NotificationId PK
+        string BusinessId FK
+        string UserId FK
+        string Title
+        string Message
+        bool IsRead
+        DateTime CreatedAt
+    }
+
+    Ticket ||--o{ Feedback : "receives"
+    </div>
+  </div>
+
+  <!-- GROUP 5: Business Management -->
+  <div class="card">
+    <div class="card-title">⑤ Business Management — Subscription, PaymentTransaction, KnowledgeBase, Integration, AuditLog, Report</div>
+    <div class="mermaid">
+erDiagram
+    Subscription {
+        string Id PK
+        string BusinessId FK
+        string PlanName
+        decimal Price
+        bool IsActive
+        DateTime StartDate
+        DateTime EndDate
+    }
+    PaymentTransaction {
+        string Id PK
+        string SubscriptionId FK
+        decimal Amount
+        string PaymentMethod
+        string Status
+        DateTime TransactionDate
+    }
+    KnowledgeBase {
+        string KnowledgeBaseId PK
+        string BusinessId FK
+        string Question
+        string Answer
+        bool IsFAQ
+        int DisplayOrder
+        bool IsActive
+        DateTime CreatedAt
+    }
+    Integration {
+        string Id PK
+        string BusinessId FK
+        string PlatformName
+        string ApiKeyOrConfig
+        string Status
+        DateTime LastSyncDate
+    }
+    AuditLog {
+        string AuditLogId PK
+        string BusinessId FK
+        string UserId FK
+        string Action
+        string Entity
+        string EntityId
+        DateTime CreatedAt
+    }
+    Report {
+        string Id PK
+        string BusinessId FK
+        string Title
+        string ReportType
+        string FilePath
+        DateTime GeneratedAt
+    }
+
+    Subscription ||--o{ PaymentTransaction : "paid-via"
+    </div>
+  </div>
+
+  <!-- Cross-domain FK summary -->
+  <div class="card">
+    <div class="card-title">Cross-Domain Foreign Keys (Business as anchor)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
+
+      <div style="background:#1a2040;border:1px solid #6c8ef0;border-radius:8px;padding:14px">
+        <div style="color:#6c8ef0;font-weight:700;font-size:12px;margin-bottom:10px">Business → (cascade delete)</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:2">
+          Customer · MenuItem · MenuCategory · WorkingHours<br/>
+          Order · Ticket · Interaction · Notification<br/>
+          Report · KnowledgeBase · Integration · AuditLog<br/>
+          Subscription · <span style="color:#5ccfb0">Setting (1:1)</span>
+        </div>
+      </div>
+
+      <div style="background:#1a2040;border:1px solid #5ccfb0;border-radius:8px;padding:14px">
+        <div style="color:#5ccfb0;font-weight:700;font-size:12px;margin-bottom:10px">Customer → (restrict delete)</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:2">
+          Order (restrict)<br/>
+          Ticket (restrict)<br/>
+          Interaction (restrict)<br/>
+          Feedback (restrict)
+        </div>
+      </div>
+
+      <div style="background:#1a2040;border:1px solid #f0a06c;border-radius:8px;padding:14px">
+        <div style="color:#f0a06c;font-weight:700;font-size:12px;margin-bottom:10px">User → (set null on delete)</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:2">
+          Interaction.HandledByUserId (set null)<br/>
+          Ticket.AssignedToUserId (set null)<br/>
+          AuditLog.UserId (set null)<br/>
+          Notification.UserId (set null)<br/>
+          Message.UserId (set null)
+        </div>
+      </div>
+
+      <div style="background:#1a2040;border:1px solid #a070e0;border-radius:8px;padding:14px">
+        <div style="color:#a070e0;font-weight:700;font-size:12px;margin-bottom:10px">1:1 Relationships</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:2">
+          Business ↔ Setting<br/>
+          Message ↔ Sentiment (cascade)<br/>
+          Interaction ↔ InteractionAnalysis (cascade)
+        </div>
+      </div>
+
+      <div style="background:#1a2040;border:1px solid #e05c5c;border-radius:8px;padding:14px">
+        <div style="color:#e05c5c;font-weight:700;font-size:12px;margin-bottom:10px">Nullable / Optional FKs</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:2">
+          User.BusinessId (optional — super admin)<br/>
+          MenuItem.MenuCategoryId (no action)<br/>
+          CallSummary.InteractionId (set null)<br/>
+          Feedback.TicketId / InteractionId<br/>
+          Ticket.InteractionId / RelatedOrderId
+        </div>
+      </div>
+
+      <div style="background:#1a2040;border:1px solid #f0c060;border-radius:8px;padding:14px">
+        <div style="color:#f0c060;font-weight:700;font-size:12px;margin-bottom:10px">All Decimals</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:2">
+          precision(18, 2) globally<br/>
+          via OnModelCreating loop<br/>
+          Order.TotalPrice · MenuItem.Price<br/>
+          Subscription.Price · PaymentTransaction.Amount
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TAB 3 — AI CHAT FLOW
+═══════════════════════════════════════════════════ -->
+<div class="diagram-section" id="tab-chat">
+  <div class="section-title">💬 AI Chat Flow <span class="badge">Agentic AI</span></div>
+  <div class="section-desc">Full sequence for customer chat — from message receipt through Intent Detection, Business Logic execution, Sentiment Analysis, and AI Response Generation.</div>
+
+  <div class="card">
+    <div class="card-title">Customer Chat — Sequence Diagram</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🖥️ Frontend<br/>(Customer)
+    participant API as 🔌 API Controller<br/>(CustomerChat)
+    participant CCS as ⚙️ CustomerChatService
+    participant IDS as 🧠 IntentDetection<br/>Service
+    participant BL as 🔧 Business Logic<br/>(CustomerInteraction)
+    participant RGS as ✍️ ResponseGeneration<br/>Service
+    participant SS as 💭 Sentiment<br/>Service
+    participant DB as 🗄️ Database
+    participant AI as 🤖 AI FastAPI<br/>Server
+
+    C->>API: POST /api/CustomerChat<br/>{ message, interactionId, customerId, businessId }
+    API->>CCS: SendMessageAsync(dto)
+    CCS->>DB: Save Customer Message<br/>{ SenderType: "Customer", Content: message }
+
+    rect rgb(26, 32, 64)
+        Note over CCS,AI: ① Intent Detection
+        CCS->>IDS: DetectIntentAsync(businessId, interactionId, recentMessages[last 10])
+        IDS->>AI: POST /detect-intent
+        AI-->>IDS: { intent, entities, confidence, language, dialect, requiresEscalation, priorityLevel }
+        IDS-->>CCS: DetectedIntentResultDTO
+        CCS->>DB: Update Message.Intent = detectedIntent
+    end
+
+    rect rgb(26, 40, 32)
+        Note over CCS,DB: ② Business Logic Execution
+        CCS->>BL: ExecuteBusinessLogic(intent, entities, businessId, customerId)
+        alt intent == "CreateOrder"
+            BL->>DB: Create Order + OrderItems
+            BL->>DB: Fetch Recommendations
+        else intent == "Complaint"
+            BL->>DB: Create Ticket (type, priority from AI)
+        else intent == "AskAboutOrderStatus"
+            BL->>DB: Fetch latest Order for customer
+        else intent == "CancelOrder"
+            BL->>DB: Update Order.Status = Cancelled
+        else intent == "RequestHumanAgent"
+            BL->>DB: Create Ticket with EscalationReason
+        end
+        BL-->>CCS: { actionOutcome, actionData }
+    end
+
+    rect rgb(40, 26, 40)
+        Note over CCS,AI: ③ Sentiment Analysis (async / non-blocking)
+        CCS-)SS: AnalyzeSentimentAsync(messageId, text, language)
+        SS-)AI: POST /analyze-sentiment
+        AI--)SS: { score, label }
+        SS-)DB: Save Sentiment record
+    end
+
+    rect rgb(40, 32, 26)
+        Note over CCS,AI: ④ Response Generation (Agentic AI)
+        CCS->>RGS: GenerateResponseAsync(intent, actionOutcome, actionData, recentMessages, language, dialect)
+        RGS->>AI: POST /generate-response
+        Note right of AI: AI crafts natural reply<br/>using action context
+        AI-->>RGS: replyText (conversational)
+        RGS-->>CCS: string replyText
+    end
+
+    CCS->>DB: Save AI Reply Message<br/>{ SenderType: "AI", Content: replyText }
+    CCS-->>API: ChatResponseDTO
+    API-->>C: { replyText, orderId?, ticketId?, cart?, recommendations?, status }
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Supported Intents &amp; Actions</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+      <div style="background:#1a2040;border:1px solid #6c8ef0;border-radius:8px;padding:12px">
+        <div style="color:#6c8ef0;font-weight:700;font-size:12px;margin-bottom:6px">CreateOrder</div>
+        <div style="color:#9ba3be;font-size:11px">Creates Order + OrderItems, calculates cart, fetches recommendations from menu</div>
+      </div>
+      <div style="background:#1a2040;border:1px solid #e05c5c;border-radius:8px;padding:12px">
+        <div style="color:#e05c5c;font-weight:700;font-size:12px;margin-bottom:6px">Complaint</div>
+        <div style="color:#9ba3be;font-size:11px">Creates Ticket with type/priority from AI escalation data</div>
+      </div>
+      <div style="background:#1a2040;border:1px solid #5ccfb0;border-radius:8px;padding:12px">
+        <div style="color:#5ccfb0;font-weight:700;font-size:12px;margin-bottom:6px">AskAboutOrderStatus</div>
+        <div style="color:#9ba3be;font-size:11px">Fetches latest order status for the customer</div>
+      </div>
+      <div style="background:#1a2040;border:1px solid #f0c060;border-radius:8px;padding:12px">
+        <div style="color:#f0c060;font-weight:700;font-size:12px;margin-bottom:6px">CancelOrder</div>
+        <div style="color:#9ba3be;font-size:11px">Updates Order.Status to Cancelled</div>
+      </div>
+      <div style="background:#1a2040;border:1px solid #a070e0;border-radius:8px;padding:12px">
+        <div style="color:#a070e0;font-weight:700;font-size:12px;margin-bottom:6px">RequestHumanAgent</div>
+        <div style="color:#9ba3be;font-size:11px">Creates escalation Ticket, routes to available agent</div>
+      </div>
+      <div style="background:#1a2040;border:1px solid #9ba3be;border-radius:8px;padding:12px">
+        <div style="color:#e8eaf0;font-weight:700;font-size:12px;margin-bottom:6px">AskAboutProducts / GeneralQuestion</div>
+        <div style="color:#9ba3be;font-size:11px">No DB action — AI responds using KnowledgeBase context</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TAB 4 — AI VOICE FLOW
+═══════════════════════════════════════════════════ -->
+<div class="diagram-section" id="tab-voice">
+  <div class="section-title">🎤 AI Voice Flow <span class="badge">WebSocket / SignalR</span></div>
+  <div class="section-desc">Voice calls are handled over WebSocket (SignalR). Audio streams in real-time — no files saved. Adds Speech-to-Text and Text-to-Speech on top of the chat flow.</div>
+
+  <div class="card">
+    <div class="card-title">Voice Call — Sequence Diagram</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 📞 Customer<br/>(Telephony / App)
+    participant WS as 🔌 WebSocket<br/>(SignalR Hub)
+    participant CVS as ⚙️ CustomerVoice<br/>Service
+    participant STT as 🎙️ Speech-to-Text<br/>(AI)
+    participant IDS as 🧠 Intent Detection<br/>(AI)
+    participant SS as 💭 Sentiment<br/>(AI, async)
+    participant BL as 🔧 Business Logic
+    participant RGS as ✍️ Response Gen<br/>(AI)
+    participant TTS as 🔊 Text-to-Speech<br/>(AI)
+    participant DB as 🗄️ Database
+
+    rect rgb(20, 30, 50)
+        Note over C,DB: Session Initialization
+        C->>WS: Connect WebSocket (businessId, customerId, callSessionId)
+        WS->>CVS: InitVoiceSession(dto)
+        CVS->>DB: Create Interaction { Channel: "Voice", CallSessionId }
+        CVS-->>WS: { interactionId, sessionReady: true }
+        WS-->>C: Session initialized
+    end
+
+    loop Each Customer Utterance
+        rect rgb(26, 40, 26)
+            Note over C,STT: ① Speech-to-Text (real-time streaming)
+            C->>WS: Audio Chunks (streaming, no file save)
+            WS->>CVS: ProcessAudioChunkAsync(byte[] audioChunk)
+            CVS->>STT: ConvertAudioToTextAsync(audioChunk, format)
+            Note right of STT: Streaming STT — detects<br/>language automatically
+            STT-->>CVS: transcribedText string
+        end
+
+        CVS->>DB: Save Customer Message { Content: transcribedText, SenderType: "Customer" }
+
+        rect rgb(26, 32, 64)
+            Note over CVS,IDS: ② Intent Detection
+            CVS->>IDS: DetectIntentAsync(businessId, interactionId, recentMessages[last 10])
+            IDS-->>CVS: { intent, entities, language, dialect, requiresEscalation, priorityLevel }
+            CVS->>DB: Update Message.Intent
+        end
+
+        rect rgb(40, 26, 26)
+            Note over CVS,SS: ③ Sentiment Analysis (async — does not block flow)
+            CVS-)SS: AnalyzeSentimentAsync(messageId, text, language)
+            SS-)DB: Save Sentiment (background)
+        end
+
+        rect rgb(26, 40, 32)
+            Note over CVS,BL: ④ Business Logic Execution
+            CVS->>BL: ExecuteBusinessLogic(intent, entities)
+            alt CreateOrder / Complaint / CancelOrder
+                BL->>DB: Perform action
+            end
+            BL-->>CVS: { actionOutcome, actionData }
+        end
+
+        rect rgb(40, 32, 26)
+            Note over CVS,RGS: ⑤ Response Generation (Agentic AI)
+            CVS->>RGS: GenerateResponseAsync(intent, actionOutcome, actionData, recentMessages, dialect)
+            RGS-->>CVS: replyText
+        end
+
+        CVS->>DB: Save AI Message { SenderType: "AI", Content: replyText }
+
+        rect rgb(30, 20, 50)
+            Note over CVS,TTS: ⑥ Text-to-Speech (streaming back to customer)
+            CVS->>TTS: ConvertTextToAudioAsync(replyText, VoiceSettings, dialect)
+            Note right of TTS: VoiceSettings from DB per Business<br/>(voice, speed, pitch, language)
+            TTS-->>CVS: Audio chunks (streaming)
+            CVS->>WS: Send audio chunks (real-time)
+            WS-->>C: 🔊 Audio response (streaming)
+        end
+    end
+
+    rect rgb(20, 20, 30)
+        Note over C,DB: Call End
+        C->>WS: End Call signal
+        WS->>CVS: EndVoiceSession(interactionId)
+        CVS->>DB: Update Interaction.Status = Closed, EndedAt = now
+        CVS->>DB: Generate CallSummary (AI)
+    end
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Voice vs Chat — Differences</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="border-bottom:2px solid #2e3347">
+            <th style="padding:10px;text-align:left;color:#9ba3be">Aspect</th>
+            <th style="padding:10px;text-align:left;color:#6c8ef0">💬 Chat</th>
+            <th style="padding:10px;text-align:left;color:#5ccfb0">🎤 Voice</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #2e3347">
+            <td style="padding:10px;color:#e8eaf0">Transport</td>
+            <td style="padding:10px;color:#6c8ef0">REST API (HTTP POST)</td>
+            <td style="padding:10px;color:#5ccfb0">WebSocket (SignalR)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #2e3347">
+            <td style="padding:10px;color:#e8eaf0">Input format</td>
+            <td style="padding:10px;color:#6c8ef0">Text string</td>
+            <td style="padding:10px;color:#5ccfb0">Audio chunks (streaming)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #2e3347">
+            <td style="padding:10px;color:#e8eaf0">Extra AI steps</td>
+            <td style="padding:10px;color:#6c8ef0">—</td>
+            <td style="padding:10px;color:#5ccfb0">Speech-to-Text + Text-to-Speech</td>
+          </tr>
+          <tr style="border-bottom:1px solid #2e3347">
+            <td style="padding:10px;color:#e8eaf0">File storage</td>
+            <td style="padding:10px;color:#6c8ef0">—</td>
+            <td style="padding:10px;color:#5ccfb0">None — real-time streaming only</td>
+          </tr>
+          <tr style="border-bottom:1px solid #2e3347">
+            <td style="padding:10px;color:#e8eaf0">Session model</td>
+            <td style="padding:10px;color:#6c8ef0">Stateless per request</td>
+            <td style="padding:10px;color:#5ccfb0">Stateful session (CallSessionId)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #2e3347">
+            <td style="padding:10px;color:#e8eaf0">Shared steps</td>
+            <td colspan="2" style="padding:10px;color:#f0c060">Intent Detection · Sentiment · Business Logic · Response Generation</td>
+          </tr>
+          <tr>
+            <td style="padding:10px;color:#e8eaf0">End artifact</td>
+            <td style="padding:10px;color:#6c8ef0">Text reply in JSON</td>
+            <td style="padding:10px;color:#5ccfb0">Audio stream + CallSummary saved to DB</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TAB 5 — SERVICES OVERVIEW
+═══════════════════════════════════════════════════ -->
+<div class="diagram-section" id="tab-services">
+  <div class="section-title">⚙️ Services Overview <span class="badge">35 Services</span></div>
+  <div class="section-desc">All services grouped by domain. Each service has a corresponding interface (I*Service) for dependency injection.</div>
+
+  <div class="card">
+    <div class="card-title">Service Groups</div>
+    <div class="services-grid">
+
+      <div class="service-group">
+        <div class="service-group-header" style="background:linear-gradient(135deg,#e05c5c88,#c03c3c88)">🤖 AI / Chat Services</div>
+        <div class="service-item"><div class="dot" style="background:#e05c5c"></div>CustomerChatService — orchestrates full chat</div>
+        <div class="service-item"><div class="dot" style="background:#e05c5c"></div>CustomerVoiceService — WebSocket voice flow</div>
+        <div class="service-item"><div class="dot" style="background:#e05c5c"></div>IntentDetectionService — calls AI /detect-intent</div>
+        <div class="service-item"><div class="dot" style="background:#e05c5c"></div>ResponseGenerationService — calls AI /generate</div>
+        <div class="service-item"><div class="dot" style="background:#e05c5c"></div>SentimentService — calls AI /analyze-sentiment</div>
+        <div class="service-item"><div class="dot" style="background:#e05c5c"></div>AiChatService — owner-facing AI chat</div>
+        <div class="service-item"><div class="dot" style="background:#e05c5c"></div>AiOwnerChatService — business owner AI Q&amp;A</div>
+        <div class="service-item"><div class="dot" style="background:#e05c5c"></div>CustomerInteractionBusinessLogic — intent executor</div>
+      </div>
+
+      <div class="service-group">
+        <div class="service-group-header" style="background:linear-gradient(135deg,#5ca8e088,#3a88c088)">🎤 Voice / STT / TTS</div>
+        <div class="service-item"><div class="dot" style="background:#5ca8e0"></div>AiVoiceJoinService — session init &amp; management</div>
+        <div class="service-item"><div class="dot" style="background:#5ca8e0"></div>AiVoiceKnowledgeSyncService — sync KB for voice</div>
+        <div class="service-item"><div class="dot" style="background:#5ca8e0"></div>CustomerVoiceService — STT + TTS + call flow</div>
+      </div>
+
+      <div class="service-group">
+        <div class="service-group-header" style="background:linear-gradient(135deg,#f0a06c88,#d0804c88)">🍔 Order &amp; Menu</div>
+        <div class="service-item"><div class="dot" style="background:#f0a06c"></div>OrderService — create, cancel, status</div>
+        <div class="service-item"><div class="dot" style="background:#f0a06c"></div>MenuItemService — CRUD menu items</div>
+        <div class="service-item"><div class="dot" style="background:#f0a06c"></div>MenuCategoryService — CRUD categories</div>
+      </div>
+
+      <div class="service-group">
+        <div class="service-group-header" style="background:linear-gradient(135deg,#6c8ef088,#4a6ad088)">🏢 Business Management</div>
+        <div class="service-item"><div class="dot" style="background:#6c8ef0"></div>BusinessService — business CRUD</div>
+        <div class="service-item"><div class="dot" style="background:#6c8ef0"></div>SettingService — voice/AI settings per business</div>
+        <div class="service-item"><div class="dot" style="background:#6c8ef0"></div>KnowledgeBaseService — FAQ / KB entries</div>
+        <div class="service-item"><div class="dot" style="background:#6c8ef0"></div>IntegrationService — 3rd party integrations</div>
+        <div class="service-item"><div class="dot" style="background:#6c8ef0"></div>AiKnowledgeSyncService — sync KB to AI</div>
+      </div>
+
+      <div class="service-group">
+        <div class="service-group-header" style="background:linear-gradient(135deg,#e06c8e88,#c04c6e88)">🔑 Auth &amp; Users</div>
+        <div class="service-item"><div class="dot" style="background:#e06c8e"></div>AuthService — register, login, JWT</div>
+        <div class="service-item"><div class="dot" style="background:#e06c8e"></div>UserService — agent/owner management</div>
+        <div class="service-item"><div class="dot" style="background:#e06c8e"></div>CustomerService — customer profiles</div>
+      </div>
+
+      <div class="service-group">
+        <div class="service-group-header" style="background:linear-gradient(135deg,#4ec99488,#2ea97488)">🎫 Tickets &amp; Support</div>
+        <div class="service-item"><div class="dot" style="background:#4ec994"></div>TicketService — create, assign, close</div>
+        <div class="service-item"><div class="dot" style="background:#4ec994"></div>FeedbackService — customer feedback</div>
+        <div class="service-item"><div class="dot" style="background:#4ec994"></div>MessageService — message management</div>
+        <div class="service-item"><div class="dot" style="background:#4ec994"></div>NotificationService — push notifications</div>
+        <div class="service-item"><div class="dot" style="background:#4ec994"></div>InteractionService — interaction lifecycle</div>
+      </div>
+
+      <div class="service-group">
+        <div class="service-group-header" style="background:linear-gradient(135deg,#a070e088,#8050c088)">📊 Analytics &amp; Reports</div>
+        <div class="service-item"><div class="dot" style="background:#a070e0"></div>DashboardService — KPIs, metrics</div>
+        <div class="service-item"><div class="dot" style="background:#a070e0"></div>AdminDashboardService — system-wide admin</div>
+        <div class="service-item"><div class="dot" style="background:#a070e0"></div>ReportService — generate reports</div>
+        <div class="service-item"><div class="dot" style="background:#a070e0"></div>AiAnalysisService — AI-powered insights</div>
+        <div class="service-item"><div class="dot" style="background:#a070e0"></div>AiReportService — AI-generated summaries</div>
+        <div class="service-item"><div class="dot" style="background:#a070e0"></div>BusinessReportGenerationService</div>
+        <div class="service-item"><div class="dot" style="background:#a070e0"></div>AuditLogService — action auditing</div>
+      </div>
+
+      <div class="service-group">
+        <div class="service-group-header" style="background:linear-gradient(135deg,#f0c06088,#d0a04088)">💳 Subscriptions &amp; Billing</div>
+        <div class="service-item"><div class="dot" style="background:#f0c060"></div>SubscriptionService — plan management</div>
+        <div class="service-item"><div class="dot" style="background:#f0c060"></div>PaymentTransactionService — payment records</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">API Endpoint Groups</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+      <div style="background:#1a2040;border:1px solid #2e3347;border-radius:8px;padding:12px">
+        <div style="color:#6c8ef0;font-weight:700;font-size:12px;margin-bottom:8px">🤖 AI / Chat</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:1.8">
+          POST /api/CustomerChat<br/>
+          WS  /api/CustomerVoice<br/>
+          POST /api/AiChat (owner)<br/>
+          POST /api/AiAnalysis
+        </div>
+      </div>
+      <div style="background:#1a2040;border:1px solid #2e3347;border-radius:8px;padding:12px">
+        <div style="color:#5ccfb0;font-weight:700;font-size:12px;margin-bottom:8px">🔑 Auth</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:1.8">
+          POST /api/Auth/register<br/>
+          POST /api/Auth/login<br/>
+          GET  /api/Auth/me<br/>
+          PUT  /api/Auth/change-password
+        </div>
+      </div>
+      <div style="background:#1a2040;border:1px solid #2e3347;border-radius:8px;padding:12px">
+        <div style="color:#f0a06c;font-weight:700;font-size:12px;margin-bottom:8px">🍔 Orders &amp; Menu</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:1.8">
+          CRUD /api/Orders<br/>
+          CRUD /api/MenuItems<br/>
+          CRUD /api/MenuCategories
+        </div>
+      </div>
+      <div style="background:#1a2040;border:1px solid #2e3347;border-radius:8px;padding:12px">
+        <div style="color:#e05c5c;font-weight:700;font-size:12px;margin-bottom:8px">🎫 Tickets</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:1.8">
+          CRUD /api/Tickets<br/>
+          POST /api/Tickets/assign<br/>
+          POST /api/Tickets/close<br/>
+          GET  /api/Feedback
+        </div>
+      </div>
+      <div style="background:#1a2040;border:1px solid #2e3347;border-radius:8px;padding:12px">
+        <div style="color:#a070e0;font-weight:700;font-size:12px;margin-bottom:8px">📊 Dashboard</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:1.8">
+          GET /api/Dashboard/kpis<br/>
+          GET /api/Dashboard/charts<br/>
+          GET /api/Reports<br/>
+          GET /api/AuditLogs
+        </div>
+      </div>
+      <div style="background:#1a2040;border:1px solid #2e3347;border-radius:8px;padding:12px">
+        <div style="color:#4ec994;font-weight:700;font-size:12px;margin-bottom:8px">🏢 Business</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:1.8">
+          CRUD /api/Business<br/>
+          CRUD /api/Settings<br/>
+          CRUD /api/KnowledgeBase<br/>
+          CRUD /api/WorkingHours
+        </div>
+      </div>
+      <div style="background:#1a2040;border:1px solid #2e3347;border-radius:8px;padding:12px">
+        <div style="color:#f0c060;font-weight:700;font-size:12px;margin-bottom:8px">💳 Billing</div>
+        <div style="color:#9ba3be;font-size:11px;line-height:1.8">
+          CRUD /api/Subscriptions<br/>
+          GET  /api/PaymentTransactions<br/>
+          GET  /api/Integrations
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TAB 6 — DEPLOYMENT
+═══════════════════════════════════════════════════ -->
+<div class="diagram-section" id="tab-deploy">
+  <div class="section-title">🚀 Deployment Architecture <span class="badge">Docker · Render · Fly.io</span></div>
+  <div class="section-desc">Container-based deployment with CI/CD via GitHub Actions.</div>
+
+  <div class="card">
+    <div class="card-title">Deployment Diagram</div>
+    <svg viewBox="0 0 860 440" xmlns="http://www.w3.org/2000/svg" class="arch-svg">
+      <rect width="860" height="440" fill="#0f1117" rx="12"/>
+      <text x="430" y="30" text-anchor="middle" fill="#e8eaf0" font-size="15" font-weight="700" font-family="Segoe UI,sans-serif">Deployment Architecture — Digital Employee</text>
+
+      <!-- GitHub -->
+      <rect x="20" y="60" width="140" height="70" rx="10" fill="#1a1d27" stroke="#6c8ef0" stroke-width="1.5"/>
+      <text x="90" y="90" text-anchor="middle" fill="#6c8ef0" font-size="22" font-family="Segoe UI,sans-serif">🐙</text>
+      <text x="90" y="110" text-anchor="middle" fill="#e8eaf0" font-size="11" font-weight="600" font-family="Segoe UI,sans-serif">GitHub</text>
+      <text x="90" y="124" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">push → main branch</text>
+
+      <!-- GitHub Actions -->
+      <rect x="20" y="160" width="140" height="70" rx="10" fill="#1a1d27" stroke="#f0c060" stroke-width="1.5"/>
+      <text x="90" y="190" text-anchor="middle" fill="#f0c060" font-size="22" font-family="Segoe UI,sans-serif">⚡</text>
+      <text x="90" y="210" text-anchor="middle" fill="#e8eaf0" font-size="11" font-weight="600" font-family="Segoe UI,sans-serif">GitHub Actions</text>
+      <text x="90" y="224" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">deploy.yml · CI/CD</text>
+
+      <!-- Arrow: GitHub → Actions -->
+      <line x1="90" y1="130" x2="90" y2="158" stroke="#6c8ef0" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="96" y="147" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">triggers</text>
+
+      <!-- Docker Build -->
+      <rect x="220" y="60" width="140" height="80" rx="10" fill="#1a1d27" stroke="#5ca8e0" stroke-width="1.5"/>
+      <text x="290" y="92" text-anchor="middle" fill="#5ca8e0" font-size="22" font-family="Segoe UI,sans-serif">🐳</text>
+      <text x="290" y="112" text-anchor="middle" fill="#e8eaf0" font-size="11" font-weight="600" font-family="Segoe UI,sans-serif">Docker Build</text>
+      <text x="290" y="126" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">Dockerfile (multi-stage)</text>
+      <text x="290" y="138" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">.NET 9 SDK → Runtime</text>
+
+      <!-- Arrow: Actions → Docker -->
+      <line x1="160" y1="195" x2="218" y2="100" stroke="#f0c060" stroke-width="1.5" marker-end="url(#arrow3)"/>
+
+      <!-- Render deployment -->
+      <rect x="420" y="56" width="160" height="110" rx="10" fill="rgba(92,204,176,0.08)" stroke="#5ccfb0" stroke-width="2"/>
+      <text x="500" y="80" text-anchor="middle" fill="#5ccfb0" font-size="13" font-weight="700" font-family="Segoe UI,sans-serif">Render.com</text>
+      <rect x="436" y="92" width="128" height="26" rx="6" fill="#152030" stroke="#5ccfb0" stroke-width="1"/>
+      <text x="500" y="110" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">.NET API Service</text>
+      <rect x="436" y="126" width="128" height="26" rx="6" fill="#152030" stroke="#5ccfb0" stroke-width="1"/>
+      <text x="500" y="144" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">render.yaml configured</text>
+
+      <!-- Fly.io -->
+      <rect x="420" y="186" width="160" height="80" rx="10" fill="rgba(108,142,240,0.08)" stroke="#6c8ef0" stroke-width="2"/>
+      <text x="500" y="210" text-anchor="middle" fill="#6c8ef0" font-size="13" font-weight="700" font-family="Segoe UI,sans-serif">Fly.io (alt)</text>
+      <rect x="436" y="220" width="128" height="26" rx="6" fill="#1a2040" stroke="#6c8ef0" stroke-width="1"/>
+      <text x="500" y="238" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">fly.toml + fly-db.toml</text>
+
+      <!-- Arrow: Docker → Render -->
+      <line x1="360" y1="100" x2="418" y2="105" stroke="#5ca8e0" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+      <!-- Azure SQL -->
+      <rect x="650" y="56" width="180" height="100" rx="10" fill="rgba(92,168,224,0.08)" stroke="#5ca8e0" stroke-width="2"/>
+      <text x="740" y="82" text-anchor="middle" fill="#5ca8e0" font-size="13" font-weight="700" font-family="Segoe UI,sans-serif">Azure SQL / Postgres</text>
+      <text x="740" y="100" text-anchor="middle" fill="#9ba3be" font-size="10" font-family="Segoe UI,sans-serif">Render PostgreSQL or Azure</text>
+      <rect x="666" y="110" width="148" height="30" rx="6" fill="#10202a" stroke="#5ca8e0" stroke-width="1"/>
+      <text x="740" y="130" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">EF Core Migrations (auto)</text>
+
+      <!-- AI Python Server -->
+      <rect x="650" y="180" width="180" height="100" rx="10" fill="rgba(224,92,92,0.08)" stroke="#e05c5c" stroke-width="2"/>
+      <text x="740" y="206" text-anchor="middle" fill="#e05c5c" font-size="13" font-weight="700" font-family="Segoe UI,sans-serif">AI FastAPI Server</text>
+      <text x="740" y="224" text-anchor="middle" fill="#9ba3be" font-size="10" font-family="Segoe UI,sans-serif">Python · FastAPI</text>
+      <text x="740" y="242" text-anchor="middle" fill="#9ba3be" font-size="10" font-family="Segoe UI,sans-serif">Intent / Sentiment / TTS / STT</text>
+      <rect x="666" y="254" width="148" height="20" rx="6" fill="#2a1820" stroke="#e05c5c" stroke-width="1"/>
+      <text x="740" y="269" text-anchor="middle" fill="#e8eaf0" font-size="10" font-weight="600" font-family="Segoe UI,sans-serif">AI_BACKEND_URL in .env</text>
+
+      <!-- Arrows: Render → DB and AI -->
+      <line x1="580" y1="100" x2="648" y2="100" stroke="#5ca8e0" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <line x1="580" y1="150" x2="620" y2="220" stroke="#e05c5c" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+      <!-- docker-compose.yml box -->
+      <rect x="220" y="280" width="200" height="80" rx="10" fill="#1a1d27" stroke="#f0a06c" stroke-width="1.5"/>
+      <text x="320" y="304" text-anchor="middle" fill="#f0a06c" font-size="12" font-weight="700" font-family="Segoe UI,sans-serif">docker-compose.yml</text>
+      <text x="320" y="322" text-anchor="middle" fill="#9ba3be" font-size="10" font-family="Segoe UI,sans-serif">Local Dev Environment</text>
+      <text x="320" y="338" text-anchor="middle" fill="#9ba3be" font-size="10" font-family="Segoe UI,sans-serif">API + SQL Server + AI Server</text>
+      <text x="320" y="354" text-anchor="middle" fill="#9ba3be" font-size="9" font-family="Segoe UI,sans-serif">mapped via .env.example</text>
+
+      <!-- .env.example -->
+      <rect x="460" y="300" width="160" height="60" rx="10" fill="#1a1d27" stroke="#a070e0" stroke-width="1.5"/>
+      <text x="540" y="324" text-anchor="middle" fill="#a070e0" font-size="12" font-weight="700" font-family="Segoe UI,sans-serif">.env / .env.example</text>
+      <text x="540" y="342" text-anchor="middle" fill="#9ba3be" font-size="10" font-family="Segoe UI,sans-serif">DB_CONNECTION · AI_URL · JWT_SECRET</text>
+
+      <!-- Footer note -->
+      <rect x="20" y="400" width="820" height="28" rx="6" fill="#1a1d27" stroke="#2e3347" stroke-width="1"/>
+      <text x="430" y="419" text-anchor="middle" fill="#9ba3be" font-size="11" font-weight="600" font-family="Segoe UI,sans-serif">All decimal columns precision(18,2) · EF Core migrations run on startup · ASP.NET Identity for JWT auth</text>
+
+    </svg>
+  </div>
+</div>
+
+</div><!-- end .content -->
+
+<script>
+  // Initialize Mermaid
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    themeVariables: {
+      background: '#1a1d27',
+      primaryColor: '#1a2040',
+      primaryTextColor: '#e8eaf0',
+      primaryBorderColor: '#6c8ef0',
+      lineColor: '#6c8ef0',
+      secondaryColor: '#152030',
+      tertiaryColor: '#201a10',
+      noteBkgColor: '#1a2040',
+      noteTextColor: '#e8eaf0',
+      activationBorderColor: '#5ccfb0',
+      activationBkgColor: '#152030',
+      sequenceNumberColor: '#f0c060',
+      actorBkg: '#1a2040',
+      actorBorder: '#6c8ef0',
+      actorTextColor: '#e8eaf0',
+      actorLineColor: '#6c8ef0',
+      signalColor: '#e8eaf0',
+      signalTextColor: '#e8eaf0',
+      labelBoxBkgColor: '#1a1d27',
+      labelBoxBorderColor: '#2e3347',
+      labelTextColor: '#9ba3be',
+      loopTextColor: '#e8eaf0',
+      fillType0: '#1a2040',
+      fillType1: '#152030',
+      fillType2: '#201a10',
+    },
+    sequence: {
+      diagramMarginX: 20,
+      diagramMarginY: 20,
+      actorMargin: 60,
+      width: 160,
+      height: 55,
+      boxMargin: 10,
+      boxTextMargin: 8,
+      noteMargin: 12,
+      messageMargin: 35,
+      mirrorActors: false,
+    },
+    er: {
+      diagramPadding: 20,
+      layoutDirection: 'TB',
+      minEntityWidth: 100,
+      minEntityHeight: 75,
+      entityPadding: 15,
+      useMaxWidth: true,
+    }
+  });
+
+  // Tab switching
+  function showTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.diagram-section').forEach(s => s.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+
+    // Render mermaid diagrams lazily on first show
+    const section = document.getElementById('tab-' + name);
+    section.querySelectorAll('.mermaid:not([data-rendered])').forEach(el => {
+      el.setAttribute('data-rendered', 'true');
+      mermaid.run({ nodes: [el] });
+    });
+  }
+
+  // Render diagrams in the active (arch) tab on load
+  // ERD diagrams render lazily when the tab is clicked to avoid timeouts
+  window.addEventListener('load', () => {
+    document.querySelectorAll('#tab-chat .mermaid, #tab-voice .mermaid').forEach(el => {
+      el.setAttribute('data-rendered', 'true');
+    });
+    mermaid.run();
+  });
+</script>
+</body>
+</html>

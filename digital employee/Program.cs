@@ -22,7 +22,7 @@ namespace digital_employee
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -174,6 +174,7 @@ namespace digital_employee
             builder.Services.AddScoped<IIntegrationRepository, IntegrationRepository>();
             builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
             builder.Services.AddScoped<ISentimentRepository, SentimentRepository>();
+            builder.Services.AddScoped<IInteractionAnalysisRepository, InteractionAnalysisRepository>();
             builder.Services.AddScoped<ICallSummaryRepository, CallSummaryRepository>();
             
             // UnitOfWork
@@ -239,18 +240,27 @@ namespace digital_employee
             // User Services
             builder.Services.AddScoped<IUserService, UserService>();
 
-            // Business Analytics Services
-            builder.Services.AddScoped<IBusinessAnalyticsService, BusinessAnalyticsService>();
 
-            // Chatbot Services
-            builder.Services.AddScoped<IChatbotService, ChatbotService>();
             builder.Services.AddScoped<ICustomerChatService, CustomerChatService>();
             builder.Services.AddScoped<ICustomerVoiceService, CustomerVoiceService>();
 
-            // AI Chat Service (external AI API)
+            // AI Services (external AI API)
             var aiApiBaseUrl = builder.Configuration["AiApi:BaseUrl"]
                 ?? "https://anyway-remix-puzzling.ngrok-free.dev";
+
             builder.Services.AddHttpClient<IAiChatService, AiChatService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            builder.Services.AddHttpClient<IAiKnowledgeSyncService, AiKnowledgeSyncService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            builder.Services.AddHttpClient<IAiAnalysisService, AiAnalysisService>(client =>
             {
                 client.BaseAddress = new Uri(aiApiBaseUrl);
                 client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
@@ -259,6 +269,31 @@ namespace digital_employee
             // Dashboard Services
             builder.Services.AddScoped<IDashboardService, DashboardService>();
             builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+
+            // AI Owner Chat Service (analytics assistant)
+            builder.Services.AddHttpClient<IAiOwnerChatService, AiOwnerChatService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            // AI Voice Services
+            var aiVoiceApiBaseUrl = builder.Configuration["AiVoiceApi:BaseUrl"]
+                ?? "https://anyway-remix-puzzling.ngrok-free.dev";
+
+            builder.Services.AddHttpClient<IAiVoiceJoinService, AiVoiceJoinService>(client =>
+            {
+                client.BaseAddress = new Uri(aiVoiceApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            // AI Report Service
+            builder.Services.AddHttpClient<IAiReportService, AiReportService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+            builder.Services.AddScoped<IBusinessReportGenerationService, BusinessReportGenerationService>();
 
             // -------------------------
             // 8) FluentValidation Registration
@@ -299,6 +334,11 @@ namespace digital_employee
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.Migrate();
             }
+
+            // -------------------------
+            // Seed dummy data (runs once per business, skips if already seeded)
+            // -------------------------
+            await DataSeeder.SeedAllAsync(app.Services);
 
             // -------------------------
             // 9) Swagger (all environments)

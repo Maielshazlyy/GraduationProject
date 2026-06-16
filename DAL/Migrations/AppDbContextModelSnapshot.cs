@@ -157,6 +157,105 @@ namespace DAL.Migrations
                     b.ToTable("Businesses");
                 });
 
+            modelBuilder.Entity("Domain_layer.Models.CallSummary", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ActionsPerformedJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("AnalyzedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AudioFilesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AudioInfoJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BusinessId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CallId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("DurationSeconds")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EscalationReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EscalationRequired")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("FullTranscript")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IntentsDetectedJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InteractionId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("KeyMomentsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MainTopicsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("MessagesCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MessagesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("QueuedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SentimentLabel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("SentimentScore")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SummaryAr")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("InteractionId");
+
+                    b.ToTable("CallSummaries");
+                });
+
             modelBuilder.Entity("Domain_layer.Models.Customer", b =>
                 {
                     b.Property<string>("CustomerId")
@@ -317,6 +416,58 @@ namespace DAL.Migrations
                     b.ToTable("Interactions");
                 });
 
+            modelBuilder.Entity("Domain_layer.Models.InteractionAnalysis", b =>
+                {
+                    b.Property<string>("InteractionAnalysisId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("AnalyzedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("BusinessId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("IntentsDetectedJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InteractionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("KeyMomentsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MainIntent")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MainTopicsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SentimentLabel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("SentimentScore")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Summary")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SummaryAr")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("InteractionAnalysisId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("InteractionId")
+                        .IsUnique();
+
+                    b.ToTable("InteractionAnalyses");
+                });
+
             modelBuilder.Entity("Domain_layer.Models.KnowledgeBase", b =>
                 {
                     b.Property<string>("KnowledgeBaseId")
@@ -393,6 +544,9 @@ namespace DAL.Migrations
                     b.Property<string>("BusinessId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -683,6 +837,9 @@ namespace DAL.Migrations
 
                     b.Property<string>("Language")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MeetingUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("PushNotifications")
@@ -1100,6 +1257,24 @@ namespace DAL.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domain_layer.Models.CallSummary", b =>
+                {
+                    b.HasOne("Domain_layer.Models.Business", "Business")
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Domain_layer.Models.Interaction", "Interaction")
+                        .WithMany()
+                        .HasForeignKey("InteractionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Business");
+
+                    b.Navigation("Interaction");
+                });
+
             modelBuilder.Entity("Domain_layer.Models.Customer", b =>
                 {
                     b.HasOne("Domain_layer.Models.Business", "Business")
@@ -1170,6 +1345,25 @@ namespace DAL.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("HandledByUser");
+                });
+
+            modelBuilder.Entity("Domain_layer.Models.InteractionAnalysis", b =>
+                {
+                    b.HasOne("Domain_layer.Models.Business", "Business")
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Domain_layer.Models.Interaction", "Interaction")
+                        .WithOne()
+                        .HasForeignKey("Domain_layer.Models.InteractionAnalysis", "InteractionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Business");
+
+                    b.Navigation("Interaction");
                 });
 
             modelBuilder.Entity("Domain_layer.Models.KnowledgeBase", b =>

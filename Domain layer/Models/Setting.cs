@@ -29,6 +29,10 @@ namespace Domain_layer.Models
         public double AgentVoicePitch { get; set; } = 1.0; // 0.5 to 2.0 (default 1.0)
         public string AgentVoiceLanguage { get; set; } = "en-US"; // e.g., "en-US", "ar-SA", "fr-FR"
 
+        // Voice Call
+        /// <summary>Fixed meeting URL the AI agent joins when a customer starts a voice call.</summary>
+        public string? MeetingUrl { get; set; }
+
         // Custom AI Prompts (Optional)
         public string? CustomSystemPrompt { get; set; } // Custom system prompt for AI agent
         public string? CustomGreetingTemplate { get; set; } // Template for greeting messages

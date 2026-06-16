@@ -12,81 +12,10 @@ namespace digital_employee.Controllers
     public class DashboardController : ControllerBase
     {
         private readonly IDashboardService _dashboardService;
-        private readonly IBusinessAnalyticsService _analyticsService;
 
-        public DashboardController(
-            IDashboardService dashboardService,
-            IBusinessAnalyticsService analyticsService)
+        public DashboardController(IDashboardService dashboardService)
         {
             _dashboardService = dashboardService;
-            _analyticsService = analyticsService;
-        }
-
-        // GET: api/Dashboard/summary
-        [HttpGet("summary")]
-        [Authorize(Policy = "OwnerOrAdmin")]
-        public async Task<IActionResult> GetDashboardSummary()
-        {
-            try
-            {
-                // Get BusinessId from token
-                var businessId = User.FindFirstValue("BusinessId");
-                if (string.IsNullOrEmpty(businessId))
-                    return BadRequest(new { Message = "BusinessId not found in token. Please ensure you are linked to a business." });
-
-                var summary = await _dashboardService.GetDashboardSummaryAsync(businessId);
-                return Ok(summary);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
-        }
-
-        // GET: api/Dashboard/analytics
-        [HttpGet("analytics")]
-        [Authorize(Policy = "OwnerOrAdmin")]
-        public async Task<IActionResult> GetAnalytics()
-        {
-            try
-            {
-                var businessId = User.FindFirstValue("BusinessId");
-                if (string.IsNullOrEmpty(businessId))
-                    return BadRequest(new { Message = "BusinessId not found in token." });
-
-                var analytics = await _analyticsService.GetBusinessAnalyticsAsync(businessId);
-                return Ok(analytics);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
-        }
-
-        // GET: api/Dashboard/full
-        [HttpGet("full")]
-        [Authorize(Policy = "OwnerOrAdmin")]
-        public async Task<IActionResult> GetFullDashboard()
-        {
-            try
-            {
-                var businessId = User.FindFirstValue("BusinessId");
-                if (string.IsNullOrEmpty(businessId))
-                    return BadRequest(new { Message = "BusinessId not found in token." });
-
-                var summary = await _dashboardService.GetDashboardSummaryAsync(businessId);
-                var analytics = await _analyticsService.GetBusinessAnalyticsAsync(businessId);
-
-                return Ok(new
-                {
-                    Summary = summary,
-                    Analytics = analytics
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
         }
 
         // GET: api/Dashboard/overview?period=30d
@@ -106,6 +35,8 @@ namespace digital_employee.Controllers
             [FromQuery] string? revenuePeriod = null,
             [FromQuery] string? productsPeriod = null,
             [FromQuery] string? leadsPeriod = null,
+            [FromQuery] string? chatAnalysisPeriod = null,
+            [FromQuery] string? feedbacksPeriod = null,
             [FromQuery] DateTime? customFrom = null,
             [FromQuery] DateTime? customTo = null)
         {
@@ -116,21 +47,24 @@ namespace digital_employee.Controllers
 
             var filter = new DashboardFilterDTO
             {
-                InsightsPeriod  = insightsPeriod  ?? defaultPeriod,
-                ChannelsPeriod  = channelsPeriod  ?? defaultPeriod,
-                SentimentPeriod = sentimentPeriod ?? defaultPeriod,
-                RevenuePeriod   = revenuePeriod   ?? defaultPeriod,
-                ProductsPeriod  = productsPeriod  ?? defaultPeriod,
-                LeadsPeriod     = leadsPeriod     ?? defaultPeriod,
-                CustomFrom      = customFrom,
-                CustomTo        = customTo
+                InsightsPeriod     = insightsPeriod     ?? defaultPeriod,
+                ChannelsPeriod     = channelsPeriod     ?? defaultPeriod,
+                SentimentPeriod    = sentimentPeriod    ?? defaultPeriod,
+                RevenuePeriod      = revenuePeriod      ?? defaultPeriod,
+                ProductsPeriod     = productsPeriod     ?? defaultPeriod,
+                LeadsPeriod        = leadsPeriod        ?? defaultPeriod,
+                ChatAnalysisPeriod = chatAnalysisPeriod ?? defaultPeriod,
+                FeedbacksPeriod    = feedbacksPeriod    ?? defaultPeriod,
+                CustomFrom         = customFrom,
+                CustomTo           = customTo
             };
 
             // If any section resolves to "custom", a valid date window is required
             var usesCustom = new[]
             {
                 filter.InsightsPeriod, filter.ChannelsPeriod, filter.SentimentPeriod,
-                filter.RevenuePeriod, filter.ProductsPeriod, filter.LeadsPeriod
+                filter.RevenuePeriod, filter.ProductsPeriod, filter.LeadsPeriod,
+                filter.ChatAnalysisPeriod, filter.FeedbacksPeriod
             }.Any(p => string.Equals(p, "custom", StringComparison.OrdinalIgnoreCase));
 
             if (usesCustom)
