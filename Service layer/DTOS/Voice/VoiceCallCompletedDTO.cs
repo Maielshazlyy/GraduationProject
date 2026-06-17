@@ -29,6 +29,23 @@ namespace Service_layer.DTOS.Voice
 
         [JsonPropertyName("queued_at")]
         public DateTime? QueuedAt { get; set; }
+
+        /// <summary>Download URLs of the uploaded recordings (from /api/CallRecording/upload).</summary>
+        [JsonPropertyName("audio_urls")]
+        public VoiceAudioUrlsDTO? AudioUrls { get; set; }
+    }
+
+    /// <summary>Download URLs for the three recording tracks.</summary>
+    public class VoiceAudioUrlsDTO
+    {
+        [JsonPropertyName("customer")]
+        public string? Customer { get; set; }
+
+        [JsonPropertyName("agent")]
+        public string? Agent { get; set; }
+
+        [JsonPropertyName("stereo")]
+        public string? Stereo { get; set; }
     }
 
     /// <summary>The call itself: timing, turns, transcript, audio.</summary>

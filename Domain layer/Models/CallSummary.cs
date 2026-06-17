@@ -26,6 +26,9 @@ namespace Domain_layer.Models
         public string AudioFilesJson { get; set; } = "{}";
         public string AudioInfoJson { get; set; } = "{}";
 
+        /// <summary>Download URLs returned by /api/CallRecording/upload (customer, agent, stereo).</summary>
+        public string AudioUrlsJson { get; set; } = "{}";
+
         // --- Analysis ---
         public string Summary { get; set; } = string.Empty;
         public string SummaryAr { get; set; } = string.Empty;
