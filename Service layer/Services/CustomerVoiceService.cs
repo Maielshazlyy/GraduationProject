@@ -117,8 +117,8 @@ namespace Service_layer.Services
                 MessagesCount  = callData.MessagesCount,
                 FullTranscript = callData.FullTranscript ?? string.Empty,
                 MessagesJson   = JsonSerializer.Serialize(callData.Messages),
-                AudioFilesJson = JsonSerializer.Serialize(callData.AudioFiles),
                 AudioInfoJson  = JsonSerializer.Serialize(callData.AudioInfo),
+                AudioUrlsJson  = JsonSerializer.Serialize(payload.AudioUrls ?? new()),
 
                 Summary          = analysis.Summary ?? string.Empty,
                 SummaryAr        = analysis.SummaryAr ?? string.Empty,
