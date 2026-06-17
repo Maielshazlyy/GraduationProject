@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260617123618_AddAudioUrlsToCallSummary")]
-    partial class AddAudioUrlsToCallSummary
+    [Migration("20260617134215_UpdateCallSummaryAudioFields")]
+    partial class UpdateCallSummaryAudioFields
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -172,11 +172,11 @@ namespace DAL.Migrations
                     b.Property<DateTime>("AnalyzedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("AudioFilesJson")
+                    b.Property<string>("AudioInfoJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("AudioInfoJson")
+                    b.Property<string>("AudioUrlsJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

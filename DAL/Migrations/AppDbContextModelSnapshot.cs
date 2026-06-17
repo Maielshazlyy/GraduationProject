@@ -169,11 +169,11 @@ namespace DAL.Migrations
                     b.Property<DateTime>("AnalyzedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("AudioFilesJson")
+                    b.Property<string>("AudioInfoJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("AudioInfoJson")
+                    b.Property<string>("AudioUrlsJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
