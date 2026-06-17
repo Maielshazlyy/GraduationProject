@@ -84,9 +84,17 @@ namespace digital_employee.Controllers
                 await _customerVoiceService.HandleCallCompletedAsync(payload);
                 return Ok(new { Message = "Call summary stored." });
             }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "Failed to store call summary.", Error = ex.Message });
+                return StatusCode(500, new
+                {
+                    Message = "Failed to store call summary.",
+                    Error = ex.InnerException?.Message ?? ex.Message
+                });
             }
         }
     }

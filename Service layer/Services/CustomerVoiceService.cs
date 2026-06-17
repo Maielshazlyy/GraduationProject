@@ -98,12 +98,18 @@ namespace Service_layer.Services
             if (interaction == null)
                 Debug.WriteLine($"[CustomerVoiceService] call-completed: interaction '{callData.CallId}' not found — storing orphan summary.");
 
+            // Resolve + validate the owning business (BusinessId is a required FK).
+            var businessId = interaction?.BusinessId ?? payload.BusinessId;
+            if (string.IsNullOrWhiteSpace(businessId) ||
+                await _unitOfWork.Businesses.GetByIdAsync(businessId) == null)
+                throw new ArgumentException($"Business '{businessId}' not found.");
+
             // Build + persist CallSummary
             var summary = new CallSummary
             {
                 Id             = Guid.NewGuid().ToString(),
                 InteractionId  = interaction?.InteractionId,
-                BusinessId     = interaction?.BusinessId ?? payload.BusinessId ?? string.Empty,
+                BusinessId     = businessId,
                 CallId         = callData.CallId,
                 StartTime      = callData.StartTime,
                 EndTime        = callData.EndTime,
