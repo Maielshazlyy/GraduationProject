@@ -23,7 +23,6 @@ namespace Domain_layer.Models
 
         // Stored as JSON
         public string MessagesJson { get; set; } = "[]";
-        public string AudioFilesJson { get; set; } = "{}";
         public string AudioInfoJson { get; set; } = "{}";
 
         /// <summary>Download URLs returned by /api/CallRecording/upload (customer, agent, stereo).</summary>

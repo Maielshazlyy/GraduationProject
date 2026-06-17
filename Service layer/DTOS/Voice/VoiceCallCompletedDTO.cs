@@ -72,9 +72,6 @@ namespace Service_layer.DTOS.Voice
         [JsonPropertyName("full_transcript")]
         public string? FullTranscript { get; set; }
 
-        [JsonPropertyName("audio_files")]
-        public VoiceAudioFilesDTO? AudioFiles { get; set; }
-
         [JsonPropertyName("audio_info")]
         public VoiceAudioInfoDTO? AudioInfo { get; set; }
     }
@@ -116,19 +113,6 @@ namespace Service_layer.DTOS.Voice
         /// <summary>Per-turn sentiment (usually populated on Customer turns).</summary>
         [JsonPropertyName("sentiment")]
         public VoiceSentimentDTO? Sentiment { get; set; }
-    }
-
-    /// <summary>References to the recorded audio files for the call.</summary>
-    public class VoiceAudioFilesDTO
-    {
-        [JsonPropertyName("customer")]
-        public string? Customer { get; set; }
-
-        [JsonPropertyName("agent")]
-        public string? Agent { get; set; }
-
-        [JsonPropertyName("stereo")]
-        public string? Stereo { get; set; }
     }
 
     /// <summary>Technical info about the recorded audio.</summary>
