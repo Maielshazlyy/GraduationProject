@@ -1751,6 +1751,39 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Bulk Create Menu Items [Owner/Admin]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Returns array', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"items\": [\n    { \"name\": \"Classic Smash Burger\", \"description\": \"لحم بجبن شيدر وصوص خاص\", \"price\": 120, \"categoryName\": \"Burgers\", \"isAvailable\": true },\n    { \"name\": \"Double Smash Burger\", \"description\": \"قرصتين لحم مع بيكون\", \"price\": 155, \"categoryName\": \"Burgers\", \"isAvailable\": true },\n    { \"name\": \"Crispy Fries\", \"description\": \"بطاطس مقلية مقرمشة\", \"price\": 35, \"categoryName\": \"Sides\", \"isAvailable\": true },\n    { \"name\": \"Pepsi\", \"description\": \"علبة بيبسي مبردة\", \"price\": 20, \"categoryName\": \"Drinks\", \"isAvailable\": true }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/MenuItem/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "MenuItem", "bulk"]
+            },
+            "description": "بيحفظ array من الـ menu items دفعة واحدة. CategoryName بيتحول لـ ID تلقائي أو بيتعمل category جديدة."
+          },
+          "response": []
         }
       ]
     },
