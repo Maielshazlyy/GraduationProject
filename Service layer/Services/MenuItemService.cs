@@ -64,6 +64,64 @@ namespace Service_layer.Services
             return menuItem;
         }
 
+        public async Task<IEnumerable<MenuItem>> BulkCreateAsync(MenuItemBulkCreateDTO dto)
+        {
+            var business = await _businessRepository.GetByIdAsync(dto.BusinessId);
+            if (business == null)
+                throw new ArgumentException($"Business with id '{dto.BusinessId}' not found.");
+
+            if (dto.Items == null || !dto.Items.Any())
+                throw new ArgumentException("Items list cannot be empty.");
+
+            // Cache categories by name to avoid repeated DB lookups
+            var existingCategories = (await _unitOfWork.MenuCategories.GetByBusinessIdAsync(dto.BusinessId))
+                .ToDictionary(c => c.Name.ToLower());
+
+            var items = new List<MenuItem>();
+            foreach (var i in dto.Items)
+            {
+                string? categoryId = null;
+
+                if (!string.IsNullOrWhiteSpace(i.CategoryName))
+                {
+                    var key = i.CategoryName.Trim().ToLower();
+                    if (!existingCategories.TryGetValue(key, out var category))
+                    {
+                        // Create category if it doesn't exist
+                        category = new Domain_layer.Models.MenuCategory
+                        {
+                            MenuCategoryId = Guid.NewGuid().ToString(),
+                            Name           = i.CategoryName.Trim(),
+                            BusinessId     = dto.BusinessId,
+                            IsActive       = true
+                        };
+                        await _unitOfWork.MenuCategories.AddAsync(category);
+                        existingCategories[key] = category;
+                    }
+                    categoryId = category.MenuCategoryId;
+                }
+
+                items.Add(new MenuItem
+                {
+                    MenuItemId     = Guid.NewGuid().ToString(),
+                    Name           = i.Name,
+                    Description    = i.Description,
+                    Price          = i.Price,
+                    MenuCategoryId = categoryId,
+                    IsAvailable    = i.IsAvailable,
+                    BusinessId     = dto.BusinessId
+                });
+            }
+
+            foreach (var item in items)
+                await _menuItemRepository.AddAsync(item);
+
+            await _unitOfWork.CompleteAsync();
+            await TrySyncAsync(dto.BusinessId);
+
+            return items;
+        }
+
         public async Task<MenuItem?> UpdateAsync(string id, MenuItemUpdateDTO dto)
         {
             var menuItem = await _menuItemRepository.GetByIdAsync(id);

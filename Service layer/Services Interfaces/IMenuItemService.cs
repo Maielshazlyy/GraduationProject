@@ -9,6 +9,7 @@ namespace Service_layer.Services_Interfaces
         Task<IEnumerable<MenuItem>> GetByBusinessIdAsync(string businessId);
         Task<MenuItem?> GetByIdAsync(string id);
         Task<MenuItem> CreateAsync(MenuItemCreateDTO dto);
+        Task<IEnumerable<MenuItem>> BulkCreateAsync(MenuItemBulkCreateDTO dto);
         Task<MenuItem?> UpdateAsync(string id, MenuItemUpdateDTO dto);
         Task<bool> DeleteAsync(string id);
     }

@@ -83,6 +83,37 @@ namespace digital_employee.Controllers
             }
         }
 
+        // POST: api/MenuItem/bulk
+        [HttpPost("bulk")]
+        [Authorize(Policy = "OwnerOrAdmin")]
+        public async Task<IActionResult> BulkCreate([FromBody] MenuItemBulkCreateDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var items = await _menuItemService.BulkCreateAsync(dto);
+
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrWhiteSpace(dto.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogMenuItemActionAsync(
+                        businessId: dto.BusinessId,
+                        action: "BulkCreateMenuItem",
+                        menuItemId: $"{items.Count()} items",
+                        userId: currentUserId
+                    );
+                }
+
+                return Ok(items.ToDtoList());
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
         // PUT: api/MenuItem/{id}
         [HttpPut("{id}")]
         [Authorize(Policy = "OwnerOrAdmin")]

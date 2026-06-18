@@ -11,7 +11,22 @@ namespace Service_layer.DTOS.menuItem
         public string Name { get; set; }
         public string Description { get; set; }
         public decimal Price { get; set; }
-        public string? MenuCategoryId { get; set; } // Optional - يمكن إنشاء menu item بدون category
+        public string? MenuCategoryId { get; set; }
         public string BusinessId { get; set; }
+    }
+
+    public class MenuItemBulkEntryDTO
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public decimal Price { get; set; }
+        public string? CategoryName { get; set; }
+        public bool IsAvailable { get; set; } = true;
+    }
+
+    public class MenuItemBulkCreateDTO
+    {
+        public string BusinessId { get; set; }
+        public List<MenuItemBulkEntryDTO> Items { get; set; } = new();
     }
 }
