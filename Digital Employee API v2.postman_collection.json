@@ -2542,7 +2542,8 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"How to place an order\",\n  \"content\": \"To place an order, browse our menu and add items to your cart...\",\n  \"businessId\": \"{{businessId}}\",\n  \"isFAQ\": false,\n  \"tags\": \"ordering, how-to, menu\"\n}"
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"question\": \"إيه ساعات العمل؟\",\n  \"answer\": \"من 10 الصبح لـ 12 الليل\",\n  \"businessId\": \"{{businessId}}\",\n  \"isFAQ\": false,\n  \"displayOrder\": 0,\n  \"isActive\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/KnowledgeBase",
@@ -2569,7 +2570,8 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated title\",\n  \"content\": \"Updated content here.\",\n  \"businessId\": \"{{businessId}}\",\n  \"isFAQ\": false,\n  \"tags\": \"updated\"\n}"
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"question\": \"إيه ساعات العمل؟\",\n  \"answer\": \"من 10 الصبح لـ 11 الليل\",\n  \"businessId\": \"{{businessId}}\",\n  \"isFAQ\": false,\n  \"displayOrder\": 0,\n  \"isActive\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/KnowledgeBase/{{knowledgeBaseId}}",
@@ -2601,6 +2603,39 @@
                 "{{knowledgeBaseId}}"
               ]
             }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Create KB [Owner/Admin]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Returns array', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"entries\": [\n    { \"question\": \"إيه ساعات العمل؟\", \"answer\": \"من 10 الصبح لـ 12 الليل\", \"isFAQ\": false, \"displayOrder\": 0, \"isActive\": true },\n    { \"question\": \"هل عندكم توصيل؟\", \"answer\": \"آه، الحد الأدنى 100 جنيه\", \"isFAQ\": false, \"displayOrder\": 1, \"isActive\": true }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/KnowledgeBase/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "KnowledgeBase", "bulk"]
+            },
+            "description": "بيحفظ array من الـ KB entries دفعة واحدة ويعمل AI sync تلقائي."
           },
           "response": []
         }
