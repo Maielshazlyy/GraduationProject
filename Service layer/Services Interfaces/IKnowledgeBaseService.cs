@@ -11,6 +11,7 @@ namespace Service_layer.Services_Interfaces
         Task<IEnumerable<KnowledgeBase>> GetKnowledgeBaseByBusinessIdAsync(string businessId); // Only KnowledgeBase (internal)
         Task<KnowledgeBase?> GetByIdAsync(string id);
         Task<KnowledgeBase> CreateAsync(KnowledgeBaseCreateDTO dto);
+        Task<IEnumerable<KnowledgeBase>> BulkCreateAsync(KnowledgeBaseBulkCreateDTO dto);
         Task<KnowledgeBase?> UpdateAsync(string id, KnowledgeBaseCreateDTO dto);
         Task<bool> DeleteAsync(string id);
     }

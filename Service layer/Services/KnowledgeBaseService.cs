@@ -80,6 +80,36 @@ namespace Service_layer.Services
             return kb;
         }
 
+        public async Task<IEnumerable<KnowledgeBase>> BulkCreateAsync(KnowledgeBaseBulkCreateDTO dto)
+        {
+            var business = await _businessRepository.GetByIdAsync(dto.BusinessId);
+            if (business == null)
+                throw new ArgumentException($"Business with id '{dto.BusinessId}' not found.");
+
+            if (dto.Entries == null || !dto.Entries.Any())
+                throw new ArgumentException("Entries list cannot be empty.");
+
+            var entries = dto.Entries.Select(e => new KnowledgeBase
+            {
+                KnowledgeBaseId = Guid.NewGuid().ToString(),
+                Question        = e.Question,
+                Answer          = e.Answer,
+                BusinessId      = dto.BusinessId,
+                IsFAQ           = e.IsFAQ,
+                DisplayOrder    = e.DisplayOrder,
+                IsActive        = e.IsActive,
+                CreatedAt       = DateTime.UtcNow
+            }).ToList();
+
+            foreach (var entry in entries)
+                await _knowledgeBaseRepository.AddAsync(entry);
+
+            await _unitOfWork.CompleteAsync();
+            await TrySyncAsync(dto.BusinessId);
+
+            return entries;
+        }
+
         public async Task<KnowledgeBase?> UpdateAsync(string id, KnowledgeBaseCreateDTO dto)
         {
             var kb = await _knowledgeBaseRepository.GetByIdAsync(id);

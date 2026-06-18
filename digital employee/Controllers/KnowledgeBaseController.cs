@@ -84,6 +84,37 @@ namespace digital_employee.Controllers
             }
         }
 
+        // POST: api/KnowledgeBase/bulk
+        [HttpPost("bulk")]
+        [Authorize(Policy = "OwnerOrAdmin")]
+        public async Task<IActionResult> BulkCreate([FromBody] KnowledgeBaseBulkCreateDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var entries = await _knowledgeBaseService.BulkCreateAsync(dto);
+
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrWhiteSpace(dto.BusinessId) && !string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    await _auditLogService.LogKnowledgeBaseActionAsync(
+                        businessId: dto.BusinessId,
+                        action: "BulkCreateKnowledgeBase",
+                        knowledgeBaseId: $"{entries.Count()} entries",
+                        userId: currentUserId
+                    );
+                }
+
+                return Ok(entries.ToDtoList());
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
         // PUT: api/KnowledgeBase/{id}
         [HttpPut("{id}")]
         [Authorize(Policy = "OwnerOrAdmin")]
