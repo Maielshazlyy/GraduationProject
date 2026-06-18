@@ -72,10 +72,22 @@ namespace Service_layer.Services
                 IsEnded = false,
                 BusinessId = dto.BusinessId,
                 CustomerId = dto.CustomerId,
+                InteractionId = dto.InteractionId,
                 CreatedAt = DateTime.UtcNow
             };
 
             await _ticketRepository.AddAsync(ticket);
+
+            if (!string.IsNullOrWhiteSpace(dto.InteractionId))
+            {
+                var interaction = await _unitOfWork.Interactions.GetByIdAsync(dto.InteractionId);
+                if (interaction != null)
+                {
+                    interaction.RelatedTicketId = ticket.Id;
+                    _unitOfWork.Interactions.Update(interaction);
+                }
+            }
+
             await _unitOfWork.CompleteAsync();
             return ticket;
         }

@@ -10,6 +10,7 @@ namespace Service_layer.DTOS.Ticket
     {
         public string Subject { get; set; }
         public string CustomerId { get; set; }
-        public string  BusinessId { get; set; }
+        public string BusinessId { get; set; }
+        public string? InteractionId { get; set; }
     }
 }
