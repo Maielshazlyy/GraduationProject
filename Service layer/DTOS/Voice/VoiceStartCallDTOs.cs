@@ -41,7 +41,7 @@ namespace Service_layer.DTOS.Voice
         [JsonPropertyName("business_id")]
         public string BusinessId { get; set; } = string.Empty;
 
-        [JsonPropertyName("meeting_url")]
-        public string MeetingUrl { get; set; } = string.Empty;
+        [JsonPropertyName("customer_identifier")]
+        public string CustomerIdentifier { get; set; } = string.Empty;
     }
 }

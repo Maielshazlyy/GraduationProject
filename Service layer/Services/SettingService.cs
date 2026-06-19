@@ -92,6 +92,9 @@ namespace Service_layer.Services
                 setting.ChatbotPersonality = dto.ChatbotPersonality;
 
             // Voice Settings
+            if (!string.IsNullOrWhiteSpace(dto.MeetingUrl))
+                setting.MeetingUrl = dto.MeetingUrl;
+
             if (!string.IsNullOrWhiteSpace(dto.AgentVoice))
                 setting.AgentVoice = dto.AgentVoice;
             

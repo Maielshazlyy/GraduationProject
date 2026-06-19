@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Domain_layer.Interfaces;
 using Domain_layer.Models;
+using Microsoft.Extensions.Configuration;
 using Service_layer.DTOS.Voice;
 using Service_layer.Services_Interfaces;
 
@@ -14,15 +15,18 @@ namespace Service_layer.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAiVoiceJoinService _aiVoiceJoin;
         private readonly IAuditLogService? _auditLogService;
+        private readonly string _meetingUrl;
 
         public CustomerVoiceService(
             IUnitOfWork unitOfWork,
             IAiVoiceJoinService aiVoiceJoin,
+            IConfiguration configuration,
             IAuditLogService? auditLogService = null)
         {
             _unitOfWork      = unitOfWork;
             _aiVoiceJoin     = aiVoiceJoin;
             _auditLogService = auditLogService;
+            _meetingUrl      = configuration["AiVoiceApi:MeetingUrl"] ?? string.Empty;
         }
 
         // ── 1. Start Call ──────────────────────────────────────────────────────
@@ -37,12 +41,8 @@ namespace Service_layer.Services
             var customer = await _unitOfWork.Customers.GetByIdAsync(request.CustomerId)
                 ?? throw new ArgumentException($"Customer '{request.CustomerId}' not found.");
 
-            // Read MeetingUrl from Settings
-            var settings = await _unitOfWork.Settings.GetByBusinessIdAsync(request.BusinessId);
-            var meetingUrl = settings?.MeetingUrl;
-
-            if (string.IsNullOrWhiteSpace(meetingUrl))
-                throw new ArgumentException("MeetingUrl is not configured for this business. Please set it in Settings.");
+            if (string.IsNullOrWhiteSpace(_meetingUrl))
+                throw new InvalidOperationException("MeetingUrl is not configured in appsettings.");
 
             // Create Interaction
             var interaction = new Interaction
@@ -59,7 +59,7 @@ namespace Service_layer.Services
             await _unitOfWork.CompleteAsync();
 
             // Notify AI to join (non-fatal)
-            await _aiVoiceJoin.JoinCallAsync(interaction.InteractionId, request.BusinessId, meetingUrl);
+            await _aiVoiceJoin.JoinCallAsync(interaction.InteractionId, request.BusinessId, request.CustomerId);
 
             if (_auditLogService != null)
             {
@@ -80,7 +80,7 @@ namespace Service_layer.Services
             return new StartVoiceCallResponseDTO
             {
                 InteractionId = interaction.InteractionId,
-                MeetingUrl    = meetingUrl,
+                MeetingUrl    = _meetingUrl,
                 Status        = "connecting"
             };
         }

@@ -10,6 +10,6 @@ namespace Service_layer.Services_Interfaces
         /// POSTs a join request to the Voice AI so it can connect to the meeting.
         /// Non-fatal — failure is logged but does not abort the call flow.
         /// </summary>
-        Task JoinCallAsync(string interactionId, string businessId, string meetingUrl);
+        Task JoinCallAsync(string interactionId, string businessId, string customerIdentifier);
     }
 }

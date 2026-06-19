@@ -18,18 +18,18 @@ namespace Service_layer.Services
             _http = http;
         }
 
-        public async Task JoinCallAsync(string interactionId, string businessId, string meetingUrl)
+        public async Task JoinCallAsync(string interactionId, string businessId, string customerIdentifier)
         {
             var payload = new AiVoiceJoinRequestDTO
             {
-                InteractionId = interactionId,
-                BusinessId    = businessId,
-                MeetingUrl    = meetingUrl
+                InteractionId      = interactionId,
+                BusinessId         = businessId,
+                CustomerIdentifier = customerIdentifier
             };
 
             try
             {
-                var response = await _http.PostAsJsonAsync("/voice/join", payload);
+                var response = await _http.PostAsJsonAsync("/api/voice/start-call", payload);
                 if (!response.IsSuccessStatusCode)
                 {
                     Debug.WriteLine($"[AiVoiceJoinService] AI returned {(int)response.StatusCode} for interactionId={interactionId}");
