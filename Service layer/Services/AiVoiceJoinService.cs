@@ -5,10 +5,6 @@ using Service_layer.Services_Interfaces;
 
 namespace Service_layer.Services
 {
-    /// <summary>
-    /// HTTP client that tells the Voice AI to join an active meeting room.
-    /// Endpoint the AI exposes: POST /voice/join
-    /// </summary>
     public class AiVoiceJoinService : IAiVoiceJoinService
     {
         private readonly HttpClient _http;
@@ -37,7 +33,6 @@ namespace Service_layer.Services
             }
             catch (Exception ex)
             {
-                // Non-fatal — the Interaction is already created; AI can be retried later
                 Debug.WriteLine($"[AiVoiceJoinService] Failed to notify AI: {ex.Message}");
             }
         }
