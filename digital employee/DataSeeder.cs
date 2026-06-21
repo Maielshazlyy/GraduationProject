@@ -252,26 +252,9 @@ namespace digital_employee
             // ── Interactions + Messages + Orders + Tickets + Feedback ─────────
             var menuItems = context.MenuItems.Where(m => m.BusinessId == business.Id && m.IsAvailable).ToList();
 
-            // ── Chat conversation templates (8 msgs each) ────────────────────
+            // ── Chat scenario templates (5 different intent types) ───────────
             var bizName = seed.Name.Split('|')[0].Trim();
 
-            // greetings rotated per customer
-            string[] customerGreetings =
-            {
-                "السلام عليكم، عايز أطلب | Hi, I'd like to place an order",
-                "أهلاً، ممكن أطلب؟ | Hello, can I order?",
-                "مرحباً، عايز أعرف الأسعار وأطلب | Hi, I want to check prices and order",
-                "هاي، عايز طلب هوم ديليفري | Hey, I want home delivery",
-                "صباح الخير، ممكن أطلب؟ | Good morning, can I order?",
-            };
-            string[] aiGreetings =
-            {
-                $"وعليكم السلام! أهلاً بيك في {bizName}. تحب تطلب إيه؟ | Welcome to {bizName}! What would you like?",
-                $"أهلاً وسهلاً! يسعدنا خدمتك في {bizName}. إيه اللي تحبه؟ | Welcome! Happy to serve you at {bizName}. What can I get you?",
-                $"مرحباً! في {bizName} عندنا أحسن الأصناف. قولي إيه اللي تحتاجه. | Hello! At {bizName} we have the best. Tell me what you need.",
-                $"هاي! اتفضل، إيه طلبك؟ | Hi there! What's your order?",
-                $"صباح النور! أهلاً بيك في {bizName}. إيه الأصناف اللي تحبها؟ | Good morning! Welcome to {bizName}. What would you like today?",
-            };
             string[] addresses =
             {
                 "شارع التحرير، مبنى 12، شقة 3 | El-Tahrir St, building 12, apt 3",
@@ -289,21 +272,6 @@ namespace digital_employee
                 "محفظة فودافون كاش | Vodafone Cash wallet",
                 "كاش | Cash",
                 "انستاباي | InstaPay",
-            };
-            string[] deliveryQuestions =
-            {
-                "وطريقة الدفع إيه؟ كاش ولا بطاقة؟ | Payment method? Cash or card?",
-                "تمام! تدفع إزاي؟ | Great! How will you pay?",
-                "ممتاز! وتحب تدفع إزاي؟ | Excellent! How would you like to pay?",
-                "تمام جداً. طريقة الدفع؟ | Perfect. Payment method?",
-            };
-            string[] confirmations =
-            {
-                "تمام! تم تسجيل طلبك وهيوصلك خلال 30-45 دقيقة. شكراً! | Order confirmed! Arrives in 30-45 mins. Thank you!",
-                "ممتاز! طلبك اتسجل وهو في الطريق خلال 35 دقيقة. | Excellent! Your order is on the way in 35 mins.",
-                "أوكي! طلبك اتبعت للمطبخ دلوقتي. متوقع يوصل خلال 40 دقيقة. | Done! Your order is being prepared now. Expected in 40 mins.",
-                "تم! هيوصلك أسرع ما يمكن. اتمنالك وجبة شهية! | Done! On its way as fast as possible. Enjoy your meal!",
-                "تم تأكيد الطلب! لو عندك أي سؤال ابعتلنا. | Order confirmed! Reach out if you have any questions.",
             };
 
             // ── Ticket / escalation templates ─────────────────────────────────
@@ -392,100 +360,108 @@ namespace digital_employee
                 int daysAgo   = 55 - ci * 4;
                 var tmpl      = ticketTemplates[ci % ticketTemplates.Length];
 
-                // ── Chat Interaction (Closed) ─────────────────────────────────
+                // ── Chat Interaction ──────────────────────────────────────────
+                int chatScenario  = ci % 5;
+                string chatType   = chatScenario == 0 || chatScenario == 2 ? "Order" : "Inquiry";
+                int chatMins      = chatScenario == 0 ? 15 : chatScenario == 1 ? 8 : chatScenario == 2 ? 12 : chatScenario == 3 ? 6 : 10;
+
                 var chatInteraction = new Interaction
                 {
                     InteractionId   = Guid.NewGuid().ToString(),
                     BusinessId      = business.Id,
                     CustomerId      = customer.CustomerId,
                     Channel         = "WebChat",
-                    InteractionType = "Order",
+                    InteractionType = chatType,
                     Status          = "Closed",
                     IsEnded         = true,
                     StartedAt       = DateTime.UtcNow.AddDays(-daysAgo),
-                    EndedAt         = DateTime.UtcNow.AddDays(-daysAgo).AddMinutes(15)
+                    EndedAt         = DateTime.UtcNow.AddDays(-daysAgo).AddMinutes(chatMins)
                 };
                 context.Interactions.Add(chatInteraction);
                 await context.SaveChangesAsync();
 
-                var item1Name = menuItems.Count > 0 ? menuItems[ci % menuItems.Count].Name : "وجبة";
-                var item2Name = menuItems.Count > 1 ? menuItems[(ci + 1) % menuItems.Count].Name : "مشروب";
+                var item1     = menuItems.Count > 0 ? menuItems[ci % menuItems.Count] : null;
+                var item2     = menuItems.Count > 1 ? menuItems[(ci + 1) % menuItems.Count] : null;
+                var item1Name = item1?.Name ?? "وجبة";
+                var item2Name = item2?.Name ?? "مشروب";
                 var address   = addresses[ci % addresses.Length];
                 var payment   = paymentMethods[ci % paymentMethods.Length];
+                var t         = chatInteraction.StartedAt;
 
-                context.Messages.AddRange(
-                    new Message
+                List<Message> chatMsgs = chatScenario switch
+                {
+                    // ── Scenario 0: Place an order ────────────────────────────
+                    0 => new()
                     {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = chatInteraction.InteractionId,
-                        SenderType    = "Customer",
-                        Content       = customerGreetings[ci % customerGreetings.Length],
-                        SentAt        = chatInteraction.StartedAt
+                        Msg(chatInteraction.InteractionId, "Customer", "السلام عليكم، عايز أطلب | Hi, I'd like to order please", t),
+                        Msg(chatInteraction.InteractionId, "AI", $"وعليكم السلام! أهلاً بيك في {bizName}. إيه اللي تحب تطلبه؟ | Welcome to {bizName}! What would you like?", t.AddSeconds(5)),
+                        Msg(chatInteraction.InteractionId, "Customer", $"عايز {item1Name} و{item2Name} من فضلك | I'd like {item1Name} and {item2Name} please", t.AddSeconds(25)),
+                        Msg(chatInteraction.InteractionId, "AI", $"تمام! {item1Name} و{item2Name}. عنوان التوصيل إيه؟ | Got it! What's your delivery address?", t.AddSeconds(32)),
+                        Msg(chatInteraction.InteractionId, "Customer", address, t.AddMinutes(1)),
+                        Msg(chatInteraction.InteractionId, "AI", "وطريقة الدفع؟ كاش ولا بطاقة؟ | Payment method? Cash or card?", t.AddMinutes(1).AddSeconds(10)),
+                        Msg(chatInteraction.InteractionId, "Customer", payment, t.AddMinutes(2)),
+                        Msg(chatInteraction.InteractionId, "AI", "تم تسجيل طلبك! هيوصلك خلال 30-45 دقيقة. شكراً! | Order confirmed! Arrives in 30-45 mins. Thank you!", t.AddMinutes(2).AddSeconds(15)),
                     },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = chatInteraction.InteractionId,
-                        SenderType    = "AI",
-                        Content       = aiGreetings[ci % aiGreetings.Length],
-                        SentAt        = chatInteraction.StartedAt.AddSeconds(5)
-                    },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = chatInteraction.InteractionId,
-                        SenderType    = "Customer",
-                        Content       = $"عايز {item1Name} و{item2Name} | I want {item1Name} and {item2Name}",
-                        SentAt        = chatInteraction.StartedAt.AddSeconds(25)
-                    },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = chatInteraction.InteractionId,
-                        SenderType    = "AI",
-                        Content       = $"تمام، {item1Name} و{item2Name}. عنوان التوصيل إيه؟ | Got it. What's your delivery address?",
-                        SentAt        = chatInteraction.StartedAt.AddSeconds(30)
-                    },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = chatInteraction.InteractionId,
-                        SenderType    = "Customer",
-                        Content       = address,
-                        SentAt        = chatInteraction.StartedAt.AddMinutes(1)
-                    },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = chatInteraction.InteractionId,
-                        SenderType    = "AI",
-                        Content       = deliveryQuestions[ci % deliveryQuestions.Length],
-                        SentAt        = chatInteraction.StartedAt.AddMinutes(1).AddSeconds(10)
-                    },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = chatInteraction.InteractionId,
-                        SenderType    = "Customer",
-                        Content       = payment,
-                        SentAt        = chatInteraction.StartedAt.AddMinutes(2)
-                    },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = chatInteraction.InteractionId,
-                        SenderType    = "AI",
-                        Content       = confirmations[ci % confirmations.Length],
-                        SentAt        = chatInteraction.StartedAt.AddMinutes(2).AddSeconds(15)
-                    }
-                );
 
-                // Order from this interaction
-                if (menuItems.Count >= 2)
+                    // ── Scenario 1: Ask about menu & prices ───────────────────
+                    1 => new()
+                    {
+                        Msg(chatInteraction.InteractionId, "Customer", $"أهلاً، عايز أعرف إيه الأصناف المتاحة وأسعارها | Hi, I'd like to know what items you have and their prices", t),
+                        Msg(chatInteraction.InteractionId, "AI", $"أهلاً! في {bizName} عندنا قائمة متنوعة. تحب تعرف عن نوع معين؟ | Hi! At {bizName} we have a varied menu. Interested in a specific category?", t.AddSeconds(6)),
+                        Msg(chatInteraction.InteractionId, "Customer", $"أيوه، إيه أرخص صنف وأغلى صنف عندكم؟ | Yes, what's your cheapest and most expensive item?", t.AddSeconds(30)),
+                        Msg(chatInteraction.InteractionId, "AI", $"أرخص صنف هو {item2Name} وأغلى صنف هو {item1Name}. كلهم بمكونات طازجة! | Cheapest is {item2Name} and most expensive is {item1Name}. All with fresh ingredients!", t.AddSeconds(40)),
+                        Msg(chatInteraction.InteractionId, "Customer", "وفي عروض أو خصومات دلوقتي؟ | Any current offers or discounts?", t.AddMinutes(1)),
+                        Msg(chatInteraction.InteractionId, "AI", "أيوه! عندنا خصم 10% على أول طلب لأي عميل جديد. | Yes! We have 10% off your first order for new customers.", t.AddMinutes(1).AddSeconds(8)),
+                        Msg(chatInteraction.InteractionId, "Customer", "ممتاز، هطلب قريب! | Great, I'll order soon!", t.AddMinutes(1).AddSeconds(45)),
+                        Msg(chatInteraction.InteractionId, "AI", "نستنى طلبك! لو عندك أي سؤال تاني ابعتلنا. | We look forward to your order! Feel free to ask anything else.", t.AddMinutes(2)),
+                    },
+
+                    // ── Scenario 2: Order with extra customization ────────────
+                    2 => new()
+                    {
+                        Msg(chatInteraction.InteractionId, "Customer", $"هاي! عايز أطلب بس عندي طلب خاص | Hey! I want to order but have a special request", t),
+                        Msg(chatInteraction.InteractionId, "AI", $"أهلاً! اتفضل، قولي طلبك وهنحاول نوفره. | Hi! Go ahead, tell us your request and we'll do our best.", t.AddSeconds(7)),
+                        Msg(chatInteraction.InteractionId, "Customer", $"عايز {item1Name} بس من غير بصل ومع صوص إضافي | I want {item1Name} but without onion and with extra sauce", t.AddSeconds(35)),
+                        Msg(chatInteraction.InteractionId, "AI", $"تمام! {item1Name} بدون بصل وصوص زيادة. هتوصل إزاي؟ | Got it! {item1Name} without onion and extra sauce. How should it be delivered?", t.AddSeconds(45)),
+                        Msg(chatInteraction.InteractionId, "Customer", address, t.AddMinutes(1)),
+                        Msg(chatInteraction.InteractionId, "AI", "وطريقة الدفع؟ | Payment method?", t.AddMinutes(1).AddSeconds(12)),
+                        Msg(chatInteraction.InteractionId, "Customer", payment, t.AddMinutes(2)),
+                        Msg(chatInteraction.InteractionId, "AI", $"ممتاز! تم تسجيل طلبك مع ملاحظة التعديل. هيوصلك خلال 35 دقيقة! | Done! Order placed with your customization noted. Arrives in 35 mins!", t.AddMinutes(2).AddSeconds(10)),
+                    },
+
+                    // ── Scenario 3: Ask about delivery areas & fees ───────────
+                    3 => new()
+                    {
+                        Msg(chatInteraction.InteractionId, "Customer", "بتوصلوا فين؟ وكام رسوم التوصيل؟ | Where do you deliver? And what are the delivery fees?", t),
+                        Msg(chatInteraction.InteractionId, "AI", "بنوصل لمعظم مناطق القاهرة والجيزة. رسوم التوصيل بتبدأ من 15 جنيه حسب المنطقة. | We deliver to most areas in Cairo and Giza. Delivery fees start from 15 EGP depending on the area.", t.AddSeconds(8)),
+                        Msg(chatInteraction.InteractionId, "Customer", "وبتوصلوا للمعادي؟ | Do you deliver to Maadi?", t.AddSeconds(40)),
+                        Msg(chatInteraction.InteractionId, "AI", "أيوه، المعادي من مناطقنا. رسوم التوصيل 20 جنيه ووقت التوصيل 40-50 دقيقة. | Yes, Maadi is one of our areas. Delivery fee is 20 EGP and takes 40-50 minutes.", t.AddSeconds(50)),
+                        Msg(chatInteraction.InteractionId, "Customer", "وفي حد أوردر minimum؟ | Is there a minimum order?", t.AddMinutes(1).AddSeconds(20)),
+                        Msg(chatInteraction.InteractionId, "AI", "أقل أوردر 50 جنيه مش شامل التوصيل. | Minimum order is 50 EGP excluding delivery.", t.AddMinutes(1).AddSeconds(30)),
+                        Msg(chatInteraction.InteractionId, "Customer", "تمام شكراً على المعلومات | Great, thanks for the info", t.AddMinutes(2)),
+                        Msg(chatInteraction.InteractionId, "AI", "العفو! لما تحب تطلب احنا موجودين. | You're welcome! We're here whenever you're ready to order.", t.AddMinutes(2).AddSeconds(10)),
+                    },
+
+                    // ── Scenario 4: Ask about ingredients / allergens ─────────
+                    _ => new()
+                    {
+                        Msg(chatInteraction.InteractionId, "Customer", $"مرحباً، عندي حساسية من المكسرات. {item1Name} فيها مكسرات؟ | Hi, I'm allergic to nuts. Does {item1Name} contain nuts?", t),
+                        Msg(chatInteraction.InteractionId, "AI", $"أهلاً! سؤال مهم جداً. {item1Name} مش فيها مكسرات في الوصفة الأصلية، بس المطبخ بيستخدم مكسرات في أصناف تانية فممكن يحصل تلوث. | Hi! Great question. {item1Name} doesn't contain nuts in the original recipe, but our kitchen handles nuts in other dishes so cross-contamination is possible.", t.AddSeconds(9)),
+                        Msg(chatInteraction.InteractionId, "Customer", "وفي أي أصناف عندكم آمنة خالص من المكسرات؟ | Which of your items are completely nut-free?", t.AddSeconds(50)),
+                        Msg(chatInteraction.InteractionId, "AI", $"الأصناف دي عادةً آمنة: {item2Name}. بس دايماً ننصح بإخبار المطبخ بالحساسية عند الطلب. | These items are usually safe: {item2Name}. We always recommend informing the kitchen about allergies when ordering.", t.AddMinutes(1)),
+                        Msg(chatInteraction.InteractionId, "Customer", "ينفع أنبه المطبخ في الأوردر؟ | Can I add an allergy note to my order?", t.AddMinutes(1).AddSeconds(30)),
+                        Msg(chatInteraction.InteractionId, "AI", "أيوه بالطبع! في خانة الملاحظات لما بتطلب اكتب حساسيتك وهياخدوا احتياطهم. | Yes of course! There's a notes field when ordering — write your allergy and the kitchen will take precautions.", t.AddMinutes(1).AddSeconds(40)),
+                        Msg(chatInteraction.InteractionId, "Customer", "شكراً جزيلاً، مطمن دلوقتي! | Thank you so much, I feel reassured now!", t.AddMinutes(2).AddSeconds(10)),
+                        Msg(chatInteraction.InteractionId, "AI", "العفو وسلامتك! طلبك دايماً مهم لينا. | You're welcome, stay safe! Your wellbeing matters to us.", t.AddMinutes(2).AddSeconds(20)),
+                    },
+                };
+
+                context.Messages.AddRange(chatMsgs);
+
+                // Order only for order scenarios (0 and 2)
+                if ((chatScenario == 0 || chatScenario == 2) && item1 != null && item2 != null)
                 {
                     var orderId = Guid.NewGuid().ToString();
-                    var item1   = menuItems[ci % menuItems.Count];
-                    var item2   = menuItems[(ci + 1) % menuItems.Count];
                     context.Orders.Add(new Order
                     {
                         OrderId    = orderId,
@@ -638,6 +614,9 @@ namespace digital_employee
             new("ممكن أعدل الأوردر؟ | Can I modify my order?",
                 "تقدر تعدل خلال 5 دقائق من التأكيد. | You can modify within 5 minutes of confirmation.", 5),
         };
+
+        private static Message Msg(string interactionId, string senderType, string content, DateTime sentAt) =>
+            new() { MessageId = Guid.NewGuid().ToString(), InteractionId = interactionId, SenderType = senderType, Content = content, SentAt = sentAt };
 
         private static List<KbSeed> CommonKb() => new()
         {
