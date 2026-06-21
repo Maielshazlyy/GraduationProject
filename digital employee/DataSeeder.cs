@@ -273,14 +273,16 @@ namespace digital_employee
                 context.Interactions.Add(chatInteraction);
                 await context.SaveChangesAsync();
 
-                // Messages for chat interaction
+                // Messages for chat interaction (8 messages)
+                var item1Name = menuItems.Count > 0 ? menuItems[ci % menuItems.Count].Name : "وجبة | meal";
+                var item2Name = menuItems.Count > 1 ? menuItems[(ci + 1) % menuItems.Count].Name : "مشروب | drink";
                 context.Messages.AddRange(
                     new Message
                     {
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = chatInteraction.InteractionId,
                         SenderType    = "Customer",
-                        Content       = "مرحباً، عايز أطلب | Hello, I want to order",
+                        Content       = "السلام عليكم، عايز أطلب | Hello, I'd like to place an order",
                         SentAt        = chatInteraction.StartedAt
                     },
                     new Message
@@ -288,7 +290,7 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = chatInteraction.InteractionId,
                         SenderType    = "AI",
-                        Content       = $"أهلاً! يسعدني مساعدتك. إيه اللي تحب تطلبه؟ | Hello! I'm happy to help. What would you like to order?",
+                        Content       = $"وعليكم السلام! أهلاً بيك في {seed.Name.Split('|')[0].Trim()}. تحب تطلب إيه؟ | Welcome! What would you like to order?",
                         SentAt        = chatInteraction.StartedAt.AddSeconds(5)
                     },
                     new Message
@@ -296,16 +298,48 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = chatInteraction.InteractionId,
                         SenderType    = "Customer",
-                        Content       = menuItems.Any() ? $"عايز {menuItems.First().Name}" : "عايز أطلب وجبة | I want to order a meal",
-                        SentAt        = chatInteraction.StartedAt.AddSeconds(30)
+                        Content       = $"عايز {item1Name} و{item2Name} | I want {item1Name} and {item2Name}",
+                        SentAt        = chatInteraction.StartedAt.AddSeconds(25)
                     },
                     new Message
                     {
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = chatInteraction.InteractionId,
                         SenderType    = "AI",
-                        Content       = "تمام، تم تسجيل طلبك وهيوصلك في أقرب وقت! | Done, your order has been placed and will arrive soon!",
+                        Content       = $"تمام، {item1Name} و{item2Name}. عنوان التوصيل إيه؟ | Got it. What's your delivery address?",
+                        SentAt        = chatInteraction.StartedAt.AddSeconds(30)
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = chatInteraction.InteractionId,
+                        SenderType    = "Customer",
+                        Content       = "شارع التحرير، مبنى 12، شقة 3 | El-Tahrir Street, building 12, apt 3",
                         SentAt        = chatInteraction.StartedAt.AddMinutes(1)
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = chatInteraction.InteractionId,
+                        SenderType    = "AI",
+                        Content       = "وطريقة الدفع إيه؟ كاش ولا بطاقة؟ | And the payment method? Cash or card?",
+                        SentAt        = chatInteraction.StartedAt.AddMinutes(1).AddSeconds(10)
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = chatInteraction.InteractionId,
+                        SenderType    = "Customer",
+                        Content       = "كاش عند الاستلام | Cash on delivery",
+                        SentAt        = chatInteraction.StartedAt.AddMinutes(2)
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = chatInteraction.InteractionId,
+                        SenderType    = "AI",
+                        Content       = "تمام! تم تسجيل طلبك وهيوصلك خلال 30-45 دقيقة. شكراً! | Done! Your order is confirmed and will arrive in 30-45 minutes. Thank you!",
+                        SentAt        = chatInteraction.StartedAt.AddMinutes(2).AddSeconds(15)
                     }
                 );
 
@@ -365,14 +399,14 @@ namespace digital_employee
                 };
                 context.Tickets.Add(ticket);
 
-                // Escalation messages
+                // Escalation messages (6 messages)
                 context.Messages.AddRange(
                     new Message
                     {
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = escInteraction.InteractionId,
                         SenderType    = "Customer",
-                        Content       = "الأوردر بتاعي تأخر كتير! | My order is very late!",
+                        Content       = "الأوردر بتاعي اتأخر أكتر من ساعة! | My order is over an hour late!",
                         SentAt        = escInteraction.StartedAt
                     },
                     new Message
@@ -380,8 +414,40 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = escInteraction.InteractionId,
                         SenderType    = "AI",
-                        Content       = "معلش على التأخير. بعمل تذكرة دعم الحين. | Sorry for the delay. Creating a support ticket now.",
-                        SentAt        = escInteraction.StartedAt.AddSeconds(10)
+                        Content       = "معلش جداً على التأخير. ممكن تقولي رقم الأوردر؟ | I'm very sorry for the delay. Could you give me your order number?",
+                        SentAt        = escInteraction.StartedAt.AddSeconds(8)
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = escInteraction.InteractionId,
+                        SenderType    = "Customer",
+                        Content       = "مش عارف الرقم بس اللي طلبته من ساعة | I don't have the number but I ordered an hour ago",
+                        SentAt        = escInteraction.StartedAt.AddSeconds(40)
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = escInteraction.InteractionId,
+                        SenderType    = "AI",
+                        Content       = "تمام، بشوف الأوردر دلوقتي... بدو إن في تأخير غير متوقع. هبعت للمسؤول فوراً. | I see the order now... there seems to be an unexpected delay. Escalating to support immediately.",
+                        SentAt        = escInteraction.StartedAt.AddMinutes(1)
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = escInteraction.InteractionId,
+                        SenderType    = "AI",
+                        Content       = "تم فتح تذكرة دعم برقم أولوية عالية. فريق الدعم هيتواصل معاك خلال 15 دقيقة. | A high-priority support ticket has been created. Our team will contact you within 15 minutes.",
+                        SentAt        = escInteraction.StartedAt.AddMinutes(1).AddSeconds(10)
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = escInteraction.InteractionId,
+                        SenderType    = "Customer",
+                        Content       = "تمام، استنى | Okay, I'll wait",
+                        SentAt        = escInteraction.StartedAt.AddMinutes(2)
                     }
                 );
 
