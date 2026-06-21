@@ -3873,7 +3873,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"meetingUrl\": \"https://meet.google.com/xxx-xxxx-xxx\",\n  \"language\": \"en\",\n  \"timeZone\": \"Africa/Cairo\",\n  \"chatbotEnabled\": true,\n  \"chatbotWelcomeMessage\": \"Welcome! How can I help you?\",\n  \"chatbotPersonality\": \"Friendly\",\n  \"agentVoice\": \"default\",\n  \"agentVoiceProvider\": \"azure\",\n  \"agentVoiceSpeed\": 1.0,\n  \"agentVoicePitch\": 1.0,\n  \"agentVoiceLanguage\": \"en-US\",\n  \"autoAssignTickets\": true,\n  \"enableNotifications\": true,\n  \"emailNotifications\": true,\n  \"smsNotifications\": false,\n  \"pushNotifications\": true\n}"
+              "raw": "{\n  \"language\": \"ar\",\n  \"timeZone\": \"Africa/Cairo\",\n  \"chatbotEnabled\": true,\n  \"chatbotWelcomeMessage\": \"أهلاً! كيف يمكنني مساعدتك؟ | Welcome! How can I help you?\",\n  \"chatbotPersonality\": \"Friendly\",\n  \"agentVoice\": \"ar-EG-SalmaNeural\",\n  \"agentVoiceProvider\": \"azure\",\n  \"agentVoiceSpeed\": 1,\n  \"agentVoicePitch\": 1,\n  \"agentVoiceLanguage\": \"ar-EG\",\n  \"autoAssignTickets\": true,\n  \"enableNotifications\": true,\n  \"emailNotifications\": true,\n  \"smsNotifications\": false,\n  \"pushNotifications\": true,\n  \"customSystemPrompt\": null,\n  \"customGreetingTemplate\": null\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/Setting/business/{{businessId}}",
