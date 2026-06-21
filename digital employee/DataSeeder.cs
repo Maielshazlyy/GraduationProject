@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DAL.Context;
+using Domain_layer.enums;
 using Domain_layer.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -149,6 +150,260 @@ namespace digital_employee
                     BusinessId      = business.Id
                 });
             }
+
+            await context.SaveChangesAsync();
+
+            // ── Setting ───────────────────────────────────────────────────────
+            context.Settings.Add(new Setting
+            {
+                SettingId               = Guid.NewGuid().ToString(),
+                BusinessId              = business.Id,
+                AutoAssignTickets       = true,
+                EnableNotifications     = true,
+                Language                = "ar",
+                TimeZone                = "Africa/Cairo",
+                ChatbotEnabled          = true,
+                ChatbotWelcomeMessage   = $"أهلاً بك في {seed.Name}! كيف يمكنني مساعدتك؟ | Welcome to {seed.Name}! How can I help you?",
+                ChatbotPersonality      = "Friendly",
+                AgentVoice              = "ar-EG-SalmaNeural",
+                AgentVoiceProvider      = "azure",
+                AgentVoiceSpeed         = 1.0,
+                AgentVoicePitch         = 1.0,
+                AgentVoiceLanguage      = "ar-EG",
+                EmailNotifications      = true,
+                SmsNotifications        = false,
+                PushNotifications       = true
+            });
+
+            // ── WorkingHours (Sat–Thu open, Fri closed) ───────────────────────
+            var workingDays = new[] { 0, 1, 2, 3, 4, 6 }; // Sun-Thu, Sat
+            for (int day = 0; day <= 6; day++)
+            {
+                context.WorkingHours.Add(new WorkingHours
+                {
+                    WorkingHoursId = Guid.NewGuid().ToString(),
+                    BusinessId     = business.Id,
+                    DayOfWeek      = day,
+                    IsClosed       = day == 5, // Friday closed
+                    OpenTime       = day == 5 ? null : new TimeSpan(12, 0, 0),
+                    CloseTime      = day == 5 ? null : new TimeSpan(23, 59, 0)
+                });
+            }
+
+            // ── Subscription + PaymentTransaction ─────────────────────────────
+            var subId  = Guid.NewGuid().ToString();
+            var payId  = Guid.NewGuid().ToString();
+            context.Subscriptions.Add(new Subscription
+            {
+                Id             = subId,
+                SubscriptionId = Guid.NewGuid().ToString(),
+                BusinessId     = business.Id,
+                PlanName       = "Professional",
+                Price          = 499m,
+                StartDate      = DateTime.UtcNow.AddMonths(-2),
+                EndDate        = DateTime.UtcNow.AddMonths(10),
+                IsActive       = true
+            });
+            context.PaymentTransactions.Add(new PaymentTransaction
+            {
+                Id              = payId,
+                PaymentId       = Guid.NewGuid().ToString(),
+                SubscriptionId  = subId,
+                Amount          = 499m,
+                PaymentMethod   = PaymentMethod.Card,
+                TransactionDate = DateTime.UtcNow.AddMonths(-2),
+                Status          = PaymentStatus.Completed
+            });
+
+            await context.SaveChangesAsync();
+
+            // ── Customers (3 per business) ────────────────────────────────────
+            var customerNames = new[] { "Ahmed Hassan", "Sara Mohamed", "Omar Khaled" };
+            var customers     = new List<Customer>();
+            for (int i = 0; i < customerNames.Length; i++)
+            {
+                var emailTag = seed.Name.Split('|')[0].Trim().Replace(" ", "").ToLower();
+                var c = new Customer
+                {
+                    CustomerId = Guid.NewGuid().ToString(),
+                    FullName   = customerNames[i],
+                    Email      = $"customer{i + 1}@{emailTag}.com",
+                    Phone      = $"0101000{i + 1}000",
+                    BusinessId = business.Id,
+                    CreatedAt  = DateTime.UtcNow.AddDays(-(30 - i * 5))
+                };
+                context.Customers.Add(c);
+                customers.Add(c);
+            }
+            await context.SaveChangesAsync();
+
+            // ── Interactions + Messages + Orders + Tickets + Feedback ─────────
+            var menuItems = context.MenuItems.Where(m => m.BusinessId == business.Id && m.IsAvailable).ToList();
+
+            foreach (var customer in customers)
+            {
+                // ── Chat Interaction (Closed) ─────────────────────────────────
+                var chatInteraction = new Interaction
+                {
+                    InteractionId   = Guid.NewGuid().ToString(),
+                    BusinessId      = business.Id,
+                    CustomerId      = customer.CustomerId,
+                    Channel         = "WebChat",
+                    InteractionType = "Order",
+                    Status          = "Closed",
+                    IsEnded         = true,
+                    StartedAt       = DateTime.UtcNow.AddDays(-10),
+                    EndedAt         = DateTime.UtcNow.AddDays(-10).AddMinutes(15)
+                };
+                context.Interactions.Add(chatInteraction);
+                await context.SaveChangesAsync();
+
+                // Messages for chat interaction
+                context.Messages.AddRange(
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = chatInteraction.InteractionId,
+                        SenderType    = "Customer",
+                        Content       = "مرحباً، عايز أطلب | Hello, I want to order",
+                        SentAt        = chatInteraction.StartedAt
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = chatInteraction.InteractionId,
+                        SenderType    = "AI",
+                        Content       = $"أهلاً! يسعدني مساعدتك. إيه اللي تحب تطلبه؟ | Hello! I'm happy to help. What would you like to order?",
+                        SentAt        = chatInteraction.StartedAt.AddSeconds(5)
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = chatInteraction.InteractionId,
+                        SenderType    = "Customer",
+                        Content       = menuItems.Any() ? $"عايز {menuItems.First().Name}" : "عايز أطلب وجبة | I want to order a meal",
+                        SentAt        = chatInteraction.StartedAt.AddSeconds(30)
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = chatInteraction.InteractionId,
+                        SenderType    = "AI",
+                        Content       = "تمام، تم تسجيل طلبك وهيوصلك في أقرب وقت! | Done, your order has been placed and will arrive soon!",
+                        SentAt        = chatInteraction.StartedAt.AddMinutes(1)
+                    }
+                );
+
+                // Order from this interaction
+                if (menuItems.Count >= 2)
+                {
+                    var orderId = Guid.NewGuid().ToString();
+                    var item1   = menuItems[0];
+                    var item2   = menuItems[1];
+                    context.Orders.Add(new Order
+                    {
+                        OrderId    = orderId,
+                        BusinessId = business.Id,
+                        CustomerId = customer.CustomerId,
+                        TotalPrice = item1.Price + item2.Price,
+                        Status     = OrderStatus.Delivered,
+                        CreatedAt  = chatInteraction.StartedAt.AddMinutes(2)
+                    });
+                    context.OrderItems.AddRange(
+                        new OrderItem { OrderItemId = Guid.NewGuid().ToString(), OrderId = orderId, MenuItemId = item1.MenuItemId, Quantity = 1, UnitPrice = item1.Price },
+                        new OrderItem { OrderItemId = Guid.NewGuid().ToString(), OrderId = orderId, MenuItemId = item2.MenuItemId, Quantity = 1, UnitPrice = item2.Price }
+                    );
+                }
+
+                // ── Escalation Interaction + Ticket ───────────────────────────
+                var escInteraction = new Interaction
+                {
+                    InteractionId   = Guid.NewGuid().ToString(),
+                    BusinessId      = business.Id,
+                    CustomerId      = customer.CustomerId,
+                    Channel         = "WebChat",
+                    InteractionType = "Ticket",
+                    Status          = "Closed",
+                    IsEnded         = true,
+                    StartedAt       = DateTime.UtcNow.AddDays(-5),
+                    EndedAt         = DateTime.UtcNow.AddDays(-5).AddMinutes(30)
+                };
+                context.Interactions.Add(escInteraction);
+                await context.SaveChangesAsync();
+
+                var ticketId = Guid.NewGuid().ToString();
+                var ticket   = new Ticket
+                {
+                    Id            = ticketId,
+                    BusinessId    = business.Id,
+                    CustomerId    = customer.CustomerId,
+                    InteractionId = escInteraction.InteractionId,
+                    Subject       = "مشكلة في التوصيل | Delivery issue",
+                    Status        = "Closed",
+                    IsEnded       = true,
+                    TicketType    = "LateDelivery",
+                    PriorityLevel = "Normal",
+                    ResolutionNotes = "تم حل المشكلة وتعويض العميل | Issue resolved and customer compensated.",
+                    CreatedAt     = escInteraction.StartedAt,
+                    ClosedAt      = escInteraction.EndedAt
+                };
+                context.Tickets.Add(ticket);
+
+                // Escalation messages
+                context.Messages.AddRange(
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = escInteraction.InteractionId,
+                        SenderType    = "Customer",
+                        Content       = "الأوردر بتاعي تأخر كتير! | My order is very late!",
+                        SentAt        = escInteraction.StartedAt
+                    },
+                    new Message
+                    {
+                        MessageId     = Guid.NewGuid().ToString(),
+                        InteractionId = escInteraction.InteractionId,
+                        SenderType    = "AI",
+                        Content       = "معلش على التأخير. بعمل تذكرة دعم الحين. | Sorry for the delay. Creating a support ticket now.",
+                        SentAt        = escInteraction.StartedAt.AddSeconds(10)
+                    }
+                );
+
+                // Feedback on the ticket
+                context.Feedbacks.Add(new Feedback
+                {
+                    FeedbackId = Guid.NewGuid().ToString(),
+                    CustomerId = customer.CustomerId,
+                    TicketId   = ticketId,
+                    Rating     = 4,
+                    Comment    = "تم الحل بشكل جيد | Issue was resolved well",
+                    CreatedAt  = escInteraction.EndedAt!.Value.AddHours(1)
+                });
+            }
+
+            // ── Notifications (2 per business) ────────────────────────────────
+            context.Notifications.AddRange(
+                new Notification
+                {
+                    NotificationId = Guid.NewGuid().ToString(),
+                    BusinessId     = business.Id,
+                    UserId         = user.Id,
+                    Title          = "طلب جديد | New Order",
+                    Message        = "وصلك طلب جديد من أحمد حسن | New order received from Ahmed Hassan",
+                    IsRead         = true,
+                    CreatedAt      = DateTime.UtcNow.AddDays(-1)
+                },
+                new Notification
+                {
+                    NotificationId = Guid.NewGuid().ToString(),
+                    BusinessId     = business.Id,
+                    UserId         = user.Id,
+                    Title          = "تذكرة جديدة | New Ticket",
+                    Message        = "تم فتح تذكرة دعم جديدة | A new support ticket has been opened",
+                    IsRead         = false,
+                    CreatedAt      = DateTime.UtcNow.AddHours(-3)
+                }
+            );
 
             await context.SaveChangesAsync();
         }
