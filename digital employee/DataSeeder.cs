@@ -217,20 +217,32 @@ namespace digital_employee
 
             await context.SaveChangesAsync();
 
-            // ── Customers (3 per business) ────────────────────────────────────
-            var customerNames = new[] { "Ahmed Hassan", "Sara Mohamed", "Omar Khaled" };
-            var customers     = new List<Customer>();
-            for (int i = 0; i < customerNames.Length; i++)
+            // ── Customers (10–15 per business) ───────────────────────────────
+            var allCustomerNames = new[]
             {
-                var emailTag = seed.Name.Split('|')[0].Trim().Replace(" ", "").ToLower();
+                "Ahmed Hassan",   "Sara Mohamed",   "Omar Khaled",
+                "Nour Ibrahim",   "Youssef Ali",    "Mariam Tarek",
+                "Kareem Mahmoud", "Dina Samer",     "Mostafa Adel",
+                "Rania Hossam",   "Amr Fathy",      "Hana Wael",
+                "Tamer Gamal",    "Salma Nasser",   "Ziad Essam"
+            };
+
+            var rng           = new Random(business.Id.GetHashCode());
+            int customerCount = rng.Next(10, 16); // 10–15 inclusive
+            var emailTag      = seed.Name.Split('|')[0].Trim().Replace(" ", "").ToLower();
+            var customers     = new List<Customer>();
+
+            for (int i = 0; i < customerCount; i++)
+            {
+                var prefix = i % 3 == 0 ? "010" : i % 3 == 1 ? "011" : "012";
                 var c = new Customer
                 {
                     CustomerId = Guid.NewGuid().ToString(),
-                    FullName   = customerNames[i],
+                    FullName   = allCustomerNames[i],
                     Email      = $"customer{i + 1}@{emailTag}.com",
-                    Phone      = $"0101000{i + 1}000",
+                    Phone      = $"{prefix}{(10000000 + i * 1111111) % 100000000:D8}",
                     BusinessId = business.Id,
-                    CreatedAt  = DateTime.UtcNow.AddDays(-(30 - i * 5))
+                    CreatedAt  = DateTime.UtcNow.AddDays(-(60 - i * 4))
                 };
                 context.Customers.Add(c);
                 customers.Add(c);
@@ -240,8 +252,11 @@ namespace digital_employee
             // ── Interactions + Messages + Orders + Tickets + Feedback ─────────
             var menuItems = context.MenuItems.Where(m => m.BusinessId == business.Id && m.IsAvailable).ToList();
 
-            foreach (var customer in customers)
+            for (int ci = 0; ci < customers.Count; ci++)
             {
+                var customer = customers[ci];
+                int daysAgo  = 55 - ci * 4; // spread interactions over past ~55 days
+
                 // ── Chat Interaction (Closed) ─────────────────────────────────
                 var chatInteraction = new Interaction
                 {
@@ -252,8 +267,8 @@ namespace digital_employee
                     InteractionType = "Order",
                     Status          = "Closed",
                     IsEnded         = true,
-                    StartedAt       = DateTime.UtcNow.AddDays(-10),
-                    EndedAt         = DateTime.UtcNow.AddDays(-10).AddMinutes(15)
+                    StartedAt       = DateTime.UtcNow.AddDays(-daysAgo),
+                    EndedAt         = DateTime.UtcNow.AddDays(-daysAgo).AddMinutes(15)
                 };
                 context.Interactions.Add(chatInteraction);
                 await context.SaveChangesAsync();
@@ -316,6 +331,7 @@ namespace digital_employee
                 }
 
                 // ── Escalation Interaction + Ticket ───────────────────────────
+                int escDaysAgo = Math.Max(1, daysAgo - 3);
                 var escInteraction = new Interaction
                 {
                     InteractionId   = Guid.NewGuid().ToString(),
@@ -325,8 +341,8 @@ namespace digital_employee
                     InteractionType = "Ticket",
                     Status          = "Closed",
                     IsEnded         = true,
-                    StartedAt       = DateTime.UtcNow.AddDays(-5),
-                    EndedAt         = DateTime.UtcNow.AddDays(-5).AddMinutes(30)
+                    StartedAt       = DateTime.UtcNow.AddDays(-escDaysAgo),
+                    EndedAt         = DateTime.UtcNow.AddDays(-escDaysAgo).AddMinutes(30)
                 };
                 context.Interactions.Add(escInteraction);
                 await context.SaveChangesAsync();
