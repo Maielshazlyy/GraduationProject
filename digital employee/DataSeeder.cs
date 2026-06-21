@@ -252,10 +252,145 @@ namespace digital_employee
             // ── Interactions + Messages + Orders + Tickets + Feedback ─────────
             var menuItems = context.MenuItems.Where(m => m.BusinessId == business.Id && m.IsAvailable).ToList();
 
+            // ── Chat conversation templates (8 msgs each) ────────────────────
+            var bizName = seed.Name.Split('|')[0].Trim();
+
+            // greetings rotated per customer
+            string[] customerGreetings =
+            {
+                "السلام عليكم، عايز أطلب | Hi, I'd like to place an order",
+                "أهلاً، ممكن أطلب؟ | Hello, can I order?",
+                "مرحباً، عايز أعرف الأسعار وأطلب | Hi, I want to check prices and order",
+                "هاي، عايز طلب هوم ديليفري | Hey, I want home delivery",
+                "صباح الخير، ممكن أطلب؟ | Good morning, can I order?",
+            };
+            string[] aiGreetings =
+            {
+                $"وعليكم السلام! أهلاً بيك في {bizName}. تحب تطلب إيه؟ | Welcome to {bizName}! What would you like?",
+                $"أهلاً وسهلاً! يسعدنا خدمتك في {bizName}. إيه اللي تحبه؟ | Welcome! Happy to serve you at {bizName}. What can I get you?",
+                $"مرحباً! في {bizName} عندنا أحسن الأصناف. قولي إيه اللي تحتاجه. | Hello! At {bizName} we have the best. Tell me what you need.",
+                $"هاي! اتفضل، إيه طلبك؟ | Hi there! What's your order?",
+                $"صباح النور! أهلاً بيك في {bizName}. إيه الأصناف اللي تحبها؟ | Good morning! Welcome to {bizName}. What would you like today?",
+            };
+            string[] addresses =
+            {
+                "شارع التحرير، مبنى 12، شقة 3 | El-Tahrir St, building 12, apt 3",
+                "مدينة نصر، شارع عباس العقاد، برج النيل، دور 5 | Nasr City, Abbas El-Akkad St, Nile Tower, 5th floor",
+                "المعادي، شارع 9، فيلا 7 | Maadi, Street 9, Villa 7",
+                "الزمالك، شارع 26 يوليو، شقة 2 | Zamalek, 26 July St, apt 2",
+                "مصر الجديدة، شارع الميرغني، عمارة الأهرام، دور 3 | Heliopolis, Mirghani St, Ahram building, 3rd floor",
+                "الدقي، شارع البطل أحمد عبد العزيز، مبنى 5 | Dokki, Ahmed Abd El-Aziz St, building 5",
+                "المهندسين، شارع سوريا، شقة 8 | Mohandiseen, Syria St, apt 8",
+            };
+            string[] paymentMethods =
+            {
+                "كاش عند الاستلام | Cash on delivery",
+                "فيزا أونلاين | Visa online",
+                "محفظة فودافون كاش | Vodafone Cash wallet",
+                "كاش | Cash",
+                "انستاباي | InstaPay",
+            };
+            string[] deliveryQuestions =
+            {
+                "وطريقة الدفع إيه؟ كاش ولا بطاقة؟ | Payment method? Cash or card?",
+                "تمام! تدفع إزاي؟ | Great! How will you pay?",
+                "ممتاز! وتحب تدفع إزاي؟ | Excellent! How would you like to pay?",
+                "تمام جداً. طريقة الدفع؟ | Perfect. Payment method?",
+            };
+            string[] confirmations =
+            {
+                "تمام! تم تسجيل طلبك وهيوصلك خلال 30-45 دقيقة. شكراً! | Order confirmed! Arrives in 30-45 mins. Thank you!",
+                "ممتاز! طلبك اتسجل وهو في الطريق خلال 35 دقيقة. | Excellent! Your order is on the way in 35 mins.",
+                "أوكي! طلبك اتبعت للمطبخ دلوقتي. متوقع يوصل خلال 40 دقيقة. | Done! Your order is being prepared now. Expected in 40 mins.",
+                "تم! هيوصلك أسرع ما يمكن. اتمنالك وجبة شهية! | Done! On its way as fast as possible. Enjoy your meal!",
+                "تم تأكيد الطلب! لو عندك أي سؤال ابعتلنا. | Order confirmed! Reach out if you have any questions.",
+            };
+
+            // ── Ticket / escalation templates ─────────────────────────────────
+            var ticketTemplates = new[]
+            {
+                new
+                {
+                    Subject         = "الأوردر اتأخر كتير | Order very late",
+                    TicketType      = "LateDelivery",
+                    Priority        = "High",
+                    Resolution      = "تم التواصل مع المندوب وتم التوصيل. اعتذرنا وقدمنا كوبون خصم. | Rider contacted, order delivered. Apology and discount coupon issued.",
+                    Opening         = "الأوردر بتاعي اتأخر أكتر من ساعة! | My order is over an hour late!",
+                    AiAck           = "معلش جداً على التأخير. ممكن تقولي رقم الأوردر؟ | So sorry for the delay. Can you share your order number?",
+                    CustomerReply   = "الرقم مش معايا بس طلبته من فترة | I don't have it but I ordered a while ago",
+                    AiInvestigate   = "بشوف الأوردر... في تأخير غير متوقع بسبب ضغط الطلبات. بترفع الموضوع للدعم فوراً. | Checking now... unexpected delay due to high demand. Escalating right away.",
+                    AiEscalate      = "تم فتح تذكرة دعم أولوية عالية. فريق الدعم هيتواصل معاك خلال 15 دقيقة. | High-priority ticket created. Support team will contact you within 15 minutes.",
+                    CustomerClose   = "تمام، شكراً | Okay, thanks",
+                    FeedbackRating  = 3,
+                    FeedbackComment = "اتأخر التوصيل بس اتحل | Delivery was late but resolved",
+                },
+                new
+                {
+                    Subject         = "الأوردر وصل ناقص | Order arrived incomplete",
+                    TicketType      = "MissingItem",
+                    Priority        = "Normal",
+                    Resolution      = "تم إرسال الأيتم الناقص مجاناً في توصيلة منفصلة. | Missing item was sent in a separate free delivery.",
+                    Opening         = "الأوردر وصل بس فيه صنف ناقص! | My order arrived but something is missing!",
+                    AiAck           = "معلش! إيه الصنف اللي مجاش؟ | Sorry! What item was missing?",
+                    CustomerReply   = "الطبق الجانبي اللي طلبته مجاش مع الأوردر | The side dish I ordered didn't come",
+                    AiInvestigate   = "آسف جداً على الإزعاج. براجع الأوردر دلوقتي... أيوه، في خطأ من جانبنا. | So sorry for the inconvenience. Reviewing your order now... yes, there was a mistake on our end.",
+                    AiEscalate      = "هنبعتلك الصنف الناقص في أقرب وقت مجاناً. فتحت تذكرة علشان نتابع. | We'll send the missing item to you for free ASAP. Ticket created to follow up.",
+                    CustomerClose   = "تمام جزاكم الله خير | Thank you so much",
+                    FeedbackRating  = 4,
+                    FeedbackComment = "حلوا المشكلة بسرعة وعوضوني | They solved it quickly and compensated me",
+                },
+                new
+                {
+                    Subject         = "الأكل وصل بارد | Food arrived cold",
+                    TicketType      = "FoodQuality",
+                    Priority        = "Normal",
+                    Resolution      = "تم تقديم اعتذار وإرسال خصم 20% على الطلب القادم. | Apology given and 20% discount on next order.",
+                    Opening         = "الأكل وصلني بارد خالص، مش مقبول! | The food arrived completely cold, unacceptable!",
+                    AiAck           = "معلش جداً! الأكل لازم يوصل ساخن. ممكن تقولي إيه الأصناف اللي وصلت باردة؟ | I'm so sorry! Food should arrive hot. Which items were cold?",
+                    CustomerReply   = "كل حاجة باردة، بدو إنه اتأخر كتير في الطريق | Everything was cold, seems it took too long on the way",
+                    AiInvestigate   = "هذا مقبولش. بشوف المدة اللي أخدها التوصيل... فعلاً اتأخر أكتر من المعتاد. | That's not acceptable. Checking the delivery time... it was indeed longer than usual.",
+                    AiEscalate      = "بفتح تذكرة لفريق الجودة وهتواصل معاك فريق الدعم. هنعوضك على الإزعاج. | Opening a quality ticket and support will contact you. We'll compensate for the inconvenience.",
+                    CustomerClose   = "شكراً، استنى تواصلهم | Thanks, awaiting their call",
+                    FeedbackRating  = 3,
+                    FeedbackComment = "المشكلة اتحلت بعد التواصل | Issue resolved after follow-up",
+                },
+                new
+                {
+                    Subject         = "طلب إلغاء الأوردر | Order cancellation request",
+                    TicketType      = "Cancellation",
+                    Priority        = "Normal",
+                    Resolution      = "تم إلغاء الأوردر واسترجاع المبلغ خلال 24 ساعة. | Order cancelled and refund processed within 24 hours.",
+                    Opening         = "عايز ألغي الأوردر بتاعي، ممكن؟ | I want to cancel my order, is that possible?",
+                    AiAck           = "أيوه ممكن نلغي لو لسه ما اتجهزش. ممكن تقولي رقم الأوردر؟ | Yes, we can cancel if it hasn't been prepared yet. Can I have your order number?",
+                    CustomerReply   = "مش معايا الرقم بس طلبته من شوية بس | I don't have the number but I just ordered",
+                    AiInvestigate   = "بشوف آخر أوردر عليك... لقيته، الأوردر لسه في مرحلة التجهيز. | Checking your latest order... found it. The order is still being prepared.",
+                    AiEscalate      = "بفتح طلب إلغاء وبرفعه للمطبخ فوراً. هيتواصل معاك فريق الدعم للتأكيد وإرجاع الفلوس لو دفعت. | Cancellation request submitted to kitchen immediately. Support will contact you to confirm and process the refund.",
+                    CustomerClose   = "شكراً جزيلاً | Thank you very much",
+                    FeedbackRating  = 5,
+                    FeedbackComment = "خدمة ممتازة وسريعة | Excellent and fast service",
+                },
+                new
+                {
+                    Subject         = "الأوردر وصل غلط | Wrong order delivered",
+                    TicketType      = "WrongItem",
+                    Priority        = "High",
+                    Resolution      = "تم إرسال الأوردر الصحيح واسترجاع الغلط. | Correct order sent and wrong order retrieved.",
+                    Opening         = "جالي أوردر غلط! ده مش اللي طلبته | I received the wrong order! This isn't what I ordered",
+                    AiAck           = "معلش جداً على الإزعاج! إيه اللي وصلك وإيه اللي كنت طالبه؟ | So sorry! What did you receive and what did you order?",
+                    CustomerReply   = "طلبت وجبة دجاج وجالي سمك! | I ordered chicken and received fish!",
+                    AiInvestigate   = "ده خطأ كبير وأنا آسف عليه. بترفع الأمر فوراً لفريق التوصيل والمطبخ. | This is a serious mistake and I apologize. Escalating immediately to delivery and kitchen teams.",
+                    AiEscalate      = "تم فتح تذكرة طارئة. هيبعتوا الأوردر الصح في أقرب وقت مجاناً ويستلموا الغلط. | Emergency ticket opened. Correct order will be sent ASAP for free and wrong order will be picked up.",
+                    CustomerClose   = "تمام، استنى | Okay, I'll wait",
+                    FeedbackRating  = 4,
+                    FeedbackComment = "المشكلة اتحلت بسرعة ونفس اليوم | Resolved quickly the same day",
+                },
+            };
+
             for (int ci = 0; ci < customers.Count; ci++)
             {
-                var customer = customers[ci];
-                int daysAgo  = 55 - ci * 4; // spread interactions over past ~55 days
+                var customer  = customers[ci];
+                int daysAgo   = 55 - ci * 4;
+                var tmpl      = ticketTemplates[ci % ticketTemplates.Length];
 
                 // ── Chat Interaction (Closed) ─────────────────────────────────
                 var chatInteraction = new Interaction
@@ -273,16 +408,18 @@ namespace digital_employee
                 context.Interactions.Add(chatInteraction);
                 await context.SaveChangesAsync();
 
-                // Messages for chat interaction (8 messages)
-                var item1Name = menuItems.Count > 0 ? menuItems[ci % menuItems.Count].Name : "وجبة | meal";
-                var item2Name = menuItems.Count > 1 ? menuItems[(ci + 1) % menuItems.Count].Name : "مشروب | drink";
+                var item1Name = menuItems.Count > 0 ? menuItems[ci % menuItems.Count].Name : "وجبة";
+                var item2Name = menuItems.Count > 1 ? menuItems[(ci + 1) % menuItems.Count].Name : "مشروب";
+                var address   = addresses[ci % addresses.Length];
+                var payment   = paymentMethods[ci % paymentMethods.Length];
+
                 context.Messages.AddRange(
                     new Message
                     {
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = chatInteraction.InteractionId,
                         SenderType    = "Customer",
-                        Content       = "السلام عليكم، عايز أطلب | Hello, I'd like to place an order",
+                        Content       = customerGreetings[ci % customerGreetings.Length],
                         SentAt        = chatInteraction.StartedAt
                     },
                     new Message
@@ -290,7 +427,7 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = chatInteraction.InteractionId,
                         SenderType    = "AI",
-                        Content       = $"وعليكم السلام! أهلاً بيك في {seed.Name.Split('|')[0].Trim()}. تحب تطلب إيه؟ | Welcome! What would you like to order?",
+                        Content       = aiGreetings[ci % aiGreetings.Length],
                         SentAt        = chatInteraction.StartedAt.AddSeconds(5)
                     },
                     new Message
@@ -314,7 +451,7 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = chatInteraction.InteractionId,
                         SenderType    = "Customer",
-                        Content       = "شارع التحرير، مبنى 12، شقة 3 | El-Tahrir Street, building 12, apt 3",
+                        Content       = address,
                         SentAt        = chatInteraction.StartedAt.AddMinutes(1)
                     },
                     new Message
@@ -322,7 +459,7 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = chatInteraction.InteractionId,
                         SenderType    = "AI",
-                        Content       = "وطريقة الدفع إيه؟ كاش ولا بطاقة؟ | And the payment method? Cash or card?",
+                        Content       = deliveryQuestions[ci % deliveryQuestions.Length],
                         SentAt        = chatInteraction.StartedAt.AddMinutes(1).AddSeconds(10)
                     },
                     new Message
@@ -330,7 +467,7 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = chatInteraction.InteractionId,
                         SenderType    = "Customer",
-                        Content       = "كاش عند الاستلام | Cash on delivery",
+                        Content       = payment,
                         SentAt        = chatInteraction.StartedAt.AddMinutes(2)
                     },
                     new Message
@@ -338,7 +475,7 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = chatInteraction.InteractionId,
                         SenderType    = "AI",
-                        Content       = "تمام! تم تسجيل طلبك وهيوصلك خلال 30-45 دقيقة. شكراً! | Done! Your order is confirmed and will arrive in 30-45 minutes. Thank you!",
+                        Content       = confirmations[ci % confirmations.Length],
                         SentAt        = chatInteraction.StartedAt.AddMinutes(2).AddSeconds(15)
                     }
                 );
@@ -347,8 +484,8 @@ namespace digital_employee
                 if (menuItems.Count >= 2)
                 {
                     var orderId = Guid.NewGuid().ToString();
-                    var item1   = menuItems[0];
-                    var item2   = menuItems[1];
+                    var item1   = menuItems[ci % menuItems.Count];
+                    var item2   = menuItems[(ci + 1) % menuItems.Count];
                     context.Orders.Add(new Order
                     {
                         OrderId    = orderId,
@@ -382,31 +519,29 @@ namespace digital_employee
                 await context.SaveChangesAsync();
 
                 var ticketId = Guid.NewGuid().ToString();
-                var ticket   = new Ticket
+                context.Tickets.Add(new Ticket
                 {
-                    Id            = ticketId,
-                    BusinessId    = business.Id,
-                    CustomerId    = customer.CustomerId,
-                    InteractionId = escInteraction.InteractionId,
-                    Subject       = "مشكلة في التوصيل | Delivery issue",
-                    Status        = "Closed",
-                    IsEnded       = true,
-                    TicketType    = "LateDelivery",
-                    PriorityLevel = "Normal",
-                    ResolutionNotes = "تم حل المشكلة وتعويض العميل | Issue resolved and customer compensated.",
-                    CreatedAt     = escInteraction.StartedAt,
-                    ClosedAt      = escInteraction.EndedAt
-                };
-                context.Tickets.Add(ticket);
+                    Id              = ticketId,
+                    BusinessId      = business.Id,
+                    CustomerId      = customer.CustomerId,
+                    InteractionId   = escInteraction.InteractionId,
+                    Subject         = tmpl.Subject,
+                    Status          = "Closed",
+                    IsEnded         = true,
+                    TicketType      = tmpl.TicketType,
+                    PriorityLevel   = tmpl.Priority,
+                    ResolutionNotes = tmpl.Resolution,
+                    CreatedAt       = escInteraction.StartedAt,
+                    ClosedAt        = escInteraction.EndedAt
+                });
 
-                // Escalation messages (6 messages)
                 context.Messages.AddRange(
                     new Message
                     {
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = escInteraction.InteractionId,
                         SenderType    = "Customer",
-                        Content       = "الأوردر بتاعي اتأخر أكتر من ساعة! | My order is over an hour late!",
+                        Content       = tmpl.Opening,
                         SentAt        = escInteraction.StartedAt
                     },
                     new Message
@@ -414,7 +549,7 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = escInteraction.InteractionId,
                         SenderType    = "AI",
-                        Content       = "معلش جداً على التأخير. ممكن تقولي رقم الأوردر؟ | I'm very sorry for the delay. Could you give me your order number?",
+                        Content       = tmpl.AiAck,
                         SentAt        = escInteraction.StartedAt.AddSeconds(8)
                     },
                     new Message
@@ -422,7 +557,7 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = escInteraction.InteractionId,
                         SenderType    = "Customer",
-                        Content       = "مش عارف الرقم بس اللي طلبته من ساعة | I don't have the number but I ordered an hour ago",
+                        Content       = tmpl.CustomerReply,
                         SentAt        = escInteraction.StartedAt.AddSeconds(40)
                     },
                     new Message
@@ -430,7 +565,7 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = escInteraction.InteractionId,
                         SenderType    = "AI",
-                        Content       = "تمام، بشوف الأوردر دلوقتي... بدو إن في تأخير غير متوقع. هبعت للمسؤول فوراً. | I see the order now... there seems to be an unexpected delay. Escalating to support immediately.",
+                        Content       = tmpl.AiInvestigate,
                         SentAt        = escInteraction.StartedAt.AddMinutes(1)
                     },
                     new Message
@@ -438,7 +573,7 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = escInteraction.InteractionId,
                         SenderType    = "AI",
-                        Content       = "تم فتح تذكرة دعم برقم أولوية عالية. فريق الدعم هيتواصل معاك خلال 15 دقيقة. | A high-priority support ticket has been created. Our team will contact you within 15 minutes.",
+                        Content       = tmpl.AiEscalate,
                         SentAt        = escInteraction.StartedAt.AddMinutes(1).AddSeconds(10)
                     },
                     new Message
@@ -446,19 +581,18 @@ namespace digital_employee
                         MessageId     = Guid.NewGuid().ToString(),
                         InteractionId = escInteraction.InteractionId,
                         SenderType    = "Customer",
-                        Content       = "تمام، استنى | Okay, I'll wait",
+                        Content       = tmpl.CustomerClose,
                         SentAt        = escInteraction.StartedAt.AddMinutes(2)
                     }
                 );
 
-                // Feedback on the ticket
                 context.Feedbacks.Add(new Feedback
                 {
                     FeedbackId = Guid.NewGuid().ToString(),
                     CustomerId = customer.CustomerId,
                     TicketId   = ticketId,
-                    Rating     = 4,
-                    Comment    = "تم الحل بشكل جيد | Issue was resolved well",
+                    Rating     = tmpl.FeedbackRating,
+                    Comment    = tmpl.FeedbackComment,
                     CreatedAt  = escInteraction.EndedAt!.Value.AddHours(1)
                 });
             }
