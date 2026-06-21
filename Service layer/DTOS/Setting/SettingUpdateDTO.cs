@@ -20,7 +20,6 @@ namespace Service_layer.DTOS.Setting
         public string? ChatbotPersonality { get; set; }
 
         // Voice Settings
-        public string? MeetingUrl { get; set; }
         public string? AgentVoice { get; set; }
         public string? AgentVoiceProvider { get; set; }
         public double? AgentVoiceSpeed { get; set; }
