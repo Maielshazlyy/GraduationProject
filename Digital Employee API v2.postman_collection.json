@@ -1769,17 +1769,30 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "json" } },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
               "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"items\": [\n    { \"name\": \"Classic Smash Burger\", \"description\": \"لحم بجبن شيدر وصوص خاص\", \"price\": 120, \"categoryName\": \"Burgers\", \"isAvailable\": true },\n    { \"name\": \"Double Smash Burger\", \"description\": \"قرصتين لحم مع بيكون\", \"price\": 155, \"categoryName\": \"Burgers\", \"isAvailable\": true },\n    { \"name\": \"Crispy Fries\", \"description\": \"بطاطس مقلية مقرمشة\", \"price\": 35, \"categoryName\": \"Sides\", \"isAvailable\": true },\n    { \"name\": \"Pepsi\", \"description\": \"علبة بيبسي مبردة\", \"price\": 20, \"categoryName\": \"Drinks\", \"isAvailable\": true }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/MenuItem/bulk",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "MenuItem", "bulk"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "MenuItem",
+                "bulk"
+              ]
             },
             "description": "بيحفظ array من الـ menu items دفعة واحدة. CategoryName بيتحول لـ ID تلقائي أو بيتعمل category جديدة."
           },
@@ -2575,7 +2588,11 @@
             ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "json" } },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
               "raw": "{\n  \"question\": \"إيه ساعات العمل؟\",\n  \"answer\": \"من 10 الصبح لـ 12 الليل\",\n  \"businessId\": \"{{businessId}}\",\n  \"isFAQ\": false,\n  \"displayOrder\": 0,\n  \"isActive\": true\n}"
             },
             "url": {
@@ -2603,7 +2620,11 @@
             ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "json" } },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
               "raw": "{\n  \"question\": \"إيه ساعات العمل؟\",\n  \"answer\": \"من 10 الصبح لـ 11 الليل\",\n  \"businessId\": \"{{businessId}}\",\n  \"isFAQ\": false,\n  \"displayOrder\": 0,\n  \"isActive\": true\n}"
             },
             "url": {
@@ -2656,17 +2677,30 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "json" } },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
               "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"entries\": [\n    { \"question\": \"إيه ساعات العمل؟\", \"answer\": \"من 10 الصبح لـ 12 الليل\", \"isFAQ\": false, \"displayOrder\": 0, \"isActive\": true },\n    { \"question\": \"هل عندكم توصيل؟\", \"answer\": \"آه، الحد الأدنى 100 جنيه\", \"isFAQ\": false, \"displayOrder\": 1, \"isActive\": true }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/KnowledgeBase/bulk",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "KnowledgeBase", "bulk"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "KnowledgeBase",
+                "bulk"
+              ]
             },
             "description": "بيحفظ array من الـ KB entries دفعة واحدة ويعمل AI sync تلقائي."
           },
@@ -4040,8 +4074,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/CallSummary/{{interactionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "CallSummary", "{{interactionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "CallSummary",
+                "{{interactionId}}"
+              ]
             },
             "description": "Get call summary by interactionId or callId. Returns summary, analysis, and audio download URLs."
           },
@@ -4054,8 +4094,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/CallSummary/business/{{businessId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "CallSummary", "business", "{{businessId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "CallSummary",
+                "business",
+                "{{businessId}}"
+              ]
             },
             "description": "Get all call summaries for a business, including audio URLs."
           },
@@ -4086,18 +4133,36 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "json" } },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
               "raw": "{\n  \"businessId\": \"{{businessId}}\",\n  \"customerId\": \"{{customerId}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/CustomerVoice/call/start",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "CustomerVoice", "call", "start"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "CustomerVoice",
+                "call",
+                "start"
+              ]
             },
             "description": "الفرونت يبعته لما العميل يضغط Call. يرجع interactionId + meetingUrl."
           },
@@ -4120,21 +4185,41 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "file", "type": "file", "src": [] },
-                { "key": "callId", "value": "{{interactionId}}", "type": "text" },
-                { "key": "speaker", "value": "agent", "type": "text" }
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "callId",
+                  "value": "{{interactionId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "speaker",
+                  "value": "agent",
+                  "type": "text"
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl}}/api/CallRecording/upload",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "CallRecording", "upload"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "CallRecording",
+                "upload"
+              ]
             },
             "description": "الذكاء الاصطناعي يرفع ملف الصوت بعد انتهاء المكالمة. يرجع downloadUrl."
           },
@@ -4156,18 +4241,35 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "options": { "raw": { "language": "json" } },
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
               "raw": "{\n  \"business_id\": \"{{businessId}}\",\n  \"call_data\": {\n    \"call_id\": \"{{interactionId}}\",\n    \"start_time\": \"2026-05-29T20:54:37Z\",\n    \"end_time\": \"2026-05-29T20:57:52Z\",\n    \"duration_seconds\": 195.17,\n    \"messages_count\": 4,\n    \"full_transcript\": \"Agent: أهلاً بيك، قولي طلبك.\\nCustomer: عايزة شيش طاووق على الفحم.\",\n    \"messages\": [],\n    \"audio_info\": {\n      \"sample_rate\": 24000,\n      \"bit_depth\": 16,\n      \"customer_duration_sec\": 194.6,\n      \"agent_duration_sec\": 131.1\n    }\n  },\n  \"analysis\": {\n    \"callId\": \"{{interactionId}}\",\n    \"durationSeconds\": 195.17,\n    \"analyzedAt\": \"2026-05-29T20:57:52Z\",\n    \"summary\": \"Customer ordered shish tawook.\",\n    \"summaryAr\": \"طلب العميل شيش طاووق.\",\n    \"overallSentiment\": { \"score\": 0.8, \"label\": \"Positive\" },\n    \"mainTopics\": [\"Food Order\"],\n    \"intentsDetected\": [\"CreateOrder\"],\n    \"actionsPerformed\": [],\n    \"escalationRequired\": false,\n    \"escalationReason\": null,\n    \"keyMoments\": []\n  },\n  \"queued_at\": \"2026-05-29T20:58:05Z\",\n  \"audio_urls\": {\n    \"customer\": null,\n    \"agent\": null,\n    \"stereo\": null\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/voice/call-completed",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "voice", "call-completed"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "voice",
+                "call-completed"
+              ]
             },
             "description": "الذكاء الاصطناعي يبعته بعد انتهاء المكالمة مع التحليل وروابط التسجيلات."
           },
@@ -4176,17 +4278,168 @@
         {
           "name": "Download Recording",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/CallRecording/{{interactionId}}/{{fileName}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "CallRecording", "{{interactionId}}", "{{fileName}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "CallRecording",
+                "{{interactionId}}",
+                "{{fileName}}"
+              ]
             },
             "description": "تحميل أو تشغيل ملف التسجيل. الـ fileName بيجي من audioUrls في GET /CallSummary."
           },
           "response": []
+        }
+      ]
+    },
+    {
+      "name": "27 - Owner Chat [Owner/Admin]",
+      "item": [
+        {
+          "name": "Send Message to AI Assistant",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"ما هي أكثر المنتجات مبيعاً هذا الشهر؟ | What are the top selling items this month?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/OwnerChat/message",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "OwnerChat",
+                "message"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get AI Analytics Report",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/OwnerChat/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "OwnerChat",
+                "report"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reload Analytics Data",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/OwnerChat/reload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "OwnerChat",
+                "reload"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "28 - Business Report [Owner/Admin]",
+      "item": [
+        {
+          "name": "Generate AI Report",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"2026-01-01T00:00:00Z\",\n  \"to\": \"2026-06-21T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/businesses/{{businessId}}/reports/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "businesses",
+                "{{businessId}}",
+                "reports",
+                "generate"
+              ]
+            }
+          }
         }
       ]
     }
