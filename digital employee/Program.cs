@@ -273,6 +273,11 @@ namespace digital_employee
                 client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
             });
 
+            builder.Services.AddHttpClient("VoiceKnowledgeSync", client =>
+            {
+                client.BaseAddress = new Uri(builder.Configuration["AiVoiceApi:BaseUrl"] ?? "http://localhost:8080");
+            });
+
             builder.Services.AddHttpClient<IAiAnalysisService, AiAnalysisService>(client =>
             {
                 client.BaseAddress = new Uri(aiApiBaseUrl);

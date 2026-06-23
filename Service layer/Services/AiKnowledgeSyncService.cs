@@ -12,12 +12,14 @@ namespace Service_layer.Services
     public class AiKnowledgeSyncService : IAiKnowledgeSyncService
     {
         private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IUnitOfWork _unitOfWork;
 
-        public AiKnowledgeSyncService(HttpClient httpClient, IUnitOfWork unitOfWork)
+        public AiKnowledgeSyncService(HttpClient httpClient, IHttpClientFactory httpClientFactory, IUnitOfWork unitOfWork)
         {
-            _httpClient = httpClient;
-            _unitOfWork = unitOfWork;
+            _httpClient        = httpClient;
+            _httpClientFactory = httpClientFactory;
+            _unitOfWork        = unitOfWork;
         }
 
         public async Task SyncBusinessAsync(string businessId)
@@ -58,8 +60,22 @@ namespace Service_layer.Services
                 }
             };
 
-            var response = await _httpClient.PostAsJsonAsync("/api/v1/business/knowledge-base/sync", payload);
-            response.EnsureSuccessStatusCode();
+            // Sync to AI chat server
+            var chatResponse = await _httpClient.PostAsJsonAsync("/api/v1/business/knowledge-base/sync", payload);
+            chatResponse.EnsureSuccessStatusCode();
+
+            // Sync to voice server (fire-and-forget style — failure doesn't block chat sync)
+            try
+            {
+                var voiceClient   = _httpClientFactory.CreateClient("VoiceKnowledgeSync");
+                var voiceResponse = await voiceClient.PostAsJsonAsync("/api/knowledge-base", payload);
+                if (!voiceResponse.IsSuccessStatusCode)
+                    System.Diagnostics.Debug.WriteLine($"[AiSync] Voice sync failed for {businessId}: {(int)voiceResponse.StatusCode}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AiSync] Voice sync exception for {businessId}: {ex.Message}");
+            }
         }
     }
 }
