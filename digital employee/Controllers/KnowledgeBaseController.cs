@@ -14,11 +14,19 @@ namespace digital_employee.Controllers
     {
         private readonly IKnowledgeBaseService _knowledgeBaseService;
         private readonly IAuditLogService _auditLogService;
+        private readonly IAiKnowledgeSyncService _aiSync;
+        private readonly IBusinessService _businessService;
 
-        public KnowledgeBaseController(IKnowledgeBaseService knowledgeBaseService, IAuditLogService auditLogService)
+        public KnowledgeBaseController(
+            IKnowledgeBaseService knowledgeBaseService,
+            IAuditLogService auditLogService,
+            IAiKnowledgeSyncService aiSync,
+            IBusinessService businessService)
         {
             _knowledgeBaseService = knowledgeBaseService;
-            _auditLogService = auditLogService;
+            _auditLogService      = auditLogService;
+            _aiSync               = aiSync;
+            _businessService      = businessService;
         }
 
         // GET: api/KnowledgeBase
@@ -140,6 +148,32 @@ namespace digital_employee.Controllers
             }
 
             return Ok(kb.ToDto());
+        }
+
+        // POST: api/KnowledgeBase/sync
+        // Pushes menu + KB for every business to the AI server in one shot.
+        // Use after seeding or any bulk DB change that bypassed the API.
+        [HttpPost("sync")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> SyncAll()
+        {
+            var businesses = await _businessService.GetAllAsync();
+            var results    = new List<object>();
+
+            foreach (var biz in businesses)
+            {
+                try
+                {
+                    await _aiSync.SyncBusinessAsync(biz.Id);
+                    results.Add(new { businessId = biz.Id, name = biz.Name, status = "synced" });
+                }
+                catch (Exception ex)
+                {
+                    results.Add(new { businessId = biz.Id, name = biz.Name, status = "failed", error = ex.Message });
+                }
+            }
+
+            return Ok(new { total = results.Count, results });
         }
 
         // DELETE: api/KnowledgeBase/{id}

@@ -392,8 +392,8 @@ namespace digital_employee
                 var item2     = menuItems.Count > 1 ? menuItems[(ci + 1) % menuItems.Count] : null;
                 var item1Name = item1?.Name ?? "وجبة";
                 var item2Name = item2?.Name ?? "مشروب";
-                var address   = addresses[ci % addresses.Length];
-                var payment   = paymentMethods[ci % paymentMethods.Length];
+                var address   = L(addresses[ci % addresses.Length], ci);
+                var payment   = L(paymentMethods[ci % paymentMethods.Length], ci);
                 var t         = chatInteraction.StartedAt;
 
                 List<Message> chatMsgs = chatScenario switch
@@ -401,66 +401,66 @@ namespace digital_employee
                     // ── Scenario 0: Place an order ────────────────────────────
                     0 => new()
                     {
-                        Msg(chatInteraction.InteractionId, "Customer", "السلام عليكم، عايز أطلب | Hi, I'd like to order please", t),
-                        Msg(chatInteraction.InteractionId, "AI", $"وعليكم السلام! أهلاً بيك في {bizName}. إيه اللي تحب تطلبه؟ | Welcome to {bizName}! What would you like?", t.AddSeconds(5)),
-                        Msg(chatInteraction.InteractionId, "Customer", $"عايز {item1Name} و{item2Name} من فضلك | I'd like {item1Name} and {item2Name} please", t.AddSeconds(25)),
-                        Msg(chatInteraction.InteractionId, "AI", $"تمام! {item1Name} و{item2Name}. عنوان التوصيل إيه؟ | Got it! What's your delivery address?", t.AddSeconds(32)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("السلام عليكم، عايز أطلب | Hi, I'd like to order please", ci), t),
+                        Msg(chatInteraction.InteractionId, "AI", L($"وعليكم السلام! أهلاً بيك في {bizName}. إيه اللي تحب تطلبه؟ | Welcome to {bizName}! What would you like?", ci), t.AddSeconds(5)),
+                        Msg(chatInteraction.InteractionId, "Customer", L($"عايز {item1Name} و{item2Name} من فضلك | I'd like {item1Name} and {item2Name} please", ci), t.AddSeconds(25)),
+                        Msg(chatInteraction.InteractionId, "AI", L($"تمام! {item1Name} و{item2Name}. عنوان التوصيل إيه؟ | Got it! What's your delivery address?", ci), t.AddSeconds(32)),
                         Msg(chatInteraction.InteractionId, "Customer", address, t.AddMinutes(1)),
-                        Msg(chatInteraction.InteractionId, "AI", "وطريقة الدفع؟ كاش ولا بطاقة؟ | Payment method? Cash or card?", t.AddMinutes(1).AddSeconds(10)),
+                        Msg(chatInteraction.InteractionId, "AI", L("وطريقة الدفع؟ كاش ولا بطاقة؟ | Payment method? Cash or card?", ci), t.AddMinutes(1).AddSeconds(10)),
                         Msg(chatInteraction.InteractionId, "Customer", payment, t.AddMinutes(2)),
-                        Msg(chatInteraction.InteractionId, "AI", "تم تسجيل طلبك! هيوصلك خلال 30-45 دقيقة. شكراً! | Order confirmed! Arrives in 30-45 mins. Thank you!", t.AddMinutes(2).AddSeconds(15)),
+                        Msg(chatInteraction.InteractionId, "AI", L("تم تسجيل طلبك! هيوصلك خلال 30-45 دقيقة. شكراً! | Order confirmed! Arrives in 30-45 mins. Thank you!", ci), t.AddMinutes(2).AddSeconds(15)),
                     },
 
                     // ── Scenario 1: Ask about menu & prices ───────────────────
                     1 => new()
                     {
-                        Msg(chatInteraction.InteractionId, "Customer", $"أهلاً، عايز أعرف إيه الأصناف المتاحة وأسعارها | Hi, I'd like to know what items you have and their prices", t),
-                        Msg(chatInteraction.InteractionId, "AI", $"أهلاً! في {bizName} عندنا قائمة متنوعة. تحب تعرف عن نوع معين؟ | Hi! At {bizName} we have a varied menu. Interested in a specific category?", t.AddSeconds(6)),
-                        Msg(chatInteraction.InteractionId, "Customer", $"أيوه، إيه أرخص صنف وأغلى صنف عندكم؟ | Yes, what's your cheapest and most expensive item?", t.AddSeconds(30)),
-                        Msg(chatInteraction.InteractionId, "AI", $"أرخص صنف هو {item2Name} وأغلى صنف هو {item1Name}. كلهم بمكونات طازجة! | Cheapest is {item2Name} and most expensive is {item1Name}. All with fresh ingredients!", t.AddSeconds(40)),
-                        Msg(chatInteraction.InteractionId, "Customer", "وفي عروض أو خصومات دلوقتي؟ | Any current offers or discounts?", t.AddMinutes(1)),
-                        Msg(chatInteraction.InteractionId, "AI", "أيوه! عندنا خصم 10% على أول طلب لأي عميل جديد. | Yes! We have 10% off your first order for new customers.", t.AddMinutes(1).AddSeconds(8)),
-                        Msg(chatInteraction.InteractionId, "Customer", "ممتاز، هطلب قريب! | Great, I'll order soon!", t.AddMinutes(1).AddSeconds(45)),
-                        Msg(chatInteraction.InteractionId, "AI", "نستنى طلبك! لو عندك أي سؤال تاني ابعتلنا. | We look forward to your order! Feel free to ask anything else.", t.AddMinutes(2)),
+                        Msg(chatInteraction.InteractionId, "Customer", L($"أهلاً، عايز أعرف إيه الأصناف المتاحة وأسعارها | Hi, I'd like to know what items you have and their prices", ci), t),
+                        Msg(chatInteraction.InteractionId, "AI", L($"أهلاً! في {bizName} عندنا قائمة متنوعة. تحب تعرف عن نوع معين؟ | Hi! At {bizName} we have a varied menu. Interested in a specific category?", ci), t.AddSeconds(6)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("أيوه، إيه أرخص صنف وأغلى صنف عندكم؟ | Yes, what's your cheapest and most expensive item?", ci), t.AddSeconds(30)),
+                        Msg(chatInteraction.InteractionId, "AI", L($"أرخص صنف هو {item2Name} وأغلى صنف هو {item1Name}. كلهم بمكونات طازجة! | Cheapest is {item2Name} and most expensive is {item1Name}. All with fresh ingredients!", ci), t.AddSeconds(40)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("وفي عروض أو خصومات دلوقتي؟ | Any current offers or discounts?", ci), t.AddMinutes(1)),
+                        Msg(chatInteraction.InteractionId, "AI", L("أيوه! عندنا خصم 10% على أول طلب لأي عميل جديد. | Yes! We have 10% off your first order for new customers.", ci), t.AddMinutes(1).AddSeconds(8)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("ممتاز، هطلب قريب! | Great, I'll order soon!", ci), t.AddMinutes(1).AddSeconds(45)),
+                        Msg(chatInteraction.InteractionId, "AI", L("نستنى طلبك! لو عندك أي سؤال تاني ابعتلنا. | We look forward to your order! Feel free to ask anything else.", ci), t.AddMinutes(2)),
                     },
 
                     // ── Scenario 2: Order with extra customization ────────────
                     2 => new()
                     {
-                        Msg(chatInteraction.InteractionId, "Customer", $"هاي! عايز أطلب بس عندي طلب خاص | Hey! I want to order but have a special request", t),
-                        Msg(chatInteraction.InteractionId, "AI", $"أهلاً! اتفضل، قولي طلبك وهنحاول نوفره. | Hi! Go ahead, tell us your request and we'll do our best.", t.AddSeconds(7)),
-                        Msg(chatInteraction.InteractionId, "Customer", $"عايز {item1Name} بس من غير بصل ومع صوص إضافي | I want {item1Name} but without onion and with extra sauce", t.AddSeconds(35)),
-                        Msg(chatInteraction.InteractionId, "AI", $"تمام! {item1Name} بدون بصل وصوص زيادة. هتوصل إزاي؟ | Got it! {item1Name} without onion and extra sauce. How should it be delivered?", t.AddSeconds(45)),
+                        Msg(chatInteraction.InteractionId, "Customer", L($"هاي! عايز أطلب بس عندي طلب خاص | Hey! I want to order but have a special request", ci), t),
+                        Msg(chatInteraction.InteractionId, "AI", L($"أهلاً! اتفضل، قولي طلبك وهنحاول نوفره. | Hi! Go ahead, tell us your request and we'll do our best.", ci), t.AddSeconds(7)),
+                        Msg(chatInteraction.InteractionId, "Customer", L($"عايز {item1Name} بس من غير بصل ومع صوص إضافي | I want {item1Name} but without onion and with extra sauce", ci), t.AddSeconds(35)),
+                        Msg(chatInteraction.InteractionId, "AI", L($"تمام! {item1Name} بدون بصل وصوص زيادة. هتوصل إزاي؟ | Got it! {item1Name} without onion and extra sauce. How should it be delivered?", ci), t.AddSeconds(45)),
                         Msg(chatInteraction.InteractionId, "Customer", address, t.AddMinutes(1)),
-                        Msg(chatInteraction.InteractionId, "AI", "وطريقة الدفع؟ | Payment method?", t.AddMinutes(1).AddSeconds(12)),
+                        Msg(chatInteraction.InteractionId, "AI", L("وطريقة الدفع؟ | Payment method?", ci), t.AddMinutes(1).AddSeconds(12)),
                         Msg(chatInteraction.InteractionId, "Customer", payment, t.AddMinutes(2)),
-                        Msg(chatInteraction.InteractionId, "AI", $"ممتاز! تم تسجيل طلبك مع ملاحظة التعديل. هيوصلك خلال 35 دقيقة! | Done! Order placed with your customization noted. Arrives in 35 mins!", t.AddMinutes(2).AddSeconds(10)),
+                        Msg(chatInteraction.InteractionId, "AI", L($"ممتاز! تم تسجيل طلبك مع ملاحظة التعديل. هيوصلك خلال 35 دقيقة! | Done! Order placed with your customization noted. Arrives in 35 mins!", ci), t.AddMinutes(2).AddSeconds(10)),
                     },
 
                     // ── Scenario 3: Ask about delivery areas & fees ───────────
                     3 => new()
                     {
-                        Msg(chatInteraction.InteractionId, "Customer", "بتوصلوا فين؟ وكام رسوم التوصيل؟ | Where do you deliver? And what are the delivery fees?", t),
-                        Msg(chatInteraction.InteractionId, "AI", "بنوصل لمعظم مناطق القاهرة والجيزة. رسوم التوصيل بتبدأ من 15 جنيه حسب المنطقة. | We deliver to most areas in Cairo and Giza. Delivery fees start from 15 EGP depending on the area.", t.AddSeconds(8)),
-                        Msg(chatInteraction.InteractionId, "Customer", "وبتوصلوا للمعادي؟ | Do you deliver to Maadi?", t.AddSeconds(40)),
-                        Msg(chatInteraction.InteractionId, "AI", "أيوه، المعادي من مناطقنا. رسوم التوصيل 20 جنيه ووقت التوصيل 40-50 دقيقة. | Yes, Maadi is one of our areas. Delivery fee is 20 EGP and takes 40-50 minutes.", t.AddSeconds(50)),
-                        Msg(chatInteraction.InteractionId, "Customer", "وفي حد أوردر minimum؟ | Is there a minimum order?", t.AddMinutes(1).AddSeconds(20)),
-                        Msg(chatInteraction.InteractionId, "AI", "أقل أوردر 50 جنيه مش شامل التوصيل. | Minimum order is 50 EGP excluding delivery.", t.AddMinutes(1).AddSeconds(30)),
-                        Msg(chatInteraction.InteractionId, "Customer", "تمام شكراً على المعلومات | Great, thanks for the info", t.AddMinutes(2)),
-                        Msg(chatInteraction.InteractionId, "AI", "العفو! لما تحب تطلب احنا موجودين. | You're welcome! We're here whenever you're ready to order.", t.AddMinutes(2).AddSeconds(10)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("بتوصلوا فين؟ وكام رسوم التوصيل؟ | Where do you deliver? And what are the delivery fees?", ci), t),
+                        Msg(chatInteraction.InteractionId, "AI", L("بنوصل لمعظم مناطق القاهرة والجيزة. رسوم التوصيل بتبدأ من 15 جنيه حسب المنطقة. | We deliver to most areas in Cairo and Giza. Delivery fees start from 15 EGP depending on the area.", ci), t.AddSeconds(8)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("وبتوصلوا للمعادي؟ | Do you deliver to Maadi?", ci), t.AddSeconds(40)),
+                        Msg(chatInteraction.InteractionId, "AI", L("أيوه، المعادي من مناطقنا. رسوم التوصيل 20 جنيه ووقت التوصيل 40-50 دقيقة. | Yes, Maadi is one of our areas. Delivery fee is 20 EGP and takes 40-50 minutes.", ci), t.AddSeconds(50)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("وفي حد أوردر minimum؟ | Is there a minimum order?", ci), t.AddMinutes(1).AddSeconds(20)),
+                        Msg(chatInteraction.InteractionId, "AI", L("أقل أوردر 50 جنيه مش شامل التوصيل. | Minimum order is 50 EGP excluding delivery.", ci), t.AddMinutes(1).AddSeconds(30)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("تمام شكراً على المعلومات | Great, thanks for the info", ci), t.AddMinutes(2)),
+                        Msg(chatInteraction.InteractionId, "AI", L("العفو! لما تحب تطلب احنا موجودين. | You're welcome! We're here whenever you're ready to order.", ci), t.AddMinutes(2).AddSeconds(10)),
                     },
 
                     // ── Scenario 4: Ask about ingredients / allergens ─────────
                     _ => new()
                     {
-                        Msg(chatInteraction.InteractionId, "Customer", $"مرحباً، عندي حساسية من المكسرات. {item1Name} فيها مكسرات؟ | Hi, I'm allergic to nuts. Does {item1Name} contain nuts?", t),
-                        Msg(chatInteraction.InteractionId, "AI", $"أهلاً! سؤال مهم جداً. {item1Name} مش فيها مكسرات في الوصفة الأصلية، بس المطبخ بيستخدم مكسرات في أصناف تانية فممكن يحصل تلوث. | Hi! Great question. {item1Name} doesn't contain nuts in the original recipe, but our kitchen handles nuts in other dishes so cross-contamination is possible.", t.AddSeconds(9)),
-                        Msg(chatInteraction.InteractionId, "Customer", "وفي أي أصناف عندكم آمنة خالص من المكسرات؟ | Which of your items are completely nut-free?", t.AddSeconds(50)),
-                        Msg(chatInteraction.InteractionId, "AI", $"الأصناف دي عادةً آمنة: {item2Name}. بس دايماً ننصح بإخبار المطبخ بالحساسية عند الطلب. | These items are usually safe: {item2Name}. We always recommend informing the kitchen about allergies when ordering.", t.AddMinutes(1)),
-                        Msg(chatInteraction.InteractionId, "Customer", "ينفع أنبه المطبخ في الأوردر؟ | Can I add an allergy note to my order?", t.AddMinutes(1).AddSeconds(30)),
-                        Msg(chatInteraction.InteractionId, "AI", "أيوه بالطبع! في خانة الملاحظات لما بتطلب اكتب حساسيتك وهياخدوا احتياطهم. | Yes of course! There's a notes field when ordering — write your allergy and the kitchen will take precautions.", t.AddMinutes(1).AddSeconds(40)),
-                        Msg(chatInteraction.InteractionId, "Customer", "شكراً جزيلاً، مطمن دلوقتي! | Thank you so much, I feel reassured now!", t.AddMinutes(2).AddSeconds(10)),
-                        Msg(chatInteraction.InteractionId, "AI", "العفو وسلامتك! طلبك دايماً مهم لينا. | You're welcome, stay safe! Your wellbeing matters to us.", t.AddMinutes(2).AddSeconds(20)),
+                        Msg(chatInteraction.InteractionId, "Customer", L($"مرحباً، عندي حساسية من المكسرات. {item1Name} فيها مكسرات؟ | Hi, I'm allergic to nuts. Does {item1Name} contain nuts?", ci), t),
+                        Msg(chatInteraction.InteractionId, "AI", L($"أهلاً! سؤال مهم جداً. {item1Name} مش فيها مكسرات في الوصفة الأصلية، بس المطبخ بيستخدم مكسرات في أصناف تانية فممكن يحصل تلوث. | Hi! Great question. {item1Name} doesn't contain nuts in the original recipe, but our kitchen handles nuts in other dishes so cross-contamination is possible.", ci), t.AddSeconds(9)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("وفي أي أصناف عندكم آمنة خالص من المكسرات؟ | Which of your items are completely nut-free?", ci), t.AddSeconds(50)),
+                        Msg(chatInteraction.InteractionId, "AI", L($"الأصناف دي عادةً آمنة: {item2Name}. بس دايماً ننصح بإخبار المطبخ بالحساسية عند الطلب. | These items are usually safe: {item2Name}. We always recommend informing the kitchen about allergies when ordering.", ci), t.AddMinutes(1)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("ينفع أنبه المطبخ في الأوردر؟ | Can I add an allergy note to my order?", ci), t.AddMinutes(1).AddSeconds(30)),
+                        Msg(chatInteraction.InteractionId, "AI", L("أيوه بالطبع! في خانة الملاحظات لما بتطلب اكتب حساسيتك وهياخدوا احتياطهم. | Yes of course! There's a notes field when ordering — write your allergy and the kitchen will take precautions.", ci), t.AddMinutes(1).AddSeconds(40)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("شكراً جزيلاً، مطمن دلوقتي! | Thank you so much, I feel reassured now!", ci), t.AddMinutes(2).AddSeconds(10)),
+                        Msg(chatInteraction.InteractionId, "AI", L("العفو وسلامتك! طلبك دايماً مهم لينا. | You're welcome, stay safe! Your wellbeing matters to us.", ci), t.AddMinutes(2).AddSeconds(20)),
                     },
                 };
 
@@ -509,65 +509,23 @@ namespace digital_employee
                     BusinessId      = business.Id,
                     CustomerId      = customer.CustomerId,
                     InteractionId   = escInteraction.InteractionId,
-                    Subject         = tmpl.Subject,
+                    Subject         = L(tmpl.Subject, ci),
                     Status          = "Closed",
                     IsEnded         = true,
                     TicketType      = tmpl.TicketType,
                     PriorityLevel   = tmpl.Priority,
-                    ResolutionNotes = tmpl.Resolution,
+                    ResolutionNotes = L(tmpl.Resolution, ci),
                     CreatedAt       = escInteraction.StartedAt,
                     ClosedAt        = escInteraction.EndedAt
                 });
 
                 context.Messages.AddRange(
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = escInteraction.InteractionId,
-                        SenderType    = "Customer",
-                        Content       = tmpl.Opening,
-                        SentAt        = escInteraction.StartedAt
-                    },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = escInteraction.InteractionId,
-                        SenderType    = "AI",
-                        Content       = tmpl.AiAck,
-                        SentAt        = escInteraction.StartedAt.AddSeconds(8)
-                    },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = escInteraction.InteractionId,
-                        SenderType    = "Customer",
-                        Content       = tmpl.CustomerReply,
-                        SentAt        = escInteraction.StartedAt.AddSeconds(40)
-                    },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = escInteraction.InteractionId,
-                        SenderType    = "AI",
-                        Content       = tmpl.AiInvestigate,
-                        SentAt        = escInteraction.StartedAt.AddMinutes(1)
-                    },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = escInteraction.InteractionId,
-                        SenderType    = "AI",
-                        Content       = tmpl.AiEscalate,
-                        SentAt        = escInteraction.StartedAt.AddMinutes(1).AddSeconds(10)
-                    },
-                    new Message
-                    {
-                        MessageId     = Guid.NewGuid().ToString(),
-                        InteractionId = escInteraction.InteractionId,
-                        SenderType    = "Customer",
-                        Content       = tmpl.CustomerClose,
-                        SentAt        = escInteraction.StartedAt.AddMinutes(2)
-                    }
+                    Msg(escInteraction.InteractionId, "Customer", L(tmpl.Opening,       ci), escInteraction.StartedAt),
+                    Msg(escInteraction.InteractionId, "AI",       L(tmpl.AiAck,         ci), escInteraction.StartedAt.AddSeconds(8)),
+                    Msg(escInteraction.InteractionId, "Customer", L(tmpl.CustomerReply, ci), escInteraction.StartedAt.AddSeconds(40)),
+                    Msg(escInteraction.InteractionId, "AI",       L(tmpl.AiInvestigate, ci), escInteraction.StartedAt.AddMinutes(1)),
+                    Msg(escInteraction.InteractionId, "AI",       L(tmpl.AiEscalate,    ci), escInteraction.StartedAt.AddMinutes(1).AddSeconds(10)),
+                    Msg(escInteraction.InteractionId, "Customer", L(tmpl.CustomerClose, ci), escInteraction.StartedAt.AddMinutes(2))
                 );
 
                 context.Feedbacks.Add(new Feedback
@@ -576,7 +534,7 @@ namespace digital_employee
                     CustomerId = customer.CustomerId,
                     TicketId   = ticketId,
                     Rating     = tmpl.FeedbackRating,
-                    Comment    = tmpl.FeedbackComment,
+                    Comment    = L(tmpl.FeedbackComment, ci),
                     CreatedAt  = escInteraction.EndedAt!.Value.AddHours(1)
                 });
             }
@@ -707,61 +665,61 @@ namespace digital_employee
                 var item2     = menuItems.Count > 1 ? menuItems[(ci + 1) % menuItems.Count] : null;
                 var item1Name = item1?.Name ?? "وجبة";
                 var item2Name = item2?.Name ?? "مشروب";
-                var address   = addresses[ci % addresses.Length];
-                var payment   = paymentMethods[ci % paymentMethods.Length];
+                var address   = L(addresses[ci % addresses.Length], ci);
+                var payment   = L(paymentMethods[ci % paymentMethods.Length], ci);
                 var t         = chatInteraction.StartedAt;
 
                 List<Message> chatMsgs = chatScenario switch
                 {
                     0 => new() {
-                        Msg(chatInteraction.InteractionId, "Customer", "السلام عليكم، عايز أطلب | Hi, I'd like to order please", t),
-                        Msg(chatInteraction.InteractionId, "AI", $"وعليكم السلام! أهلاً بيك في {bizName}. إيه اللي تحب تطلبه؟ | Welcome to {bizName}! What would you like?", t.AddSeconds(5)),
-                        Msg(chatInteraction.InteractionId, "Customer", $"عايز {item1Name} و{item2Name} من فضلك | I'd like {item1Name} and {item2Name} please", t.AddSeconds(25)),
-                        Msg(chatInteraction.InteractionId, "AI", $"تمام! {item1Name} و{item2Name}. عنوان التوصيل إيه؟ | Got it! What's your delivery address?", t.AddSeconds(32)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("السلام عليكم، عايز أطلب | Hi, I'd like to order please", ci), t),
+                        Msg(chatInteraction.InteractionId, "AI", L($"وعليكم السلام! أهلاً بيك في {bizName}. إيه اللي تحب تطلبه؟ | Welcome to {bizName}! What would you like?", ci), t.AddSeconds(5)),
+                        Msg(chatInteraction.InteractionId, "Customer", L($"عايز {item1Name} و{item2Name} من فضلك | I'd like {item1Name} and {item2Name} please", ci), t.AddSeconds(25)),
+                        Msg(chatInteraction.InteractionId, "AI", L($"تمام! {item1Name} و{item2Name}. عنوان التوصيل إيه؟ | Got it! What's your delivery address?", ci), t.AddSeconds(32)),
                         Msg(chatInteraction.InteractionId, "Customer", address, t.AddMinutes(1)),
-                        Msg(chatInteraction.InteractionId, "AI", "وطريقة الدفع؟ كاش ولا بطاقة؟ | Payment method? Cash or card?", t.AddMinutes(1).AddSeconds(10)),
+                        Msg(chatInteraction.InteractionId, "AI", L("وطريقة الدفع؟ كاش ولا بطاقة؟ | Payment method? Cash or card?", ci), t.AddMinutes(1).AddSeconds(10)),
                         Msg(chatInteraction.InteractionId, "Customer", payment, t.AddMinutes(2)),
-                        Msg(chatInteraction.InteractionId, "AI", "تم تسجيل طلبك! هيوصلك خلال 30-45 دقيقة. شكراً! | Order confirmed! Arrives in 30-45 mins. Thank you!", t.AddMinutes(2).AddSeconds(15)),
+                        Msg(chatInteraction.InteractionId, "AI", L("تم تسجيل طلبك! هيوصلك خلال 30-45 دقيقة. شكراً! | Order confirmed! Arrives in 30-45 mins. Thank you!", ci), t.AddMinutes(2).AddSeconds(15)),
                     },
                     1 => new() {
-                        Msg(chatInteraction.InteractionId, "Customer", $"أهلاً، عايز أعرف إيه الأصناف المتاحة وأسعارها | Hi, I'd like to know what items you have and their prices", t),
-                        Msg(chatInteraction.InteractionId, "AI", $"أهلاً! في {bizName} عندنا قائمة متنوعة. تحب تعرف عن نوع معين؟ | Hi! At {bizName} we have a varied menu. Interested in a specific category?", t.AddSeconds(6)),
-                        Msg(chatInteraction.InteractionId, "Customer", "أيوه، إيه أرخص صنف وأغلى صنف عندكم؟ | Yes, what's your cheapest and most expensive item?", t.AddSeconds(30)),
-                        Msg(chatInteraction.InteractionId, "AI", $"أرخص صنف هو {item2Name} وأغلى صنف هو {item1Name}. كلهم بمكونات طازجة! | Cheapest is {item2Name} and most expensive is {item1Name}. All with fresh ingredients!", t.AddSeconds(40)),
-                        Msg(chatInteraction.InteractionId, "Customer", "وفي عروض أو خصومات دلوقتي؟ | Any current offers or discounts?", t.AddMinutes(1)),
-                        Msg(chatInteraction.InteractionId, "AI", "أيوه! عندنا خصم 10% على أول طلب لأي عميل جديد. | Yes! We have 10% off your first order for new customers.", t.AddMinutes(1).AddSeconds(8)),
-                        Msg(chatInteraction.InteractionId, "Customer", "ممتاز، هطلب قريب! | Great, I'll order soon!", t.AddMinutes(1).AddSeconds(45)),
-                        Msg(chatInteraction.InteractionId, "AI", "نستنى طلبك! لو عندك أي سؤال تاني ابعتلنا. | We look forward to your order! Feel free to ask anything else.", t.AddMinutes(2)),
+                        Msg(chatInteraction.InteractionId, "Customer", L($"أهلاً، عايز أعرف إيه الأصناف المتاحة وأسعارها | Hi, I'd like to know what items you have and their prices", ci), t),
+                        Msg(chatInteraction.InteractionId, "AI", L($"أهلاً! في {bizName} عندنا قائمة متنوعة. تحب تعرف عن نوع معين؟ | Hi! At {bizName} we have a varied menu. Interested in a specific category?", ci), t.AddSeconds(6)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("أيوه، إيه أرخص صنف وأغلى صنف عندكم؟ | Yes, what's your cheapest and most expensive item?", ci), t.AddSeconds(30)),
+                        Msg(chatInteraction.InteractionId, "AI", L($"أرخص صنف هو {item2Name} وأغلى صنف هو {item1Name}. كلهم بمكونات طازجة! | Cheapest is {item2Name} and most expensive is {item1Name}. All with fresh ingredients!", ci), t.AddSeconds(40)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("وفي عروض أو خصومات دلوقتي؟ | Any current offers or discounts?", ci), t.AddMinutes(1)),
+                        Msg(chatInteraction.InteractionId, "AI", L("أيوه! عندنا خصم 10% على أول طلب لأي عميل جديد. | Yes! We have 10% off your first order for new customers.", ci), t.AddMinutes(1).AddSeconds(8)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("ممتاز، هطلب قريب! | Great, I'll order soon!", ci), t.AddMinutes(1).AddSeconds(45)),
+                        Msg(chatInteraction.InteractionId, "AI", L("نستنى طلبك! لو عندك أي سؤال تاني ابعتلنا. | We look forward to your order! Feel free to ask anything else.", ci), t.AddMinutes(2)),
                     },
                     2 => new() {
-                        Msg(chatInteraction.InteractionId, "Customer", $"هاي! عايز أطلب بس عندي طلب خاص | Hey! I want to order but have a special request", t),
-                        Msg(chatInteraction.InteractionId, "AI", $"أهلاً! اتفضل، قولي طلبك وهنحاول نوفره. | Hi! Go ahead, tell us your request and we'll do our best.", t.AddSeconds(7)),
-                        Msg(chatInteraction.InteractionId, "Customer", $"عايز {item1Name} بس من غير بصل ومع صوص إضافي | I want {item1Name} but without onion and with extra sauce", t.AddSeconds(35)),
-                        Msg(chatInteraction.InteractionId, "AI", $"تمام! {item1Name} بدون بصل وصوص زيادة. هتوصل إزاي؟ | Got it! {item1Name} without onion and extra sauce. How should it be delivered?", t.AddSeconds(45)),
+                        Msg(chatInteraction.InteractionId, "Customer", L($"هاي! عايز أطلب بس عندي طلب خاص | Hey! I want to order but have a special request", ci), t),
+                        Msg(chatInteraction.InteractionId, "AI", L($"أهلاً! اتفضل، قولي طلبك وهنحاول نوفره. | Hi! Go ahead, tell us your request and we'll do our best.", ci), t.AddSeconds(7)),
+                        Msg(chatInteraction.InteractionId, "Customer", L($"عايز {item1Name} بس من غير بصل ومع صوص إضافي | I want {item1Name} but without onion and with extra sauce", ci), t.AddSeconds(35)),
+                        Msg(chatInteraction.InteractionId, "AI", L($"تمام! {item1Name} بدون بصل وصوص زيادة. هتوصل إزاي؟ | Got it! {item1Name} without onion and extra sauce. How should it be delivered?", ci), t.AddSeconds(45)),
                         Msg(chatInteraction.InteractionId, "Customer", address, t.AddMinutes(1)),
-                        Msg(chatInteraction.InteractionId, "AI", "وطريقة الدفع؟ | Payment method?", t.AddMinutes(1).AddSeconds(12)),
+                        Msg(chatInteraction.InteractionId, "AI", L("وطريقة الدفع؟ | Payment method?", ci), t.AddMinutes(1).AddSeconds(12)),
                         Msg(chatInteraction.InteractionId, "Customer", payment, t.AddMinutes(2)),
-                        Msg(chatInteraction.InteractionId, "AI", $"ممتاز! تم تسجيل طلبك مع ملاحظة التعديل. هيوصلك خلال 35 دقيقة! | Done! Order placed with your customization noted. Arrives in 35 mins!", t.AddMinutes(2).AddSeconds(10)),
+                        Msg(chatInteraction.InteractionId, "AI", L($"ممتاز! تم تسجيل طلبك مع ملاحظة التعديل. هيوصلك خلال 35 دقيقة! | Done! Order placed with your customization noted. Arrives in 35 mins!", ci), t.AddMinutes(2).AddSeconds(10)),
                     },
                     3 => new() {
-                        Msg(chatInteraction.InteractionId, "Customer", "بتوصلوا فين؟ وكام رسوم التوصيل؟ | Where do you deliver? And what are the delivery fees?", t),
-                        Msg(chatInteraction.InteractionId, "AI", "بنوصل لمعظم مناطق القاهرة والجيزة. رسوم التوصيل بتبدأ من 15 جنيه حسب المنطقة. | We deliver to most areas in Cairo and Giza. Delivery fees start from 15 EGP depending on the area.", t.AddSeconds(8)),
-                        Msg(chatInteraction.InteractionId, "Customer", "وبتوصلوا للمعادي؟ | Do you deliver to Maadi?", t.AddSeconds(40)),
-                        Msg(chatInteraction.InteractionId, "AI", "أيوه، المعادي من مناطقنا. رسوم التوصيل 20 جنيه ووقت التوصيل 40-50 دقيقة. | Yes, Maadi is one of our areas. Delivery fee is 20 EGP and takes 40-50 minutes.", t.AddSeconds(50)),
-                        Msg(chatInteraction.InteractionId, "Customer", "وفي حد أوردر minimum؟ | Is there a minimum order?", t.AddMinutes(1).AddSeconds(20)),
-                        Msg(chatInteraction.InteractionId, "AI", "أقل أوردر 50 جنيه مش شامل التوصيل. | Minimum order is 50 EGP excluding delivery.", t.AddMinutes(1).AddSeconds(30)),
-                        Msg(chatInteraction.InteractionId, "Customer", "تمام شكراً على المعلومات | Great, thanks for the info", t.AddMinutes(2)),
-                        Msg(chatInteraction.InteractionId, "AI", "العفو! لما تحب تطلب احنا موجودين. | You're welcome! We're here whenever you're ready to order.", t.AddMinutes(2).AddSeconds(10)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("بتوصلوا فين؟ وكام رسوم التوصيل؟ | Where do you deliver? And what are the delivery fees?", ci), t),
+                        Msg(chatInteraction.InteractionId, "AI", L("بنوصل لمعظم مناطق القاهرة والجيزة. رسوم التوصيل بتبدأ من 15 جنيه حسب المنطقة. | We deliver to most areas in Cairo and Giza. Delivery fees start from 15 EGP depending on the area.", ci), t.AddSeconds(8)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("وبتوصلوا للمعادي؟ | Do you deliver to Maadi?", ci), t.AddSeconds(40)),
+                        Msg(chatInteraction.InteractionId, "AI", L("أيوه، المعادي من مناطقنا. رسوم التوصيل 20 جنيه ووقت التوصيل 40-50 دقيقة. | Yes, Maadi is one of our areas. Delivery fee is 20 EGP and takes 40-50 minutes.", ci), t.AddSeconds(50)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("وفي حد أوردر minimum؟ | Is there a minimum order?", ci), t.AddMinutes(1).AddSeconds(20)),
+                        Msg(chatInteraction.InteractionId, "AI", L("أقل أوردر 50 جنيه مش شامل التوصيل. | Minimum order is 50 EGP excluding delivery.", ci), t.AddMinutes(1).AddSeconds(30)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("تمام شكراً على المعلومات | Great, thanks for the info", ci), t.AddMinutes(2)),
+                        Msg(chatInteraction.InteractionId, "AI", L("العفو! لما تحب تطلب احنا موجودين. | You're welcome! We're here whenever you're ready to order.", ci), t.AddMinutes(2).AddSeconds(10)),
                     },
                     _ => new() {
-                        Msg(chatInteraction.InteractionId, "Customer", $"مرحباً، عندي حساسية من المكسرات. {item1Name} فيها مكسرات؟ | Hi, I'm allergic to nuts. Does {item1Name} contain nuts?", t),
-                        Msg(chatInteraction.InteractionId, "AI", $"أهلاً! سؤال مهم جداً. {item1Name} مش فيها مكسرات في الوصفة الأصلية، بس المطبخ بيستخدم مكسرات في أصناف تانية فممكن يحصل تلوث. | Hi! Great question. {item1Name} doesn't contain nuts in the original recipe, but our kitchen handles nuts in other dishes so cross-contamination is possible.", t.AddSeconds(9)),
-                        Msg(chatInteraction.InteractionId, "Customer", "وفي أي أصناف عندكم آمنة خالص من المكسرات؟ | Which of your items are completely nut-free?", t.AddSeconds(50)),
-                        Msg(chatInteraction.InteractionId, "AI", $"الأصناف دي عادةً آمنة: {item2Name}. بس دايماً ننصح بإخبار المطبخ بالحساسية عند الطلب. | These items are usually safe: {item2Name}. We always recommend informing the kitchen about allergies when ordering.", t.AddMinutes(1)),
-                        Msg(chatInteraction.InteractionId, "Customer", "ينفع أنبه المطبخ في الأوردر؟ | Can I add an allergy note to my order?", t.AddMinutes(1).AddSeconds(30)),
-                        Msg(chatInteraction.InteractionId, "AI", "أيوه بالطبع! في خانة الملاحظات لما بتطلب اكتب حساسيتك وهياخدوا احتياطهم. | Yes of course! There's a notes field when ordering — write your allergy and the kitchen will take precautions.", t.AddMinutes(1).AddSeconds(40)),
-                        Msg(chatInteraction.InteractionId, "Customer", "شكراً جزيلاً، مطمن دلوقتي! | Thank you so much, I feel reassured now!", t.AddMinutes(2).AddSeconds(10)),
-                        Msg(chatInteraction.InteractionId, "AI", "العفو وسلامتك! طلبك دايماً مهم لينا. | You're welcome, stay safe! Your wellbeing matters to us.", t.AddMinutes(2).AddSeconds(20)),
+                        Msg(chatInteraction.InteractionId, "Customer", L($"مرحباً، عندي حساسية من المكسرات. {item1Name} فيها مكسرات؟ | Hi, I'm allergic to nuts. Does {item1Name} contain nuts?", ci), t),
+                        Msg(chatInteraction.InteractionId, "AI", L($"أهلاً! سؤال مهم جداً. {item1Name} مش فيها مكسرات في الوصفة الأصلية، بس المطبخ بيستخدم مكسرات في أصناف تانية فممكن يحصل تلوث. | Hi! Great question. {item1Name} doesn't contain nuts in the original recipe, but our kitchen handles nuts in other dishes so cross-contamination is possible.", ci), t.AddSeconds(9)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("وفي أي أصناف عندكم آمنة خالص من المكسرات؟ | Which of your items are completely nut-free?", ci), t.AddSeconds(50)),
+                        Msg(chatInteraction.InteractionId, "AI", L($"الأصناف دي عادةً آمنة: {item2Name}. بس دايماً ننصح بإخبار المطبخ بالحساسية عند الطلب. | These items are usually safe: {item2Name}. We always recommend informing the kitchen about allergies when ordering.", ci), t.AddMinutes(1)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("ينفع أنبه المطبخ في الأوردر؟ | Can I add an allergy note to my order?", ci), t.AddMinutes(1).AddSeconds(30)),
+                        Msg(chatInteraction.InteractionId, "AI", L("أيوه بالطبع! في خانة الملاحظات لما بتطلب اكتب حساسيتك وهياخدوا احتياطهم. | Yes of course! There's a notes field when ordering — write your allergy and the kitchen will take precautions.", ci), t.AddMinutes(1).AddSeconds(40)),
+                        Msg(chatInteraction.InteractionId, "Customer", L("شكراً جزيلاً، مطمن دلوقتي! | Thank you so much, I feel reassured now!", ci), t.AddMinutes(2).AddSeconds(10)),
+                        Msg(chatInteraction.InteractionId, "AI", L("العفو وسلامتك! طلبك دايماً مهم لينا. | You're welcome, stay safe! Your wellbeing matters to us.", ci), t.AddMinutes(2).AddSeconds(20)),
                     },
                 };
 
@@ -809,23 +767,23 @@ namespace digital_employee
                     BusinessId      = business.Id,
                     CustomerId      = customer.CustomerId,
                     InteractionId   = escInteraction.InteractionId,
-                    Subject         = tmpl.Subject,
+                    Subject         = L(tmpl.Subject, ci),
                     Status          = "Closed",
                     IsEnded         = true,
                     TicketType      = tmpl.TicketType,
                     PriorityLevel   = tmpl.Priority,
-                    ResolutionNotes = tmpl.Resolution,
+                    ResolutionNotes = L(tmpl.Resolution, ci),
                     CreatedAt       = escInteraction.StartedAt,
                     ClosedAt        = escInteraction.EndedAt
                 });
 
                 context.Messages.AddRange(
-                    Msg(escInteraction.InteractionId, "Customer", tmpl.Opening, escInteraction.StartedAt),
-                    Msg(escInteraction.InteractionId, "AI", tmpl.AiAck, escInteraction.StartedAt.AddSeconds(8)),
-                    Msg(escInteraction.InteractionId, "Customer", tmpl.CustomerReply, escInteraction.StartedAt.AddSeconds(40)),
-                    Msg(escInteraction.InteractionId, "AI", tmpl.AiInvestigate, escInteraction.StartedAt.AddMinutes(1)),
-                    Msg(escInteraction.InteractionId, "AI", tmpl.AiEscalate, escInteraction.StartedAt.AddMinutes(1).AddSeconds(10)),
-                    Msg(escInteraction.InteractionId, "Customer", tmpl.CustomerClose, escInteraction.StartedAt.AddMinutes(2))
+                    Msg(escInteraction.InteractionId, "Customer", L(tmpl.Opening,       ci), escInteraction.StartedAt),
+                    Msg(escInteraction.InteractionId, "AI",       L(tmpl.AiAck,         ci), escInteraction.StartedAt.AddSeconds(8)),
+                    Msg(escInteraction.InteractionId, "Customer", L(tmpl.CustomerReply, ci), escInteraction.StartedAt.AddSeconds(40)),
+                    Msg(escInteraction.InteractionId, "AI",       L(tmpl.AiInvestigate, ci), escInteraction.StartedAt.AddMinutes(1)),
+                    Msg(escInteraction.InteractionId, "AI",       L(tmpl.AiEscalate,    ci), escInteraction.StartedAt.AddMinutes(1).AddSeconds(10)),
+                    Msg(escInteraction.InteractionId, "Customer", L(tmpl.CustomerClose, ci), escInteraction.StartedAt.AddMinutes(2))
                 );
 
                 context.Feedbacks.Add(new Feedback
@@ -834,7 +792,7 @@ namespace digital_employee
                     CustomerId = customer.CustomerId,
                     TicketId   = ticketId,
                     Rating     = tmpl.FeedbackRating,
-                    Comment    = tmpl.FeedbackComment,
+                    Comment    = L(tmpl.FeedbackComment, ci),
                     CreatedAt  = escInteraction.EndedAt!.Value.AddHours(1)
                 });
 
@@ -859,6 +817,12 @@ namespace digital_employee
 
         private static Message Msg(string interactionId, string senderType, string content, DateTime sentAt) =>
             new() { MessageId = Guid.NewGuid().ToString(), InteractionId = interactionId, SenderType = senderType, Content = content, SentAt = sentAt };
+
+        // ci even → Arabic half, ci odd → English half
+        private static string L(string arEn, int ci) =>
+            ci % 2 == 0
+                ? arEn.Split(" | ")[0].Trim()
+                : (arEn.Contains(" | ") ? arEn.Split(" | ")[1].Trim() : arEn);
 
         private static List<KbSeed> CommonKb() => new()
         {
