@@ -349,6 +349,48 @@ namespace digital_employee
             }
 
             // -------------------------
+            // Seed super-admin user
+            // -------------------------
+            using (var scope = app.Services.CreateScope())
+            {
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+                if (!await roleManager.RoleExistsAsync("Admin"))
+                    await roleManager.CreateAsync(new IdentityRole("Admin"));
+
+                var adminEmail = "admin@app.com";
+                var adminUser  = await userManager.FindByEmailAsync(adminEmail);
+
+                if (adminUser == null)
+                {
+                    adminUser = new User
+                    {
+                        UserName       = adminEmail,
+                        Email          = adminEmail,
+                        FullName       = "Super Admin",
+                        Role           = "Admin",
+                        EmailConfirmed = true,
+                        CreatedAt      = DateTime.UtcNow
+                    };
+                    await userManager.CreateAsync(adminUser, "Admin@123");
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                }
+                else
+                {
+                    // Fix role if admin was created with wrong role
+                    if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+                        await userManager.AddToRoleAsync(adminUser, "Admin");
+
+                    if (adminUser.Role != "Admin")
+                    {
+                        adminUser.Role = "Admin";
+                        await userManager.UpdateAsync(adminUser);
+                    }
+                }
+            }
+
+            // -------------------------
             // Seed dummy data (runs once per business, skips if already seeded)
             // -------------------------
             await DataSeeder.SeedAllAsync(app.Services);

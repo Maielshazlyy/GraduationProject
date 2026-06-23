@@ -2705,6 +2705,26 @@
             "description": "بيحفظ array من الـ KB entries دفعة واحدة ويعمل AI sync تلقائي."
           },
           "response": []
+        },
+        {
+          "name": "Sync All Businesses to AI [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/KnowledgeBase/sync",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "KnowledgeBase",
+                "sync"
+              ]
+            },
+            "description": "Pushes menu + knowledge base for ALL businesses to the AI server in one shot. Use after seeding or any bulk DB change that bypassed the API. Requires Admin token."
+          },
+          "response": []
         }
       ]
     },

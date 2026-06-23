@@ -154,7 +154,7 @@ namespace digital_employee.Controllers
         // Pushes menu + KB for every business to the AI server in one shot.
         // Use after seeding or any bulk DB change that bypassed the API.
         [HttpPost("sync")]
-        [Authorize(Policy = "OwnerOrAdmin")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> SyncAll()
         {
             var businesses = await _businessService.GetAllAsync();

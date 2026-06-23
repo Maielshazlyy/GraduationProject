@@ -58,7 +58,7 @@ namespace Service_layer.Services
                 }
             };
 
-            var response = await _httpClient.PostAsJsonAsync("/api/knowledge-base", payload);
+            var response = await _httpClient.PostAsJsonAsync("/api/v1/business/knowledge-base/sync", payload);
             response.EnsureSuccessStatusCode();
         }
     }
