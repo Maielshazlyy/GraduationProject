@@ -8,6 +8,7 @@ using Domain_layer.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Service_layer.Services_Interfaces;
 
 namespace digital_employee
 {
@@ -36,21 +37,29 @@ namespace digital_employee
         // ── Entry point ───────────────────────────────────────────────────────
         public static async Task SeedAllAsync(IServiceProvider services)
         {
-            using var scope = services.CreateScope();
-            var context     = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            using var scope    = services.CreateScope();
+            var context        = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var userManager    = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var roleManager    = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var aiSync         = scope.ServiceProvider.GetRequiredService<IAiKnowledgeSyncService>();
 
             // Ensure Owner role exists
             if (!await roleManager.RoleExistsAsync("Owner"))
                 await roleManager.CreateAsync(new IdentityRole("Owner"));
 
             foreach (var seed in GetBusinessSeeds())
-                await SeedBusinessAsync(context, userManager, seed);
+            {
+                var businessId = await SeedBusinessAsync(context, userManager, seed);
+                if (businessId != null)
+                {
+                    try   { await aiSync.SyncBusinessAsync(businessId); }
+                    catch { /* AI server might not be up yet — sync can be triggered manually */ }
+                }
+            }
         }
 
-        // ── Seed one business ─────────────────────────────────────────────────
-        private static async Task SeedBusinessAsync(
+        // ── Seed one business — returns businessId for AI sync ───────────────
+        private static async Task<string?> SeedBusinessAsync(
             AppDbContext context,
             UserManager<User> userManager,
             BusinessSeed seed)
@@ -63,7 +72,7 @@ namespace digital_employee
                     .FirstOrDefaultAsync(b => b.Id == existingUser.BusinessId);
                 if (existingBusiness != null)
                     await SeedMissingCustomersAsync(context, existingBusiness, seed);
-                return;
+                return existingBusiness?.Id;
             }
 
             // Create business
@@ -564,6 +573,7 @@ namespace digital_employee
             );
 
             await context.SaveChangesAsync();
+            return business.Id;
         }
 
         // ── Top-up customers for an already-seeded business ──────────────────
