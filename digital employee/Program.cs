@@ -259,7 +259,7 @@ namespace digital_employee
 
             // AI Services (external AI API)
             var aiApiBaseUrl = builder.Configuration["AiApi:BaseUrl"]
-                ?? "https://anyway-remix-puzzling.ngrok-free.dev";
+                ?? "https://mariah-albert-resolution-consultancy.trycloudflare.com";
 
             builder.Services.AddHttpClient<IAiChatService, AiChatService>(client =>
             {
