@@ -7,6 +7,8 @@ primary_region = "iad"
 [env]
   ASPNETCORE_ENVIRONMENT = "Production"
   ASPNETCORE_URLS        = "http://+:10000"
+  AiApi__BaseUrl         = "https://anyway-remix-puzzling.ngrok-free.dev"
+  AiVoiceApi__MeetingUrl = "https://anyway-remix-puzzling.ngrok-free.dev/meeting"
 
 [http_service]
   internal_port        = 10000
