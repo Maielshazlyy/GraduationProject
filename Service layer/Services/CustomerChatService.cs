@@ -8,6 +8,7 @@ using Domain_layer.enums;
 using Service_layer.DTOS.AiChat;
 using Service_layer.DTOS.Chat;
 using Service_layer.Services_Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Service_layer.Services
 {
@@ -22,6 +23,7 @@ namespace Service_layer.Services
         private readonly IAuditLogService? _auditLogService;
         private readonly ISentimentService? _sentimentService;
         private readonly IAiChatService _aiChatService;
+        private readonly ILogger<CustomerChatService>? _logger;
         private readonly CustomerInteractionBusinessLogic _businessLogic;
 
         public CustomerChatService(
@@ -29,13 +31,15 @@ namespace Service_layer.Services
             ISettingService settingService,
             IAiChatService aiChatService,
             IAuditLogService? auditLogService = null,
-            ISentimentService? sentimentService = null)
+            ISentimentService? sentimentService = null,
+            ILogger<CustomerChatService>? logger = null)
         {
             _unitOfWork    = unitOfWork;
             _settingService = settingService;
             _aiChatService  = aiChatService;
             _auditLogService = auditLogService;
             _sentimentService = sentimentService;
+            _logger        = logger;
             _businessLogic  = new CustomerInteractionBusinessLogic(unitOfWork, auditLogService);
         }
 
@@ -82,7 +86,9 @@ namespace Service_layer.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[CustomerChatService] AI call failed: {ex.Message}");
+                _logger?.LogError(ex,
+                    "[CustomerChatService] AI call failed for InteractionId={InteractionId} BusinessId={BusinessId}",
+                    interaction.InteractionId, interaction.BusinessId);
                 aiResponse = new AiChatResponseDTO
                 {
                     Reply = "عذراً، حدث خطأ مؤقت. يرجى المحاولة مرة أخرى."
