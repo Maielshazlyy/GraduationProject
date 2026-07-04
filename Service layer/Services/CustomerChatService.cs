@@ -9,6 +9,7 @@ using Service_layer.DTOS.AiChat;
 using Service_layer.DTOS.Chat;
 using Service_layer.DTOS.Notification;
 using Service_layer.Services_Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Service_layer.Services
 {
@@ -24,6 +25,7 @@ namespace Service_layer.Services
         private readonly ISentimentService? _sentimentService;
         private readonly INotificationService? _notificationService;
         private readonly IAiChatService _aiChatService;
+        private readonly ILogger<CustomerChatService>? _logger;
         private readonly CustomerInteractionBusinessLogic _businessLogic;
 
         public CustomerChatService(
@@ -32,7 +34,8 @@ namespace Service_layer.Services
             IAiChatService aiChatService,
             IAuditLogService? auditLogService = null,
             ISentimentService? sentimentService = null,
-            INotificationService? notificationService = null)
+            INotificationService? notificationService = null,
+            ILogger<CustomerChatService>? logger = null)
         {
             _unitOfWork    = unitOfWork;
             _settingService = settingService;
@@ -40,6 +43,7 @@ namespace Service_layer.Services
             _auditLogService = auditLogService;
             _sentimentService = sentimentService;
             _notificationService = notificationService;
+            _logger        = logger;
             _businessLogic  = new CustomerInteractionBusinessLogic(unitOfWork, auditLogService);
         }
 
@@ -86,7 +90,9 @@ namespace Service_layer.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[CustomerChatService] AI call failed: {ex.Message}");
+                _logger?.LogError(ex,
+                    "[CustomerChatService] AI call failed for InteractionId={InteractionId} BusinessId={BusinessId}",
+                    interaction.InteractionId, interaction.BusinessId);
                 aiResponse = new AiChatResponseDTO
                 {
                     Reply = "عذراً، حدث خطأ مؤقت. يرجى المحاولة مرة أخرى."
@@ -338,15 +344,25 @@ namespace Service_layer.Services
             CustomerChatRequestDTO request, string channel)
         {
             // ── Validate business exists before creating any records ────────────
-            var business = await _unitOfWork.Businesses.GetByIdAsync(request.BusinessId);
+            // A Business carries two GUIDs: the primary key `Id` and a separate
+            // `BusinessId` column, and the API exposes both to clients. Resolve by
+            // the primary key first, then fall back to the `BusinessId` column so a
+            // caller that sent either value still resolves to the same business.
+            var business = await _unitOfWork.Businesses.GetByIdAsync(request.BusinessId)
+                ?? await _unitOfWork.Businesses.FirstOrDefaultAsync(b => b.BusinessId == request.BusinessId);
             if (business == null)
                 throw new ArgumentException($"Business '{request.BusinessId}' not found.");
+
+            // Normalize to the canonical primary key for all downstream records so
+            // customers, interactions and the AI call are keyed consistently — the
+            // AI knowledge base is synced by `Business.Id`.
+            var businessId = business.Id;
 
             // ── Resume existing interaction (must belong to this business) ──────
             if (!string.IsNullOrWhiteSpace(request.InteractionId))
             {
                 var existing = await _unitOfWork.Interactions.GetByIdAsync(request.InteractionId);
-                if (existing != null && existing.BusinessId == request.BusinessId)
+                if (existing != null && existing.BusinessId == businessId)
                 {
                     // Reject messages on a closed interaction — session_id must never be reused
                     if (existing.IsEnded == true)
@@ -358,12 +374,12 @@ namespace Service_layer.Services
                 // wrong id or wrong business → fall through and create a new interaction
             }
 
-            var customerId = await EnsureCustomerAsync(request.BusinessId, request.CustomerId);
+            var customerId = await EnsureCustomerAsync(businessId, request.CustomerId);
 
             var interaction = new Interaction
             {
                 InteractionId = Guid.NewGuid().ToString(),
-                BusinessId    = request.BusinessId,
+                BusinessId    = businessId,
                 CustomerId    = customerId,
                 Channel       = channel,
                 Status        = "Open",

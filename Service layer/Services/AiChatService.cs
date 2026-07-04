@@ -18,7 +18,14 @@ namespace Service_layer.Services
         public async Task<AiChatResponseDTO> SendMessageAsync(AiChatRequestDTO request)
         {
             var response = await _httpClient.PostAsJsonAsync("/api/v1/chat", request);
-            response.EnsureSuccessStatusCode();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(
+                    $"AI /api/v1/chat returned {(int)response.StatusCode} {response.StatusCode} " +
+                    $"(base={_httpClient.BaseAddress}). Body: {errorBody}");
+            }
 
             var result = await response.Content.ReadFromJsonAsync<AiChatResponseDTO>();
             return result ?? new AiChatResponseDTO { Reply = string.Empty, SessionId = request.SessionId };

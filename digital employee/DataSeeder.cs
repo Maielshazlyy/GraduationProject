@@ -59,6 +59,17 @@ namespace digital_employee
         }
 
         // ── Seed one business — returns businessId for AI sync ───────────────
+        /// <summary>
+        /// Produces a stable GUID string from an input (e.g. owner email) so seed data
+        /// keeps the same identifier across runs, environments and DB resets.
+        /// </summary>
+        private static string DeterministicGuid(string input)
+        {
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            var hash = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input.Trim().ToLowerInvariant()));
+            return new Guid(hash).ToString();
+        }
+
         private static async Task<string?> SeedBusinessAsync(
             AppDbContext context,
             UserManager<User> userManager,
@@ -75,11 +86,18 @@ namespace digital_employee
                 return existingBusiness?.Id;
             }
 
-            // Create business
+            // Create business.
+            // The Id is derived deterministically from the owner email so that every
+            // seed run — in any environment (local, fly.io) and after any DB reset —
+            // produces the SAME business Id. Random GUIDs here caused the backend DB
+            // and the AI knowledge base (synced by Business.Id) to drift apart, which
+            // surfaced as "Business '...' not found." on chat. BusinessId is set to the
+            // same value to remove the two-GUID ambiguity for seeded data.
+            var deterministicId = DeterministicGuid(seed.OwnerEmail);
             var business = new Business
             {
-                Id           = Guid.NewGuid().ToString(),
-                BusinessId   = Guid.NewGuid().ToString(),
+                Id           = deterministicId,
+                BusinessId   = deterministicId,
                 Name         = seed.Name,
                 Type         = seed.Type,
                 CuisineType  = seed.CuisineType,
