@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using Service_layer.DTOS.BusinessReport;
 
 namespace Service_layer.DTOS.AiOwnerChat
 {
     public class AiOwnerChatRequestDTO
     {
+        [JsonPropertyName("business_id")]
+        public string BusinessId { get; set; } = string.Empty;
+
         [JsonPropertyName("session_id")]
         public string SessionId { get; set; } = string.Empty;
 
@@ -30,27 +34,29 @@ namespace Service_layer.DTOS.AiOwnerChat
         public string Confidence { get; set; } = "high";
     }
 
-    public class AiOwnerReportResponseDTO
+    /// <summary>
+    /// Pushed to the AI service whenever a business report is generated/updated, so Owner Chat
+    /// has the report content to ground its answers in. This is a separate store from the
+    /// customer-chat knowledge base (menu/FAQ) -- owner chat must answer from analytics data only.
+    /// </summary>
+    public class AiOwnerReportSyncRequestDTO
     {
-        [JsonPropertyName("report_content")]
-        public string ReportContent { get; set; } = string.Empty;
+        [JsonPropertyName("business_id")]
+        public string BusinessId { get; set; } = string.Empty;
 
-        [JsonPropertyName("sections_available")]
-        public List<string> SectionsAvailable { get; set; } = new();
+        [JsonPropertyName("business_name")]
+        public string BusinessName { get; set; } = string.Empty;
 
-        [JsonPropertyName("last_updated")]
-        public DateTime? LastUpdated { get; set; }
+        [JsonPropertyName("period")]
+        public ReportPeriodDTO Period { get; set; } = new();
+
+        [JsonPropertyName("report")]
+        public AiReportResponseDTO Report { get; set; } = new();
     }
 
-    public class AiOwnerReloadResponseDTO
+    public class AiOwnerReportSyncResponseDTO
     {
         [JsonPropertyName("status")]
         public string Status { get; set; } = string.Empty;
-
-        [JsonPropertyName("reports_loaded")]
-        public int ReportsLoaded { get; set; }
-
-        [JsonPropertyName("message")]
-        public string Message { get; set; } = string.Empty;
     }
 }

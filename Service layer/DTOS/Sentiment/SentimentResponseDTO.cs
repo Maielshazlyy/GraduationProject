@@ -13,5 +13,7 @@ namespace Service_layer.DTOS.Sentiment
         public double Score { get; set; }
         public string Label { get; set; } // Positive / Neutral / Negative
         public DateTime AnalyzedAt { get; set; }
+        public string? CustomerId { get; set; }
+        public string? CustomerName { get; set; }
     }
 }

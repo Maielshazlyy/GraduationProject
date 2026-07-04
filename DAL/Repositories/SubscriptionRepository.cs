@@ -13,7 +13,13 @@ namespace DAL.Repositories
         {
             _context = context;
         }
-        
+
+        // Load the related Business too -- callers (e.g. the admin subscriptions list) need BusinessName.
+        public override async Task<IEnumerable<Subscription>> GetAllAsync()
+        {
+            return await _context.Subscriptions.Include(s => s.Business).ToListAsync();
+        }
+
         public async Task<IEnumerable<Subscription>> GetByBusinessIdAsync(string businessId)
         {
             return await FindAsync(s => s.BusinessId == businessId);

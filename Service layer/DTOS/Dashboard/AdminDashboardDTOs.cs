@@ -6,6 +6,13 @@ namespace Service_layer.DTOS.Dashboard
         public int TotalBusinesses { get; set; }
         public int ActiveBusinesses { get; set; }
         public int NewBusinessesLast30Days { get; set; }
+        public int TotalUsers { get; set; }
+        public int TotalCalls { get; set; }
+
+        // Customer satisfaction: percentage of analyzed messages with a "Positive" sentiment label.
+        public double CustomerSatisfactionRate { get; set; }
+        public List<AdminCategoryCountDTO> TopBusinessTypes { get; set; } = new();
+        public List<AdminCategoryCountDTO> TopCuisineTypes { get; set; } = new();
 
         // Core business activity
         public int TotalOrders { get; set; }
@@ -38,6 +45,12 @@ namespace Service_layer.DTOS.Dashboard
         public DateTime? LastOrderDate { get; set; }
         public DateTime? LastTicketDate { get; set; }
         public DateTime? LastFeedbackDate { get; set; }
+    }
+
+    public class AdminCategoryCountDTO
+    {
+        public string Category { get; set; } = string.Empty;
+        public int Count { get; set; }
     }
 
     public class AdminBusinessSnapshotDTO

@@ -7,6 +7,7 @@ using Domain_layer.Models;
 using Domain_layer.enums;
 using Service_layer.DTOS.AiChat;
 using Service_layer.DTOS.Chat;
+using Service_layer.DTOS.Notification;
 using Service_layer.Services_Interfaces;
 
 namespace Service_layer.Services
@@ -21,6 +22,7 @@ namespace Service_layer.Services
         private readonly ISettingService _settingService;
         private readonly IAuditLogService? _auditLogService;
         private readonly ISentimentService? _sentimentService;
+        private readonly INotificationService? _notificationService;
         private readonly IAiChatService _aiChatService;
         private readonly CustomerInteractionBusinessLogic _businessLogic;
 
@@ -29,13 +31,15 @@ namespace Service_layer.Services
             ISettingService settingService,
             IAiChatService aiChatService,
             IAuditLogService? auditLogService = null,
-            ISentimentService? sentimentService = null)
+            ISentimentService? sentimentService = null,
+            INotificationService? notificationService = null)
         {
             _unitOfWork    = unitOfWork;
             _settingService = settingService;
             _aiChatService  = aiChatService;
             _auditLogService = auditLogService;
             _sentimentService = sentimentService;
+            _notificationService = notificationService;
             _businessLogic  = new CustomerInteractionBusinessLogic(unitOfWork, auditLogService);
         }
 
@@ -140,6 +144,26 @@ namespace Service_layer.Services
                         action:        "EscalateToHuman",
                         interactionId: interaction.InteractionId,
                         userId:        null);
+                }
+
+                // Best-effort: surface this in the notification bell immediately so an
+                // agent doesn't have to stumble on it by browsing the Tickets list.
+                if (_notificationService != null)
+                {
+                    try
+                    {
+                        await _notificationService.CreateAsync(new NotificationCreateDTO
+                        {
+                            Title = "Customer needs a human agent",
+                            Message = $"Ticket #{ticket.TicketId.Substring(0, 8)} — {ticket.Subject}",
+                            BusinessId = interaction.BusinessId,
+                            UserId = null
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Escalation notification failed: {ex.Message}");
+                    }
                 }
             }
             else if (aiResponse.TicketDetected)

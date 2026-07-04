@@ -14,10 +14,12 @@ namespace Tests.Controllers
     {
         private readonly Mock<IKnowledgeBaseService> _kbServiceMock = new();
         private readonly Mock<IAuditLogService> _auditLogMock = new();
+        private readonly Mock<IAiKnowledgeSyncService> _aiSyncMock = new();
+        private readonly Mock<IBusinessService> _businessServiceMock = new();
 
         private KnowledgeBaseController CreateController(string userId = "user-1")
         {
-            var controller = new KnowledgeBaseController(_kbServiceMock.Object, _auditLogMock.Object);
+            var controller = new KnowledgeBaseController(_kbServiceMock.Object, _auditLogMock.Object, _aiSyncMock.Object, _businessServiceMock.Object);
             controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext

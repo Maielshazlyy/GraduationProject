@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service_layer.DTOS.Subscription;
@@ -92,6 +93,32 @@ namespace digital_employee.Controllers
                 return NotFound(new { Message = $"Subscription with id '{id}' not found." });
 
             return Ok(subscription.ToDto());
+        }
+
+        // POST: api/Subscription/{id}/activate
+        [HttpPost("{id}/activate")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> Activate(string id)
+        {
+            var adminUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var updated = await _subscriptionService.SetActiveStateAsync(id, true, adminUserId);
+            if (!updated)
+                return NotFound(new { Message = $"Subscription with id '{id}' not found." });
+
+            return Ok(new { Message = "Subscription activated successfully." });
+        }
+
+        // POST: api/Subscription/{id}/deactivate
+        [HttpPost("{id}/deactivate")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> Deactivate(string id)
+        {
+            var adminUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var updated = await _subscriptionService.SetActiveStateAsync(id, false, adminUserId);
+            if (!updated)
+                return NotFound(new { Message = $"Subscription with id '{id}' not found." });
+
+            return Ok(new { Message = "Subscription deactivated successfully." });
         }
 
         // DELETE: api/Subscription/{id}

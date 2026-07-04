@@ -16,14 +16,22 @@ namespace DAL.Repositories
         
         public async Task<IEnumerable<Sentiment>> GetByMessageIdAsync(string messageId)
         {
-            return await FindAsync(s => s.MessageId == messageId);
+            return await _context.Sentiments
+                .Include(s => s.Message)
+                    .ThenInclude(m => m.Interaction)
+                        .ThenInclude(i => i.Customer)
+                .Where(s => s.MessageId == messageId)
+                .ToListAsync();
         }
-        
+
         public async Task<IEnumerable<Sentiment>> GetByBusinessIdAsync(string businessId)
         {
             return await _context.Sentiments
-                .Where(s => s.Message != null && 
-                           s.Message.Interaction != null && 
+                .Include(s => s.Message)
+                    .ThenInclude(m => m.Interaction)
+                        .ThenInclude(i => i.Customer)
+                .Where(s => s.Message != null &&
+                           s.Message.Interaction != null &&
                            s.Message.Interaction.BusinessId == businessId)
                 .ToListAsync();
         }

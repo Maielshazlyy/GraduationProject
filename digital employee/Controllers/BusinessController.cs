@@ -66,8 +66,9 @@ namespace digital_employee.Controllers
             if (user == null)
                 return Unauthorized(new { Message = "User not found." });
 
-            // التحقق من أن المستخدم ليس لديه Business بالفعل
-            if (!string.IsNullOrEmpty(user.BusinessId))
+            // التحقق من أن المستخدم ليس لديه Business بالفعل (لا ينطبق على الـ Admin،
+            // لأنه بيقدر ينشئ بيزنسات لغيره من غير ما يبقى مالكها هو)
+            if (user.Role != Roles.Admin && !string.IsNullOrEmpty(user.BusinessId))
                 return BadRequest(new { Message = "User already has a business. One user can only have one business." });
 
             var business = new Domain_layer.Models.Business
@@ -126,10 +127,14 @@ namespace digital_employee.Controllers
 
             var created = await _businessService.CreateAsync(business);
 
-            // ربط المستخدم بالـ Business وتحديث role إلى Owner
-            user.BusinessId = created.Id;
-            user.Role = Roles.Owner;
-            await _userManager.UpdateAsync(user);
+            // ربط المستخدم بالـ Business وتحديث role إلى Owner (غير مطبق على الـ Admin،
+            // عشان مايفقدش صلاحيات النظام بمجرد ما ينشئ بيزنس جديد لحد تاني)
+            if (user.Role != Roles.Admin)
+            {
+                user.BusinessId = created.Id;
+                user.Role = Roles.Owner;
+                await _userManager.UpdateAsync(user);
+            }
 
             // Log business creation
             await _auditLogService.LogBusinessActionAsync(

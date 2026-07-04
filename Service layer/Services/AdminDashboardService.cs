@@ -9,11 +9,13 @@ namespace Service_layer.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAuditLogService _auditLogService;
+        private readonly IUserService _userService;
 
-        public AdminDashboardService(IUnitOfWork unitOfWork, IAuditLogService auditLogService)
+        public AdminDashboardService(IUnitOfWork unitOfWork, IAuditLogService auditLogService, IUserService userService)
         {
             _unitOfWork = unitOfWork;
             _auditLogService = auditLogService;
+            _userService = userService;
         }
 
         public async Task<AdminDashboardSummaryDTO> GetSummaryAsync()
@@ -25,6 +27,8 @@ namespace Service_layer.Services
             var feedbacks = (await _unitOfWork.Feedbacks.GetAllAsync()).ToList();
             var sentiments = (await _unitOfWork.Sentiments.GetAllAsync()).ToList();
             var auditLogs = (await _unitOfWork.AuditLogs.GetAllAsync()).ToList();
+            var users = (await _userService.GetAllAsync()).ToList();
+            var calls = (await _unitOfWork.CallSummaries.GetAllAsync()).ToList();
 
             var now = DateTime.UtcNow;
 
@@ -33,6 +37,26 @@ namespace Service_layer.Services
                 TotalBusinesses = businesses.Count,
                 ActiveBusinesses = businesses.Count(b => b.IsActive),
                 NewBusinessesLast30Days = businesses.Count(b => b.CreatedAt >= now.AddDays(-30)),
+                TotalUsers = users.Count,
+                TotalCalls = calls.Count,
+
+                CustomerSatisfactionRate = sentiments.Any()
+                    ? Math.Round(sentiments.Count(s => s.Label.Equals("Positive", StringComparison.OrdinalIgnoreCase)) / (double)sentiments.Count * 100, 1)
+                    : 0,
+                TopBusinessTypes = businesses
+                    .Where(b => !string.IsNullOrWhiteSpace(b.Type))
+                    .GroupBy(b => b.Type)
+                    .Select(g => new AdminCategoryCountDTO { Category = g.Key, Count = g.Count() })
+                    .OrderByDescending(x => x.Count)
+                    .Take(10)
+                    .ToList(),
+                TopCuisineTypes = businesses
+                    .Where(b => !string.IsNullOrWhiteSpace(b.CuisineType))
+                    .GroupBy(b => b.CuisineType!)
+                    .Select(g => new AdminCategoryCountDTO { Category = g.Key, Count = g.Count() })
+                    .OrderByDescending(x => x.Count)
+                    .Take(10)
+                    .ToList(),
 
                 TotalOrders = orders.Count,
                 TotalRevenue = orders

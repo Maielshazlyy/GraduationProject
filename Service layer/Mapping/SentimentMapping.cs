@@ -13,13 +13,17 @@ namespace Service_layer.Mapping
         {
             if (s == null) return null;
 
+            var customer = s.Message?.Interaction?.Customer;
+
             return new SentimentResponseDTO
             {
                 SentimentId = s.SentimentId,
                 SourceText = s.SourceText,
                 Label = s.Label,
                 Score = s.Score,
-                AnalyzedAt = s.AnalyzedAt
+                AnalyzedAt = s.AnalyzedAt,
+                CustomerId = customer?.CustomerId,
+                CustomerName = customer?.FullName
             };
         }
 

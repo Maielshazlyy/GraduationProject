@@ -71,13 +71,20 @@ namespace Service_layer.Services
 
             // PLACEHOLDER: Simple keyword-based sentiment detection
             // This will be replaced with AI-based analysis
-            var positiveKeywords = language == "ar" 
-                ? new[] { "ممتاز", "رائع", "شكرا", "حلو", "جميل", "مشكور", "تمام", "زوق", "عظيم" }
-                : new[] { "excellent", "great", "thanks", "good", "nice", "perfect", "amazing", "wonderful", "love", "happy" };
-            
-            var negativeKeywords = language == "ar"
-                ? new[] { "سيء", "مش عاجبني", "مشكلة", "غلط", "مش راضي", "زعلان", "غضبان", "مش عاجب", "مش حلو" }
-                : new[] { "bad", "terrible", "awful", "hate", "angry", "disappointed", "problem", "wrong", "poor", "worst" };
+            // Check both keyword sets regardless of the detected language: language detection
+            // upstream is unreliable (defaults to "ar"), and previously caused every message
+            // in the non-detected language to fall through as Neutral/0 regardless of content.
+            var positiveKeywords = new[]
+            {
+                "ممتاز", "رائع", "شكرا", "حلو", "جميل", "مشكور", "تمام", "زوق", "عظيم",
+                "excellent", "great", "thanks", "good", "nice", "perfect", "amazing", "wonderful", "love", "happy"
+            };
+
+            var negativeKeywords = new[]
+            {
+                "سيء", "مش عاجبني", "مشكلة", "غلط", "مش راضي", "زعلان", "غضبان", "مش عاجب", "مش حلو",
+                "bad", "terrible", "awful", "hate", "angry", "disappointed", "problem", "wrong", "poor", "worst"
+            };
 
             var positiveCount = positiveKeywords.Count(k => lowerText.Contains(k));
             var negativeCount = negativeKeywords.Count(k => lowerText.Contains(k));

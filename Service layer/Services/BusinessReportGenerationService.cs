@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Domain_layer.Interfaces;
 using Service_layer.DTOS.AiAnalysis;
+using Service_layer.DTOS.AiOwnerChat;
 using Service_layer.DTOS.BusinessReport;
 using Service_layer.Services_Interfaces;
 
@@ -15,15 +16,18 @@ namespace Service_layer.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IBusinessRepository _businessRepository;
         private readonly IAiReportService _aiReportService;
+        private readonly IAiOwnerChatService _aiOwnerChatService;
 
         public BusinessReportGenerationService(
             IUnitOfWork unitOfWork,
             IBusinessRepository businessRepository,
-            IAiReportService aiReportService)
+            IAiReportService aiReportService,
+            IAiOwnerChatService aiOwnerChatService)
         {
             _unitOfWork = unitOfWork;
             _businessRepository = businessRepository;
             _aiReportService = aiReportService;
+            _aiOwnerChatService = aiOwnerChatService;
         }
 
         public async Task<AiReportResponseDTO> GenerateReportAsync(string businessId, ReportGenerateRequestDTO request)
@@ -161,8 +165,28 @@ namespace Service_layer.Services
                 SampleSummaries  = sampleSummaries
             };
 
-            // 8 — Call AI and return
-            return await _aiReportService.GenerateReportAsync(payload);
+            // 8 — Call AI to generate the report
+            var report = await _aiReportService.GenerateReportAsync(payload);
+
+            // 9 — Push it to Owner Chat's report store so it can answer analytics questions
+            // grounded in this data. Never let a sync failure block the owner from seeing
+            // the report they just generated.
+            try
+            {
+                await _aiOwnerChatService.SyncReportAsync(new AiOwnerReportSyncRequestDTO
+                {
+                    BusinessId = businessId,
+                    BusinessName = business.Name,
+                    Period = payload.Period,
+                    Report = report
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OwnerChat] Report sync failed for {businessId}: {ex.Message}");
+            }
+
+            return report;
         }
     }
 }

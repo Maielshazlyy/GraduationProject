@@ -11,6 +11,7 @@ namespace Service_layer.Services_Interfaces
         Task<Subscription?> GetActiveSubscriptionAsync(string businessId);
         Task<Subscription> CreateAsync(SubscriptionCreateDTO dto);
         Task<Subscription?> RenewAsync(string id, SubscriptionRenewDTO dto);
+        Task<bool> SetActiveStateAsync(string id, bool isActive, string? adminUserId = null);
         Task<bool> DeleteAsync(string id);
     }
 }

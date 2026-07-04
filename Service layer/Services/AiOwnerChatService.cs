@@ -24,20 +24,12 @@ namespace Service_layer.Services
             return result ?? new AiOwnerChatResponseDTO { Reply = string.Empty, SessionId = request.SessionId };
         }
 
-        public async Task<AiOwnerReportResponseDTO> GetReportAsync()
+        public async Task<AiOwnerReportSyncResponseDTO> SyncReportAsync(AiOwnerReportSyncRequestDTO request)
         {
-            var response = await _httpClient.GetAsync("/api/v1/owner/report");
+            var response = await _httpClient.PostAsJsonAsync("/api/v1/owner/reports/sync", request);
             response.EnsureSuccessStatusCode();
-            var result = await response.Content.ReadFromJsonAsync<AiOwnerReportResponseDTO>();
-            return result ?? new AiOwnerReportResponseDTO();
-        }
-
-        public async Task<AiOwnerReloadResponseDTO> ReloadAsync()
-        {
-            var response = await _httpClient.PostAsync("/api/v1/owner/reload", null);
-            response.EnsureSuccessStatusCode();
-            var result = await response.Content.ReadFromJsonAsync<AiOwnerReloadResponseDTO>();
-            return result ?? new AiOwnerReloadResponseDTO { Status = "success", ReportsLoaded = 0, Message = "Reloaded." };
+            var result = await response.Content.ReadFromJsonAsync<AiOwnerReportSyncResponseDTO>();
+            return result ?? new AiOwnerReportSyncResponseDTO { Status = "ok" };
         }
     }
 }

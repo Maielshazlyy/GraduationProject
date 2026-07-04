@@ -41,6 +41,7 @@ namespace digital_employee.Controllers
             {
                 var request = new AiOwnerChatRequestDTO
                 {
+                    BusinessId = businessId,
                     SessionId = $"owner-{businessId}-{userId}",
                     Message = dto.Message
                 };
@@ -51,43 +52,6 @@ namespace digital_employee.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { Message = "Owner chat failed.", Error = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Get the AI-generated analytics report for this business.
-        /// </summary>
-        [HttpGet("report")]
-        [ProducesResponseType(typeof(AiOwnerReportResponseDTO), 200)]
-        public async Task<IActionResult> GetReport()
-        {
-            try
-            {
-                var result = await _aiOwnerChatService.GetReportAsync();
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "Failed to get report.", Error = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Trigger IRIS to reload its analytics data.
-        /// Call this after significant data changes.
-        /// </summary>
-        [HttpPost("reload")]
-        [ProducesResponseType(typeof(AiOwnerReloadResponseDTO), 200)]
-        public async Task<IActionResult> Reload()
-        {
-            try
-            {
-                var result = await _aiOwnerChatService.ReloadAsync();
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "Failed to reload analytics.", Error = ex.Message });
             }
         }
     }

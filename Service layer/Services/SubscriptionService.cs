@@ -11,15 +11,18 @@ namespace Service_layer.Services
         private readonly ISubscriptionRepository _subscriptionRepository;
         private readonly IBusinessRepository _businessRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAuditLogService _auditLogService;
 
         public SubscriptionService(
             ISubscriptionRepository subscriptionRepository,
             IBusinessRepository businessRepository,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IAuditLogService auditLogService)
         {
             _subscriptionRepository = subscriptionRepository;
             _businessRepository = businessRepository;
             _unitOfWork = unitOfWork;
+            _auditLogService = auditLogService;
         }
 
         public async Task<IEnumerable<Subscription>> GetAllAsync()
@@ -70,12 +73,34 @@ namespace Service_layer.Services
             var subscription = await _subscriptionRepository.GetByIdAsync(id);
             if (subscription == null) return null;
 
-            subscription.EndDate = dto.NewEndDate;
+            subscription.EndDate = dto.NewEndDate ?? subscription.EndDate;
+            if (!string.IsNullOrWhiteSpace(dto.NewPlanName))
+                subscription.PlanName = dto.NewPlanName;
+            if (dto.NewPrice.HasValue)
+                subscription.Price = dto.NewPrice.Value;
             subscription.IsActive = true;
 
             _subscriptionRepository.Update(subscription);
             await _unitOfWork.CompleteAsync();
             return subscription;
+        }
+
+        public async Task<bool> SetActiveStateAsync(string id, bool isActive, string? adminUserId = null)
+        {
+            var subscription = await _subscriptionRepository.GetByIdAsync(id);
+            if (subscription == null) return false;
+
+            subscription.IsActive = isActive;
+
+            _subscriptionRepository.Update(subscription);
+            await _unitOfWork.CompleteAsync();
+
+            await _auditLogService.LogBusinessActionAsync(
+                businessId: subscription.BusinessId,
+                action: isActive ? "AdminActivateSubscription" : "AdminDeactivateSubscription",
+                userId: adminUserId);
+
+            return true;
         }
 
         public async Task<bool> DeleteAsync(string id)
