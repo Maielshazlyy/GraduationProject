@@ -2927,6 +2927,26 @@
           "response": []
         },
         {
+          "name": "Get Feedback by Business",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Feedback/business/{{businessId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Feedback",
+                "business",
+                "{{businessId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Get Feedback by ID",
           "request": {
             "method": "GET",
@@ -4362,7 +4382,7 @@
           }
         },
         {
-          "name": "Get AI Analytics Report",
+          "name": "Clear Chat History",
           "request": {
             "auth": {
               "type": "bearer",
@@ -4374,47 +4394,20 @@
                 }
               ]
             },
-            "method": "GET",
+            "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/OwnerChat/report",
+              "raw": "{{baseUrl}}/api/OwnerChat/history",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "OwnerChat",
-                "report"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Reload Analytics Data",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
+                "history"
               ]
             },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/OwnerChat/reload",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "OwnerChat",
-                "reload"
-              ]
-            }
+            "description": "Deletes all saved Owner Chat messages (question + reply) for the current business. Returns 204 No Content."
           }
         }
       ]
