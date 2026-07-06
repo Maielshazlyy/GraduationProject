@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Domain_layer.Interfaces;
@@ -78,6 +80,28 @@ namespace digital_employee.Controllers
             {
                 return StatusCode(500, new { Message = "Owner chat failed.", Error = ex.Message });
             }
+        }
+
+        /// <summary>
+        /// Get saved Owner Chat history for the current business, oldest first, so the
+        /// frontend can repopulate the conversation when the owner reopens the page.
+        /// </summary>
+        [HttpGet("history")]
+        [ProducesResponseType(typeof(List<OwnerChatHistoryItemDTO>), 200)]
+        public async Task<IActionResult> GetHistory()
+        {
+            var businessId = User.FindFirstValue("BusinessId") ?? "unknown";
+
+            var messages = await _unitOfWork.OwnerChatMessages.GetByBusinessIdAsync(businessId);
+            var result = messages.Select(m => new OwnerChatHistoryItemDTO
+            {
+                Message = m.Message,
+                Reply = m.Reply,
+                Confidence = m.Confidence,
+                SentAt = m.SentAt
+            }).ToList();
+
+            return Ok(result);
         }
 
         /// <summary>
