@@ -35,6 +35,7 @@ namespace DAL.UnitOfWork
         public ISentimentRepository Sentiments { get; }
         public IInteractionAnalysisRepository InteractionAnalyses { get; }
         public ICallSummaryRepository CallSummaries { get; }
+        public IOwnerChatMessageRepository OwnerChatMessages { get; }
 
         public UnitOfWork(
             AppDbContext context,
@@ -59,7 +60,8 @@ namespace DAL.UnitOfWork
             IAuditLogRepository auditLogRepository,
             ISentimentRepository sentimentRepository,
             IInteractionAnalysisRepository interactionAnalysisRepository,
-            ICallSummaryRepository callSummaryRepository)
+            ICallSummaryRepository callSummaryRepository,
+            IOwnerChatMessageRepository ownerChatMessageRepository)
         {
             _context = context;
             Businesses = businessRepository;
@@ -84,6 +86,7 @@ namespace DAL.UnitOfWork
             Sentiments = sentimentRepository;
             InteractionAnalyses = interactionAnalysisRepository;
             CallSummaries = callSummaryRepository;
+            OwnerChatMessages = ownerChatMessageRepository;
         }
         
         public async Task<int> CompleteAsync()

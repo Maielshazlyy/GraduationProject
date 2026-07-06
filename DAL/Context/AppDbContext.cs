@@ -38,6 +38,7 @@ namespace DAL.Context
         public DbSet<Integration> Integrations { get; set; }
         public DbSet<InteractionAnalysis> InteractionAnalyses { get; set; }
         public DbSet<CallSummary> CallSummaries { get; set; }
+        public DbSet<OwnerChatMessage> OwnerChatMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -208,6 +209,20 @@ namespace DAL.Context
                 .HasOne(m => m.User)
                 .WithMany(u => u.Messages)
                 .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<OwnerChatMessage>().HasKey(o => o.OwnerChatMessageId);
+
+            modelBuilder.Entity<OwnerChatMessage>()
+                .HasOne(o => o.Business)
+                .WithMany()
+                .HasForeignKey(o => o.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OwnerChatMessage>()
+                .HasOne(o => o.User)
+                .WithMany()
+                .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             // ---------------------------

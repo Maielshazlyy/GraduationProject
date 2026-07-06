@@ -7,6 +7,7 @@ namespace Service_layer.Services_Interfaces
     {
         Task<IEnumerable<Feedback>> GetAllAsync();
         Task<IEnumerable<Feedback>> GetByCustomerIdAsync(string customerId);
+        Task<IEnumerable<Feedback>> GetByBusinessIdAsync(string businessId);
         Task<Feedback?> GetByIdAsync(string id);
         Task<Feedback> CreateAsync(FeedbackCreateDTO dto);
         Task<Feedback?> UpdateAsync(string id, FeedbackUpdateDTO dto);

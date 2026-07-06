@@ -38,6 +38,11 @@ namespace Service_layer.Services
             return await _feedbackRepository.GetByCustomerIdAsync(customerId);
         }
 
+        public async Task<IEnumerable<Feedback>> GetByBusinessIdAsync(string businessId)
+        {
+            return await _feedbackRepository.GetByBusinessIdAsync(businessId);
+        }
+
         public async Task<Feedback?> GetByIdAsync(string id)
         {
             return await _feedbackRepository.GetByIdAsync(id);

@@ -1,6 +1,8 @@
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Domain_layer.Interfaces;
+using Domain_layer.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service_layer.DTOS.AiOwnerChat;
@@ -18,14 +20,17 @@ namespace digital_employee.Controllers
     public class OwnerChatController : ControllerBase
     {
         private readonly IAiOwnerChatService _aiOwnerChatService;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public OwnerChatController(IAiOwnerChatService aiOwnerChatService)
+        public OwnerChatController(IAiOwnerChatService aiOwnerChatService, IUnitOfWork unitOfWork)
         {
             _aiOwnerChatService = aiOwnerChatService;
+            _unitOfWork = unitOfWork;
         }
 
         /// <summary>
-        /// Send an analytics question to the AI owner assistant.
+        /// Send an analytics question to the AI owner assistant. The exchange (question +
+        /// reply) is persisted so the owner's chat history survives across sessions.
         /// </summary>
         [HttpPost("message")]
         [ProducesResponseType(typeof(AiOwnerChatResponseDTO), 200)]
@@ -47,12 +52,44 @@ namespace digital_employee.Controllers
                 };
 
                 var result = await _aiOwnerChatService.SendMessageAsync(request);
+
+                // Best-effort: a history-save failure must never block the reply from reaching
+                // the owner.
+                try
+                {
+                    await _unitOfWork.OwnerChatMessages.AddAsync(new OwnerChatMessage
+                    {
+                        BusinessId = businessId,
+                        UserId = userId,
+                        Message = dto.Message,
+                        Reply = result.Reply,
+                        Confidence = result.Confidence
+                    });
+                    await _unitOfWork.CompleteAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[OwnerChat] Failed to save chat history: {ex.Message}");
+                }
+
                 return Ok(result);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { Message = "Owner chat failed.", Error = ex.Message });
             }
+        }
+
+        /// <summary>
+        /// Clear all saved Owner Chat history for the current business.
+        /// </summary>
+        [HttpDelete("history")]
+        public async Task<IActionResult> ClearHistory()
+        {
+            var businessId = User.FindFirstValue("BusinessId") ?? "unknown";
+
+            await _unitOfWork.OwnerChatMessages.DeleteAllByBusinessIdAsync(businessId);
+            return NoContent();
         }
     }
 

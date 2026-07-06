@@ -30,6 +30,7 @@ namespace Domain_layer.Interfaces
         ISentimentRepository Sentiments { get; }
         IInteractionAnalysisRepository InteractionAnalyses { get; }
         ICallSummaryRepository CallSummaries { get; }
+        IOwnerChatMessageRepository OwnerChatMessages { get; }
 
         Task<int> CompleteAsync();
     }

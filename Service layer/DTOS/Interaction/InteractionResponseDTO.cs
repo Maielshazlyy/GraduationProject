@@ -22,6 +22,7 @@ namespace Service_layer.DTOS.Interaction
 
         public string CustomerId { get; set; }
         public string CustomerName { get; set; }
+        public string? RelatedTicketId { get; set; }
         public int MessageCount{ get; set; }
         
         public string? HandledByAgentId { get; set; }

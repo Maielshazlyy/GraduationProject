@@ -26,6 +26,7 @@ namespace Service_layer.Mapping
 
                 CustomerId = i.CustomerId,
                 CustomerName = i.Customer?.FullName ?? "",
+                RelatedTicketId = i.RelatedTicketId,
 
                 HandledByAgentId = i.HandledByUserId,
                 HandledByAgentName = i.HandledByUser?.FullName ?? "",

@@ -36,6 +36,15 @@ namespace digital_employee.Controllers
             return Ok(feedbacks.ToDtoList());
         }
 
+        // GET: api/Feedback/business/{businessId}
+        [HttpGet("business/{businessId}")]
+        [Authorize(Policy = "AgentOrOwnerOrAdmin")]
+        public async Task<IActionResult> GetByBusinessId(string businessId)
+        {
+            var feedbacks = await _feedbackService.GetByBusinessIdAsync(businessId);
+            return Ok(feedbacks.ToDtoList());
+        }
+
         // GET: api/Feedback/{id}
         [HttpGet("{id}")]
         [Authorize(Policy = "AgentOrOwnerOrAdmin")]
