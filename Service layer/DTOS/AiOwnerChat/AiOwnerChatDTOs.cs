@@ -52,6 +52,15 @@ namespace Service_layer.DTOS.AiOwnerChat
 
         [JsonPropertyName("report")]
         public AiReportResponseDTO Report { get; set; } = new();
+
+        /// <summary>
+        /// Raw, ground-truth data the report narrative was generated from (real order/ticket
+        /// counts, full menu catalog, FAQ list, etc). The AI's own "report" above is a narrative
+        /// summary and may omit specifics (e.g. individual menu item prices) -- Owner Chat needs
+        /// this raw structured data too so it can answer precise questions accurately.
+        /// </summary>
+        [JsonPropertyName("metrics")]
+        public Service_layer.DTOS.BusinessReport.ReportMetricsDTO Metrics { get; set; } = new();
     }
 
     public class AiOwnerReportSyncResponseDTO

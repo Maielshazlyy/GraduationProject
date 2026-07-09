@@ -277,6 +277,9 @@ namespace digital_employee
             builder.Services.AddHttpClient("VoiceKnowledgeSync", client =>
             {
                 client.BaseAddress = new Uri(builder.Configuration["AiVoiceApi:BaseUrl"] ?? "http://localhost:8080");
+                // Voice AI often lives on a private LAN IP that's only reachable when on the
+                // same network -- fail fast instead of hanging on the default 100s timeout.
+                client.Timeout = TimeSpan.FromSeconds(5);
             });
 
             builder.Services.AddHttpClient<IAiAnalysisService, AiAnalysisService>(client =>

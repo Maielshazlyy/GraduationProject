@@ -12,9 +12,8 @@ namespace Service_layer.Validators.Feedback
     {
         public FeedbackCreateDTOValidator()
         {
-            RuleFor(x => x.TicketId)
-                .NotEmpty()
-                .WithMessage("TicketId is required");
+            // TicketId is optional -- feedback can also be tied to just an Interaction
+            // (e.g. right after a chat/call ends, before any support ticket exists).
 
             RuleFor(x => x.CustomerId)
                 .NotEmpty()

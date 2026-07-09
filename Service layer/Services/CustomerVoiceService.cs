@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Domain_layer.Interfaces;
@@ -15,6 +16,7 @@ namespace Service_layer.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAiVoiceJoinService _aiVoiceJoin;
         private readonly IAuditLogService? _auditLogService;
+        private readonly CustomerInteractionBusinessLogic _businessLogic;
         private readonly string _meetingUrl;
 
         public CustomerVoiceService(
@@ -26,6 +28,7 @@ namespace Service_layer.Services
             _unitOfWork      = unitOfWork;
             _aiVoiceJoin     = aiVoiceJoin;
             _auditLogService = auditLogService;
+            _businessLogic   = new CustomerInteractionBusinessLogic(unitOfWork, auditLogService);
             _meetingUrl      = configuration["AiVoiceApi:MeetingUrl"] ?? string.Empty;
         }
 
@@ -136,6 +139,21 @@ namespace Service_layer.Services
             };
 
             await _unitOfWork.CallSummaries.AddAsync(summary);
+
+            // Turn any "OrderCreated" action the AI reported into a real Order record --
+            // previously this JSON was only archived on the CallSummary and never became
+            // an actual order (invisible to Dashboard, customer order counts, Owner Chat, etc).
+            if (interaction != null)
+            {
+                var orderAction = analysis.ActionsPerformed?
+                    .FirstOrDefault(a => string.Equals(a.Type, "OrderCreated", StringComparison.OrdinalIgnoreCase)
+                                       || string.Equals(a.Type, "CreateOrder", StringComparison.OrdinalIgnoreCase));
+
+                if (orderAction?.Details?.Items?.Any() == true)
+                {
+                    await _businessLogic.HandleVoiceOrderAsync(interaction, orderAction.Details.Items);
+                }
+            }
 
             // Close the Interaction
             if (interaction != null)

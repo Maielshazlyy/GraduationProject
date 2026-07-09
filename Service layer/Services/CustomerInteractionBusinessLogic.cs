@@ -124,6 +124,98 @@ namespace Service_layer.Services
         }
 
         /// <summary>
+        /// Creates an order from a completed voice call's "OrderCreated" action. The Voice AI
+        /// only reports item names (no quantity/price/menuItemId per item) -- repeated names in
+        /// the list stand in for quantity (e.g. ["Pepsi","Pepsi"] = 2x Pepsi). Unlike text chat
+        /// (which echoes the exact synced menu name), the voice transcript tends to say only one
+        /// language side of our "English | Arabic" menu names (e.g. "بيبسي" for "Pepsi | بيبسي"),
+        /// so each menu name is split on "|" and matched per-side, with a substring fallback for
+        /// partial mentions. Prices always come from the menu DB, never from the AI.
+        /// </summary>
+        public async Task<Order?> HandleVoiceOrderAsync(Interaction interaction, List<string> itemNames)
+        {
+            var menuItems = (await _unitOfWork.MenuItems
+                    .GetByBusinessIdAsync(interaction.BusinessId))
+                .ToList();
+
+            if (!menuItems.Any() || itemNames == null || !itemNames.Any())
+                return null;
+
+            var quantityByName = itemNames
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .GroupBy(n => n.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
+
+            var orderItems = new List<OrderItem>();
+            decimal total = 0;
+
+            foreach (var (name, quantity) in quantityByName)
+            {
+                var menuItem = MatchVoiceItemName(menuItems, name);
+
+                if (menuItem == null) continue; // name not found in menu -> skip
+
+                total += menuItem.Price * quantity;
+
+                orderItems.Add(new OrderItem
+                {
+                    OrderItemId = Guid.NewGuid().ToString(),
+                    MenuItemId  = menuItem.MenuItemId,
+                    Quantity    = quantity,
+                    UnitPrice   = menuItem.Price
+                });
+            }
+
+            if (!orderItems.Any())
+                return null;
+
+            var order = new Order
+            {
+                OrderId    = Guid.NewGuid().ToString(),
+                BusinessId = interaction.BusinessId,
+                CustomerId = interaction.CustomerId,
+                CreatedAt  = DateTime.UtcNow,
+                Status     = OrderStatus.Pending,
+                TotalPrice = total,
+                OrderItems = orderItems
+            };
+
+            await _unitOfWork.Orders.AddAsync(order);
+
+            if (_auditLogService != null)
+            {
+                await _auditLogService.LogOrderActionAsync(
+                    businessId: interaction.BusinessId,
+                    action:     "CreateOrderFromVoiceCall",
+                    orderId:    order.OrderId,
+                    userId:     null);
+            }
+
+            return order;
+        }
+
+        /// <summary>
+        /// Matches a voice-transcribed item name against the menu. Menu names are stored as
+        /// "English | Arabic" -- tries each side for an exact match first, then falls back to
+        /// substring containment either direction (handles extra words like "مشروب بيبسي" for
+        /// "بيبسي", or a shortened "Smash Burger" for "Classic Smash Burger").
+        /// </summary>
+        private static MenuItem? MatchVoiceItemName(List<MenuItem> menuItems, string spokenName)
+        {
+            var sides = menuItems
+                .Select(mi => (Item: mi, Sides: mi.Name.Split('|').Select(p => p.Trim()).Where(p => p.Length > 0).ToList()))
+                .ToList();
+
+            var exact = sides.FirstOrDefault(x => x.Sides.Any(s => s.Equals(spokenName, StringComparison.OrdinalIgnoreCase)));
+            if (exact.Item != null) return exact.Item;
+
+            var contains = sides.FirstOrDefault(x => x.Sides.Any(s =>
+                s.Contains(spokenName, StringComparison.OrdinalIgnoreCase) ||
+                spokenName.Contains(s, StringComparison.OrdinalIgnoreCase)));
+            return contains.Item;
+        }
+
+        /// <summary>
         /// Legacy overload — kept for Voice path and tests that still pass DetectedIntentResultDTO.
         /// Falls back to picking the first available menu item (to be improved when Voice AI is updated).
         /// </summary>

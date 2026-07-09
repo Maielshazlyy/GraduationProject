@@ -137,6 +137,80 @@ namespace Service_layer.Services
             var sentDist = list.GroupBy(a => a.SentimentLabel)
                                .ToDictionary(g => g.Key, g => g.Count());
 
+            // 6b — Real, ground-truth operational counts (orders + tickets), so Owner
+            // Chat can answer live-ops questions with actual numbers, not AI estimates.
+            var orders = (await _unitOfWork.Orders.GetByBusinessIdAsync(businessId)).ToList();
+            var todayUtc = DateTime.UtcNow.Date;
+            var weekAgoUtc = DateTime.UtcNow.AddDays(-7);
+            var ordersToday = orders.Count(o => o.CreatedAt.Date == todayUtc);
+            var ordersInPeriod = orders.Count(o => o.CreatedAt >= request.From && o.CreatedAt <= request.To);
+            var ordersThisWeek = orders.Count(o => o.CreatedAt >= weekAgoUtc);
+
+            var tickets = (await _unitOfWork.Tickets.GetByBusinessIdAsync(businessId)).ToList();
+            var openTickets = tickets.Where(t => !t.IsEnded).ToList();
+            var escalatedTickets = tickets.Where(t => t.Status.Equals("Escalated", StringComparison.OrdinalIgnoreCase)).ToList();
+            var ticketsThisWeek = tickets.Count(t => t.CreatedAt >= weekAgoUtc);
+            var recentOpenTickets = openTickets
+                .OrderByDescending(t => t.CreatedAt)
+                .Take(5)
+                .Select(t => new ReportTicketSummaryDTO
+                {
+                    Subject   = t.Subject,
+                    Status    = t.Status,
+                    Priority  = t.PriorityLevel,
+                    CreatedAt = t.CreatedAt
+                })
+                .ToList();
+            var mostCommonTicketTypes = tickets
+                .Where(t => !string.IsNullOrEmpty(t.TicketType))
+                .GroupBy(t => t.TicketType!, StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(g => g.Count())
+                .Take(5)
+                .Select(g => new ReportIntentCountDTO { Name = g.Key, Count = g.Count() })
+                .ToList();
+
+            // 6c — Menu awareness: top-selling items in this period (real Order/OrderItem data).
+            var menuItems = (await _unitOfWork.MenuItems.GetByBusinessIdAsync(businessId)).ToList();
+            var menuItemNamesById = menuItems.ToDictionary(m => m.MenuItemId, m => m.Name);
+            var menuItemsList = menuItems
+                .Select(m => new ReportMenuItemDTO
+                {
+                    Name        = m.Name,
+                    Description = m.Description,
+                    Price       = m.Price,
+                    Category    = m.MenuCategory?.Name,
+                    IsAvailable = m.IsAvailable
+                })
+                .ToList();
+
+            var ordersInPeriodList = orders.Where(o => o.CreatedAt >= request.From && o.CreatedAt <= request.To).ToList();
+            var itemTallies = new Dictionary<string, (int Qty, decimal Revenue)>();
+            foreach (var order in ordersInPeriodList)
+            {
+                var orderItems = await _unitOfWork.OrderItems.GetByOrderIdAsync(order.OrderId);
+                foreach (var oi in orderItems)
+                {
+                    var name = menuItemNamesById.GetValueOrDefault(oi.MenuItemId, "Unknown Item");
+                    var (qty, rev) = itemTallies.GetValueOrDefault(name, (0, 0m));
+                    itemTallies[name] = (qty + oi.Quantity, rev + oi.UnitPrice * oi.Quantity);
+                }
+            }
+            var topOrderedItems = itemTallies
+                .OrderByDescending(kv => kv.Value.Qty)
+                .Take(5)
+                .Select(kv => new ReportTopItemDTO { Name = kv.Key, QuantitySold = kv.Value.Qty, Revenue = kv.Value.Revenue })
+                .ToList();
+
+            // 6d — FAQ awareness: let Owner Chat recite configured FAQs if asked.
+            var faqs = (await _unitOfWork.KnowledgeBases.GetByBusinessIdAsync(businessId))
+                .Where(k => k.IsActive)
+                .OrderBy(k => k.DisplayOrder)
+                .ToList();
+            var faqList = faqs
+                .Take(15)
+                .Select(k => new ReportFaqDTO { Question = k.Question, Answer = k.Answer })
+                .ToList();
+
             // 7 — Build AI payload
             var payload = new AiReportRequestDTO
             {
@@ -156,7 +230,20 @@ namespace Service_layer.Services
                     },
                     TotalComplaints          = list.Count(a => a.MainIntent.Equals("Complaint", StringComparison.OrdinalIgnoreCase)),
                     TotalHumanAgentRequests  = allIntents.GetValueOrDefault("RequestHumanAgent", 0),
-                    TotalOrdersDetected      = allIntents.GetValueOrDefault("CreateOrder", 0)
+                    TotalOrdersDetected      = allIntents.GetValueOrDefault("CreateOrder", 0),
+                    OrdersToday              = ordersToday,
+                    OrdersInPeriod           = ordersInPeriod,
+                    OrdersThisWeek           = ordersThisWeek,
+                    OpenTicketsCount         = openTickets.Count,
+                    EscalatedTicketsCount    = escalatedTickets.Count,
+                    TicketsThisWeek          = ticketsThisWeek,
+                    RecentOpenTickets        = recentOpenTickets,
+                    MostCommonTicketTypes    = mostCommonTicketTypes,
+                    TopOrderedItems          = topOrderedItems,
+                    MenuItemsCount           = menuItems.Count,
+                    MenuItemsList            = menuItemsList,
+                    FaqCount                 = faqs.Count,
+                    FaqList                  = faqList
                 },
                 TopIntents       = topIntents,
                 TopTopics        = topTopics,
@@ -178,7 +265,8 @@ namespace Service_layer.Services
                     BusinessId = businessId,
                     BusinessName = business.Name,
                     Period = payload.Period,
-                    Report = report
+                    Report = report,
+                    Metrics = payload.Metrics
                 });
             }
             catch (Exception ex)

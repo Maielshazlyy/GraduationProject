@@ -61,6 +61,13 @@ namespace Service_layer.Services
                     throw new ArgumentException($"Ticket with id '{dto.TicketId}' not found.");
             }
 
+            if (!string.IsNullOrEmpty(dto.InteractionId))
+            {
+                var interaction = await _unitOfWork.Interactions.GetByIdAsync(dto.InteractionId);
+                if (interaction == null)
+                    throw new ArgumentException($"Interaction with id '{dto.InteractionId}' not found.");
+            }
+
             if (dto.Rating < 1 || dto.Rating > 5)
                 throw new ArgumentException("Rating must be between 1 and 5.");
 
@@ -69,6 +76,7 @@ namespace Service_layer.Services
                 FeedbackId = Guid.NewGuid().ToString(),
                 CustomerId = dto.CustomerId,
                 TicketId = string.IsNullOrEmpty(dto.TicketId) ? null : dto.TicketId,
+                InteractionId = string.IsNullOrEmpty(dto.InteractionId) ? null : dto.InteractionId,
                 Rating = dto.Rating,
                 Comment = dto.Comment,
                 CreatedAt = DateTime.UtcNow

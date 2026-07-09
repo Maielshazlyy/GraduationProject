@@ -16,7 +16,11 @@ namespace DAL.Repositories
         
         public async Task<IEnumerable<Customer>> GetByBusinessIdAsync(string businessId)
         {
-            return await FindAsync(c => c.BusinessId == businessId);
+            return await _context.Customers
+                .Include(c => c.Orders)
+                .Include(c => c.Tickets)
+                .Where(c => c.BusinessId == businessId)
+                .ToListAsync();
         }
         
         public async Task<Customer?> GetByEmailAsync(string email)

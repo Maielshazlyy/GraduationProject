@@ -17,12 +17,22 @@ namespace DAL.Repositories
         
         public async Task<IEnumerable<Order>> GetByBusinessIdAsync(string businessId)
         {
-            return await FindAsync(o => o.BusinessId == businessId);
+            return await _context.Orders
+                .Include(o => o.OrderItems).ThenInclude(oi => oi.MenuItem)
+                .Include(o => o.Customer)
+                .Include(o => o.Business)
+                .Where(o => o.BusinessId == businessId)
+                .ToListAsync();
         }
-        
+
         public async Task<IEnumerable<Order>> GetByCustomerIdAsync(string customerId)
         {
-            return await FindAsync(o => o.CustomerId == customerId);
+            return await _context.Orders
+                .Include(o => o.OrderItems).ThenInclude(oi => oi.MenuItem)
+                .Include(o => o.Customer)
+                .Include(o => o.Business)
+                .Where(o => o.CustomerId == customerId)
+                .ToListAsync();
         }
         
         public async Task<IEnumerable<Order>> GetByStatusAsync(OrderStatus status)
