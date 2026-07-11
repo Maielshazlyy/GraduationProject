@@ -12,6 +12,12 @@
       "runtimeExecutable": "cmd",
       "runtimeArgs": ["/c", "cd /d C:\\Users\\Shazly\\source\\repos\\digital-employee-frontend-teammate && npm run dev -- --port 5175"],
       "port": 5175
+    },
+    {
+      "name": "scratchpad-static",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d C:\\Users\\Shazly\\AppData\\Local\\Temp\\claude\\D--Users-Shazly-Desktop-assignments-grad-project\\f33b1b3d-5fa7-46c1-8f89-791cae5520b0\\scratchpad && python -m http.server 5199"],
+      "port": 5199
     }
   ]
 }

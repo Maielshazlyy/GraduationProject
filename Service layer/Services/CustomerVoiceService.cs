@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Domain_layer.Interfaces;
 using Domain_layer.Models;
 using Microsoft.Extensions.Configuration;
+using Service_layer.DTOS.Chat;
+using Service_layer.DTOS.Notification;
 using Service_layer.DTOS.Voice;
 using Service_layer.Services_Interfaces;
 
@@ -16,6 +18,7 @@ namespace Service_layer.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAiVoiceJoinService _aiVoiceJoin;
         private readonly IAuditLogService? _auditLogService;
+        private readonly INotificationService? _notificationService;
         private readonly CustomerInteractionBusinessLogic _businessLogic;
         private readonly string _meetingUrl;
 
@@ -23,11 +26,13 @@ namespace Service_layer.Services
             IUnitOfWork unitOfWork,
             IAiVoiceJoinService aiVoiceJoin,
             IConfiguration configuration,
-            IAuditLogService? auditLogService = null)
+            IAuditLogService? auditLogService = null,
+            INotificationService? notificationService = null)
         {
             _unitOfWork      = unitOfWork;
             _aiVoiceJoin     = aiVoiceJoin;
             _auditLogService = auditLogService;
+            _notificationService = notificationService;
             _businessLogic   = new CustomerInteractionBusinessLogic(unitOfWork, auditLogService);
             _meetingUrl      = configuration["AiVoiceApi:MeetingUrl"] ?? string.Empty;
         }
@@ -152,6 +157,47 @@ namespace Service_layer.Services
                 if (orderAction?.Details?.Items?.Any() == true)
                 {
                     await _businessLogic.HandleVoiceOrderAsync(interaction, orderAction.Details.Items);
+                }
+            }
+
+            // Turn an AI-flagged escalation into a real Ticket — previously this only
+            // flipped the Interaction's status to "Escalated" and never created a Ticket,
+            // so escalated calls never showed up anywhere in the Tickets list.
+            string? ticketId = null;
+            if (interaction != null && analysis.EscalationRequired)
+            {
+                var intentResult = new DetectedIntentResultDTO
+                {
+                    Intent             = "RequestHumanAgent",
+                    RequiresEscalation = true,
+                    EscalationReason   = analysis.EscalationReason
+                };
+
+                var ticket = await _businessLogic.HandleTicketAsync(
+                    interaction, intentResult,
+                    aiTicketDetails: null,
+                    isEscalation: true);
+
+                ticketId = ticket.TicketId;
+                interaction.InteractionType = "Ticket";
+                interaction.RelatedTicketId = ticketId;
+
+                if (_notificationService != null)
+                {
+                    try
+                    {
+                        await _notificationService.CreateAsync(new NotificationCreateDTO
+                        {
+                            Title = "Customer needs a human agent",
+                            Message = $"Ticket #{ticket.TicketId.Substring(0, 8)} — {ticket.Subject}",
+                            BusinessId = interaction.BusinessId,
+                            UserId = null
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[CustomerVoiceService] Escalation notification failed: {ex.Message}");
+                    }
                 }
             }
 
