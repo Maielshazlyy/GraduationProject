@@ -63,6 +63,9 @@ namespace DAL.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<bool>("AcceptsReservations")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Address")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -71,24 +74,186 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("City")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CoverImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("CuisineType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FacebookUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("HasDelivery")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasOutdoorSeating")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasParking")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasTakeout")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasWiFi")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("InstagramUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentMethods")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PriceRange")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Type")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Website")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Businesses");
+                });
+
+            modelBuilder.Entity("Domain_layer.Models.CallSummary", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ActionsPerformedJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("AnalyzedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AudioInfoJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AudioUrlsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BusinessId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CallId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("DurationSeconds")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EscalationReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EscalationRequired")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("FullTranscript")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IntentsDetectedJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InteractionId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("KeyMomentsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MainTopicsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("MessagesCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MessagesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("QueuedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SentimentLabel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("SentimentScore")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SummaryAr")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("InteractionId");
+
+                    b.ToTable("CallSummaries");
                 });
 
             modelBuilder.Entity("Domain_layer.Models.Customer", b =>
@@ -138,8 +303,14 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("InteractionId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<int>("Rating")
                         .HasColumnType("int");
+
+                    b.Property<double?>("SentimentScore")
+                        .HasColumnType("float");
 
                     b.Property<string>("TicketId")
                         .HasColumnType("nvarchar(450)");
@@ -147,6 +318,8 @@ namespace DAL.Migrations
                     b.HasKey("FeedbackId");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("InteractionId");
 
                     b.HasIndex("TicketId");
 
@@ -196,6 +369,9 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("CallSessionId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Channel")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -210,8 +386,17 @@ namespace DAL.Migrations
                     b.Property<string>("HandledByUserId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("InteractionType")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool?>("IsEnded")
                         .HasColumnType("bit");
+
+                    b.Property<string>("RelatedOrderId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RelatedTicketId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("datetime2");
@@ -231,6 +416,58 @@ namespace DAL.Migrations
                     b.ToTable("Interactions");
                 });
 
+            modelBuilder.Entity("Domain_layer.Models.InteractionAnalysis", b =>
+                {
+                    b.Property<string>("InteractionAnalysisId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("AnalyzedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("BusinessId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("IntentsDetectedJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InteractionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("KeyMomentsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MainIntent")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MainTopicsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SentimentLabel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("SentimentScore")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Summary")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SummaryAr")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("InteractionAnalysisId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("InteractionId")
+                        .IsUnique();
+
+                    b.ToTable("InteractionAnalyses");
+                });
+
             modelBuilder.Entity("Domain_layer.Models.KnowledgeBase", b =>
                 {
                     b.Property<string>("KnowledgeBaseId")
@@ -247,6 +484,15 @@ namespace DAL.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsFAQ")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Question")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -258,6 +504,38 @@ namespace DAL.Migrations
                     b.ToTable("KnowledgeBases");
                 });
 
+            modelBuilder.Entity("Domain_layer.Models.MenuCategory", b =>
+                {
+                    b.Property<string>("MenuCategoryId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("BusinessId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("MenuCategoryId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.ToTable("MenuCategories");
+                });
+
             modelBuilder.Entity("Domain_layer.Models.MenuItem", b =>
                 {
                     b.Property<string>("MenuItemId")
@@ -267,9 +545,8 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -277,6 +554,9 @@ namespace DAL.Migrations
 
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
+
+                    b.Property<string>("MenuCategoryId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -290,6 +570,8 @@ namespace DAL.Migrations
 
                     b.HasIndex("BusinessId");
 
+                    b.HasIndex("MenuCategoryId");
+
                     b.ToTable("MenuItems");
                 });
 
@@ -298,8 +580,20 @@ namespace DAL.Migrations
                     b.Property<string>("MessageId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("AiMetadataJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AudioPath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("ConfidenceScore")
+                        .HasColumnType("float");
+
                     b.Property<string>("Content")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Intent")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("InteractionId")
@@ -421,6 +715,41 @@ namespace DAL.Migrations
                     b.ToTable("OrderItems");
                 });
 
+            modelBuilder.Entity("Domain_layer.Models.OwnerChatMessage", b =>
+                {
+                    b.Property<string>("OwnerChatMessageId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("BusinessId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Confidence")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reply")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("OwnerChatMessageId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("OwnerChatMessages");
+                });
+
             modelBuilder.Entity("Domain_layer.Models.PaymentTransaction", b =>
                 {
                     b.Property<string>("Id")
@@ -493,6 +822,24 @@ namespace DAL.Migrations
                     b.Property<string>("SettingId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("AgentVoice")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AgentVoiceLanguage")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("AgentVoicePitch")
+                        .HasColumnType("float");
+
+                    b.Property<string>("AgentVoiceProvider")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("AgentVoiceSpeed")
+                        .HasColumnType("float");
+
                     b.Property<bool>("AutoAssignTickets")
                         .HasColumnType("bit");
 
@@ -509,6 +856,12 @@ namespace DAL.Migrations
 
                     b.Property<string>("ChatbotWelcomeMessage")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CustomGreetingTemplate")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CustomSystemPrompt")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("EmailNotifications")
@@ -598,8 +951,26 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<double?>("EscalationConfidence")
+                        .HasColumnType("float");
+
+                    b.Property<string>("EscalationReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InteractionId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsEnded")
                         .HasColumnType("bit");
+
+                    b.Property<string>("PriorityLevel")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RelatedOrderId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -611,6 +982,9 @@ namespace DAL.Migrations
 
                     b.Property<string>("TicketId")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TicketType")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -633,7 +1007,6 @@ namespace DAL.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("BusinessId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -704,6 +1077,34 @@ namespace DAL.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Domain_layer.Models.WorkingHours", b =>
+                {
+                    b.Property<string>("WorkingHoursId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("BusinessId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<TimeSpan?>("CloseTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.Property<TimeSpan?>("OpenTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("WorkingHoursId");
+
+                    b.HasIndex("BusinessId");
+
+                    b.ToTable("WorkingHours");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -888,6 +1289,24 @@ namespace DAL.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domain_layer.Models.CallSummary", b =>
+                {
+                    b.HasOne("Domain_layer.Models.Business", "Business")
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Domain_layer.Models.Interaction", "Interaction")
+                        .WithMany()
+                        .HasForeignKey("InteractionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Business");
+
+                    b.Navigation("Interaction");
+                });
+
             modelBuilder.Entity("Domain_layer.Models.Customer", b =>
                 {
                     b.HasOne("Domain_layer.Models.Business", "Business")
@@ -907,12 +1326,18 @@ namespace DAL.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain_layer.Models.Interaction", "Interaction")
+                        .WithMany()
+                        .HasForeignKey("InteractionId");
+
                     b.HasOne("Domain_layer.Models.Ticket", "Ticket")
                         .WithMany("Feedbacks")
                         .HasForeignKey("TicketId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Customer");
+
+                    b.Navigation("Interaction");
 
                     b.Navigation("Ticket");
                 });
@@ -954,10 +1379,40 @@ namespace DAL.Migrations
                     b.Navigation("HandledByUser");
                 });
 
+            modelBuilder.Entity("Domain_layer.Models.InteractionAnalysis", b =>
+                {
+                    b.HasOne("Domain_layer.Models.Business", "Business")
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Domain_layer.Models.Interaction", "Interaction")
+                        .WithOne()
+                        .HasForeignKey("Domain_layer.Models.InteractionAnalysis", "InteractionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Business");
+
+                    b.Navigation("Interaction");
+                });
+
             modelBuilder.Entity("Domain_layer.Models.KnowledgeBase", b =>
                 {
                     b.HasOne("Domain_layer.Models.Business", "Business")
                         .WithMany("KnowledgeBases")
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Business");
+                });
+
+            modelBuilder.Entity("Domain_layer.Models.MenuCategory", b =>
+                {
+                    b.HasOne("Domain_layer.Models.Business", "Business")
+                        .WithMany("MenuCategories")
                         .HasForeignKey("BusinessId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -973,7 +1428,14 @@ namespace DAL.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain_layer.Models.MenuCategory", "MenuCategory")
+                        .WithMany("MenuItems")
+                        .HasForeignKey("MenuCategoryId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("Business");
+
+                    b.Navigation("MenuCategory");
                 });
 
             modelBuilder.Entity("Domain_layer.Models.Message", b =>
@@ -1048,6 +1510,24 @@ namespace DAL.Migrations
                     b.Navigation("MenuItem");
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Domain_layer.Models.OwnerChatMessage", b =>
+                {
+                    b.HasOne("Domain_layer.Models.Business", "Business")
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain_layer.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Business");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain_layer.Models.PaymentTransaction", b =>
@@ -1125,7 +1605,17 @@ namespace DAL.Migrations
                     b.HasOne("Domain_layer.Models.Business", "Business")
                         .WithMany("Users")
                         .HasForeignKey("BusinessId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Business");
+                });
+
+            modelBuilder.Entity("Domain_layer.Models.WorkingHours", b =>
+                {
+                    b.HasOne("Domain_layer.Models.Business", "Business")
+                        .WithMany("WorkingHours")
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Business");
@@ -1205,6 +1695,8 @@ namespace DAL.Migrations
 
                     b.Navigation("KnowledgeBases");
 
+                    b.Navigation("MenuCategories");
+
                     b.Navigation("MenuItems");
 
                     b.Navigation("Notifications");
@@ -1220,6 +1712,8 @@ namespace DAL.Migrations
                     b.Navigation("Tickets");
 
                     b.Navigation("Users");
+
+                    b.Navigation("WorkingHours");
                 });
 
             modelBuilder.Entity("Domain_layer.Models.Customer", b =>
@@ -1236,6 +1730,11 @@ namespace DAL.Migrations
             modelBuilder.Entity("Domain_layer.Models.Interaction", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Domain_layer.Models.MenuCategory", b =>
+                {
+                    b.Navigation("MenuItems");
                 });
 
             modelBuilder.Entity("Domain_layer.Models.MenuItem", b =>

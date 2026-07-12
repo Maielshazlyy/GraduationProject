@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  # ──────────────────────────────────────────────
+  # SQL Server 2022
+  # ──────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: digital-employee-db
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "${SA_PASSWORD:-Admin@12345!}"
+      MSSQL_PID: "Express"
+      # Limit memory so it runs on small free-tier VMs
+      MSSQL_MEMORY_LIMIT_MB: "512"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "${SA_PASSWORD:-Admin@12345!}" -Q "SELECT 1" || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────
+  # .NET 10 API
+  # ──────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: digital-employee-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:10000
+      ConnectionStrings__DefaultConnection: >-
+        Server=sqlserver,1433;
+        Database=DigitalEmployeeDB;
+        User Id=sa;
+        Password=${SA_PASSWORD:-Admin@12345!};
+        MultipleActiveResultSets=True;
+        TrustServerCertificate=True;
+        Connection Timeout=30;
+      JWT__Key: "${JWT_KEY:-SuperSecretKey_MustBe32CharsLong_ChangeThis!}"
+      JWT__Issuer: "${JWT_ISSUER:-http://localhost:10000}"
+      JWT__Audience: "${JWT_AUDIENCE:-http://localhost:10000}"
+      Google__ClientId: "${GOOGLE_CLIENT_ID:-}"
+      AI__BaseUrl: "${AI_BASE_URL:-https://anyway-remix-puzzling.ngrok-free.dev}"
+    ports:
+      - "10000:10000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:

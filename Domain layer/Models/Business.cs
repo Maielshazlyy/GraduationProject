@@ -25,6 +25,40 @@ namespace Domain_layer.Models
 
         public string Phone { get; set; } = string.Empty;
 
+        // Contact Information
+        public string? Email { get; set; }
+        public string? Website { get; set; }
+        public string? FacebookUrl { get; set; }
+        public string? InstagramUrl { get; set; }
+
+        // Location (for maps)
+        public string? City { get; set; }
+        public string? Country { get; set; }
+        public double? Latitude { get; set; } // خط العرض
+        public double? Longitude { get; set; } // خط الطول
+
+        // Restaurant Information
+        public string? Description { get; set; }
+        public string? CuisineType { get; set; } // e.g., "Arabic", "Italian", "Asian", "Fast Food"
+        public string? PriceRange { get; set; } // e.g., "$$", "$$$", "$$$$"
+        public string? LogoUrl { get; set; }
+        public string? CoverImageUrl { get; set; }
+
+        // Features & Services
+        public bool HasDelivery { get; set; } = false;
+        public bool HasTakeout { get; set; } = false;
+        public bool HasParking { get; set; } = false;
+        public bool HasWiFi { get; set; } = false;
+        public bool HasOutdoorSeating { get; set; } = false;
+        public bool AcceptsReservations { get; set; } = false;
+
+        // Payment Methods (comma-separated: "Cash,Card,Mobile Payment")
+        public string? PaymentMethods { get; set; }
+
+        // Status
+        public bool IsActive { get; set; } = true;
+        public bool IsVerified { get; set; } = false;
+
        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -37,6 +71,8 @@ namespace Domain_layer.Models
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
         public ICollection<Report> Reports { get; set; } = new List<Report>();
         public ICollection<KnowledgeBase> KnowledgeBases { get; set; } = new List<KnowledgeBase>();
+        public ICollection<MenuCategory> MenuCategories { get; set; } = new List<MenuCategory>();
+        public ICollection<WorkingHours> WorkingHours { get; set; } = new List<WorkingHours>();
 
         public Setting? Setting { get; set; }
         public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();

@@ -9,7 +9,10 @@ namespace Domain_layer.enums
     public enum OrderStatus
     {
         Pending,
+        PendingConfirmation, // For abandoned orders that need follow-up
         Paid,
-        Delivered
+        DelayedRisk, // System detected potential delivery delay
+        Delivered,
+        Cancelled
     }
 }

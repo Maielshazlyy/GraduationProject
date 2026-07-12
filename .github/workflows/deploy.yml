@@ -1,0 +1,135 @@
+name: Deploy to Fly.io
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:   # allows manual trigger from GitHub UI
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Pre-flight: validate all required secrets exist
+  # ─────────────────────────────────────────────
+  check-secrets:
+    name: Validate Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check FLY_API_TOKEN
+        run: |
+          if [ -z "${{ secrets.FLY_API_TOKEN }}" ]; then
+            echo "❌ FLY_API_TOKEN secret is not set."
+            echo ""
+            echo "Fix it in 2 minutes:"
+            echo "  1. Go to https://fly.io  → sign up free (no credit card)"
+            echo "  2. After login → fly.io dashboard → Account → Access Tokens → Create token"
+            echo "  3. Copy the token"
+            echo "  4. GitHub repo → Settings → Secrets → Actions → New secret"
+            echo "     Name:  FLY_API_TOKEN"
+            echo "     Value: (paste token)"
+            echo "  5. Also add: SA_PASSWORD, JWT_KEY  (see .env.example)"
+            echo "  6. Re-run this workflow"
+            exit 1
+          fi
+          echo "✅ FLY_API_TOKEN is set"
+
+      - name: Check SA_PASSWORD
+        run: |
+          if [ -z "${{ secrets.SA_PASSWORD }}" ]; then
+            echo "❌ SA_PASSWORD secret is not set. Add it in GitHub → Settings → Secrets."
+            exit 1
+          fi
+          echo "✅ SA_PASSWORD is set"
+
+      - name: Check JWT_KEY
+        run: |
+          if [ -z "${{ secrets.JWT_KEY }}" ]; then
+            echo "❌ JWT_KEY secret is not set. Add it in GitHub → Settings → Secrets."
+            exit 1
+          fi
+          echo "✅ JWT_KEY is set"
+
+  # ─────────────────────────────────────────────
+  # Job 1 — Deploy SQL Server
+  # ─────────────────────────────────────────────
+  deploy-db:
+    name: Deploy SQL Server
+    runs-on: ubuntu-latest
+    needs: check-secrets
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Ensure DB app exists
+        run: |
+          flyctl status --app digital-employee-db \
+            || flyctl apps create digital-employee-db --org personal \
+            || true
+
+      - name: Create persistent volume (skipped if already exists)
+        run: |
+          flyctl volumes list --app digital-employee-db | grep -q "sqlserver_data" \
+            || flyctl volumes create sqlserver_data \
+                 --app digital-employee-db \
+                 --region iad \
+                 --size 5 --yes \
+            || true
+
+      - name: Set SQL Server secrets
+        run: |
+          flyctl secrets set \
+            ACCEPT_EULA=Y \
+            SA_PASSWORD="${{ secrets.SA_PASSWORD }}" \
+            MSSQL_PID=Express \
+            MSSQL_MEMORY_LIMIT_MB=512 \
+            --app digital-employee-db
+
+      - name: Deploy SQL Server
+        run: flyctl deploy --config fly.toml --app digital-employee-db --remote-only
+
+  # ─────────────────────────────────────────────
+  # Job 2 — Deploy .NET API (runs after DB is up)
+  # ─────────────────────────────────────────────
+  deploy-api:
+    name: Deploy .NET API
+    runs-on: ubuntu-latest
+    # Decoupled from deploy-db: the database is stateful and already running,
+    # so a code push should ship the API even if DB provisioning is skipped/fails.
+    needs: check-secrets
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Ensure API app exists
+        run: |
+          flyctl status --app graduationproject \
+            || flyctl apps create graduationproject --org personal \
+            || true
+
+      - name: Set API secrets
+        run: |
+          flyctl secrets set \
+            ConnectionStrings__DefaultConnection="Server=digital-employee-db.internal,1433;Database=DigitalEmployeeDB;User Id=sa;Password=${{ secrets.SA_PASSWORD }};MultipleActiveResultSets=True;TrustServerCertificate=True;Connection Timeout=60;" \
+            JWT__Key="${{ secrets.JWT_KEY }}" \
+            JWT__Issuer="https://graduationproject.fly.dev" \
+            JWT__Audience="https://graduationproject.fly.dev" \
+            Google__ClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            AI__BaseUrl="${{ secrets.AI_BASE_URL }}" \
+            --app graduationproject
+
+      - name: Deploy API
+        run: flyctl deploy --config fly-api.toml --app graduationproject --remote-only
+
+      - name: Print live URL
+        run: |
+          echo ""
+          echo "✅ Deployment complete!"
+          echo "🌐 API:     https://graduationproject.fly.dev"
+          echo "📖 Swagger: https://graduationproject.fly.dev/swagger"
+          echo ""

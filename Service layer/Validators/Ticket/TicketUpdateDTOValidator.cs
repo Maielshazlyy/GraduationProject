@@ -20,6 +20,11 @@ namespace Service_layer.Validators.Ticket
                 .NotEmpty()
                 .Must(s => s == "Open" || s == "InProgress" || s == "Closed")
                 .WithMessage("Status must be Open, InProgress, or Closed");
+
+            // Optional field; only enforce a max length when provided.
+            RuleFor(x => x.ResolutionNotes)
+                .MaximumLength(2000)
+                .When(x => x.ResolutionNotes != null);
         }
     }
 }

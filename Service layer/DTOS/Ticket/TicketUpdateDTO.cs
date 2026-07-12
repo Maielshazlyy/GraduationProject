@@ -10,5 +10,10 @@ namespace Service_layer.DTOS.Ticket
     {
         public string Subject { get; set; }
         public string Status { get; set; }  // Open, InProgress, Closed
+
+        /// <summary>
+        /// Optional free-text notes describing how the ticket was resolved.
+        /// </summary>
+        public string? ResolutionNotes { get; set; }
     }
 }

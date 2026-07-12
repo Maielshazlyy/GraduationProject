@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,15 +24,8 @@ namespace Service_layer.Validators.Auth
                 .NotEmpty().WithMessage("Password is required.")
                 .MinimumLength(6).WithMessage("Password must be at least 6 characters.");
 
-            // التحقق من أن الـ BusinessId ليس فارغاً (لأنه string)
             RuleFor(x => x.BusinessId)
-                .NotEmpty().WithMessage("BusinessId is required.");
-
-            // التحقق من الأدوار المسموحة
-            RuleFor(x => x.Role)
-                .NotEmpty()
-                .Must(r => r == "Owner" || r == "Admin" || r == "Agent")
-                .WithMessage("Role must be Owner, Admin, or Agent.");
+                .NotEmpty().WithMessage("BusinessId is required for agent registration.");
         }
     }
 }

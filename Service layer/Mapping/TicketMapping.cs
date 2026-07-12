@@ -31,7 +31,16 @@ namespace Service_layer.Mapping
                 AssignedToUserId = t.AssignedToUserId,
                 AssignedToUserName = t.AssignedToUser?.FullName ?? "",
 
-                TotalFeedback = t.Feedbacks?.Count ?? 0
+                TotalFeedback = t.Feedbacks?.Count ?? 0,
+
+                TicketType = t.TicketType,
+                PriorityLevel = t.PriorityLevel,
+                EscalationConfidence = t.EscalationConfidence,
+                EscalationReason = t.EscalationReason,
+                ResolutionNotes = t.ResolutionNotes,
+
+                InteractionId = t.InteractionId,
+                RelatedOrderId = t.RelatedOrderId
             };
         }
 

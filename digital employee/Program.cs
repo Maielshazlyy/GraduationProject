@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using Service_layer;
 using DAL.Context;
@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Domain_layer.Models;
 using Domain_layer.Constants;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using DAL.UnitOfWork;
@@ -17,19 +16,44 @@ using Service_layer.Services_Interfaces;
 using DAL.Repositories;
 using FluentValidation.AspNetCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace digital_employee
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            // -------------------------
+            // 0) Kestrel limits (file uploads, e.g. call recordings)
+            // -------------------------
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                // Disable the minimum data-rate guard so large/slow uploads
+                // (call .wav recordings) don't time out behind the Fly.io proxy.
+                options.Limits.MinRequestBodyDataRate = null;
+
+                // Allow request bodies up to 50 MB (Kestrel default is ~28 MB).
+                options.Limits.MaxRequestBodySize = 52_428_800; // 50 MB
+            });
 
             // -------------------------
             // 1) Controllers
             // -------------------------
             builder.Services.AddControllers();
+            
+            // CORS Configuration
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
 
             // -------------------------
             // 2) OpenAPI / Swagger
@@ -53,7 +77,7 @@ namespace digital_employee
                     Scheme = "Bearer",
                     BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = "Enter your JWT Token here without 'Bearer' prefix."
+                    Description = "Enter your JWT token. Example: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n\nYou can get the token from /api/Auth/login or /api/Auth/register endpoints."
                 });
 
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -116,7 +140,7 @@ namespace digital_employee
                     ValidAudience = builder.Configuration["JWT:Audience"],
                     ValidIssuer = builder.Configuration["JWT:Issuer"],
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
+                        Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"] ?? throw new InvalidOperationException("JWT:Key is not configured")))
                 };
             });
 
@@ -138,11 +162,160 @@ namespace digital_employee
             // -------------------------
             // 7) Dependency Injection (تسجيل الخدمات - جديد)
             // -------------------------
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            
+            // Generic Repository
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            
+            // Specific Repositories
             builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
+            builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+            builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+            builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
+            builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+            builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
+            builder.Services.AddScoped<IMenuCategoryRepository, MenuCategoryRepository>();
+            builder.Services.AddScoped<IWorkingHoursRepository, WorkingHoursRepository>();
+            builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+            builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+            builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+            builder.Services.AddScoped<IReportRepository, ReportRepository>();
+            builder.Services.AddScoped<IKnowledgeBaseRepository, KnowledgeBaseRepository>();
+            builder.Services.AddScoped<IInteractionRepository, InteractionRepository>();
+            builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+            builder.Services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
+            builder.Services.AddScoped<ISettingRepository, SettingRepository>();
+            builder.Services.AddScoped<IIntegrationRepository, IntegrationRepository>();
+            builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+            builder.Services.AddScoped<ISentimentRepository, SentimentRepository>();
+            builder.Services.AddScoped<IInteractionAnalysisRepository, InteractionAnalysisRepository>();
+            builder.Services.AddScoped<ICallSummaryRepository, CallSummaryRepository>();
+            builder.Services.AddScoped<IOwnerChatMessageRepository, OwnerChatMessageRepository>();
+
+            // UnitOfWork
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            
+            // Auth Services
             builder.Services.AddScoped<IAuthService, AuthService>();
+            
+            // Business Services
             builder.Services.AddScoped<IBusinessService, BusinessService>();
+            
+            // Ticket Services
+            builder.Services.AddScoped<ITicketService, TicketService>();
+            
+            // Order Services
+            builder.Services.AddScoped<IOrderService, OrderService>();
+            
+            // Feedback Services
+            builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+            
+            // MenuItem Services
+            builder.Services.AddScoped<IMenuItemService, MenuItemService>();
+            
+            // MenuCategory Services
+            builder.Services.AddScoped<IMenuCategoryService, MenuCategoryService>();
+            
+            // Message Services
+            builder.Services.AddScoped<IMessageService, MessageService>();
+            
+            // Notification Services
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+            
+            // KnowledgeBase Services
+            builder.Services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
+            
+            // Report Services
+            builder.Services.AddScoped<IReportService, ReportService>();
+            
+            // Customer Services
+            builder.Services.AddScoped<ICustomerService, CustomerService>();
+            
+            // Interaction Services
+            builder.Services.AddScoped<IInteractionService, InteractionService>();
+            
+            // Subscription Services
+            builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+            
+            // PaymentTransaction Services
+            builder.Services.AddScoped<IPaymentTransactionService, PaymentTransactionService>();
+            
+            // Setting Services
+            builder.Services.AddScoped<ISettingService, SettingService>();
+            
+            // Integration Services
+            builder.Services.AddScoped<IIntegrationService, IntegrationService>();
+            
+            // AuditLog Services
+            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+            
+            // Sentiment Services
+            builder.Services.AddScoped<ISentimentService, SentimentService>();
+            
+            // User Services
+            builder.Services.AddScoped<IUserService, UserService>();
+
+
+            builder.Services.AddScoped<ICustomerChatService, CustomerChatService>();
+            builder.Services.AddScoped<ICustomerVoiceService, CustomerVoiceService>();
+
+            // AI Services (external AI API)
+            var aiApiBaseUrl = builder.Configuration["AiApi:BaseUrl"]
+                ?? "https://anyway-remix-puzzling.ngrok-free.dev";
+
+            builder.Services.AddHttpClient<IAiChatService, AiChatService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            builder.Services.AddHttpClient<IAiKnowledgeSyncService, AiKnowledgeSyncService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            builder.Services.AddHttpClient("VoiceKnowledgeSync", client =>
+            {
+                client.BaseAddress = new Uri(builder.Configuration["AiVoiceApi:BaseUrl"] ?? "http://localhost:8080");
+                // Voice AI often lives on a private LAN IP that's only reachable when on the
+                // same network -- fail fast instead of hanging on the default 100s timeout.
+                client.Timeout = TimeSpan.FromSeconds(5);
+            });
+
+            builder.Services.AddHttpClient<IAiAnalysisService, AiAnalysisService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            // Dashboard Services
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
+            builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+
+            // AI Owner Chat Service (analytics assistant)
+            builder.Services.AddHttpClient<IAiOwnerChatService, AiOwnerChatService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            // AI Voice Services
+            var aiVoiceApiBaseUrl = builder.Configuration["AiVoiceApi:BaseUrl"]
+                ?? "https://anyway-remix-puzzling.ngrok-free.dev";
+
+            builder.Services.AddHttpClient<IAiVoiceJoinService, AiVoiceJoinService>(client =>
+            {
+                client.BaseAddress = new Uri(aiVoiceApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+
+            // AI Report Service
+            builder.Services.AddHttpClient<IAiReportService, AiReportService>(client =>
+            {
+                client.BaseAddress = new Uri(aiApiBaseUrl);
+                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "true");
+            });
+            builder.Services.AddScoped<IBusinessReportGenerationService, BusinessReportGenerationService>();
 
             // -------------------------
             // 8) FluentValidation Registration
@@ -158,11 +331,11 @@ namespace digital_employee
                 options.InvalidModelStateResponseFactory = context =>
                 {
                     var errors = context.ModelState
-                        .Where(e => e.Value.Errors.Count > 0)
+                        .Where(e => e.Value?.Errors.Count > 0)
                         .Select(e => new
                         {
                             Field = e.Key,
-                            Error = e.Value.Errors.First().ErrorMessage
+                            Error = e.Value?.Errors.FirstOrDefault()?.ErrorMessage ?? "Validation error"
                         });
 
                     return new BadRequestObjectResult(new
@@ -176,20 +349,76 @@ namespace digital_employee
             var app = builder.Build();
 
             // -------------------------
-            // 9) Swagger in Development
+            // Auto-apply EF migrations on startup
             // -------------------------
-            if (app.Environment.IsDevelopment())
+            using (var scope = app.Services.CreateScope())
             {
-                app.UseSwagger();
-
-                // بيعمل صفحة الويب الملونة
-                app.UseSwaggerUI();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.Migrate();
             }
+
+            // -------------------------
+            // Seed super-admin user
+            // -------------------------
+            using (var scope = app.Services.CreateScope())
+            {
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+                if (!await roleManager.RoleExistsAsync("Admin"))
+                    await roleManager.CreateAsync(new IdentityRole("Admin"));
+
+                var adminEmail = "admin@app.com";
+                var adminUser  = await userManager.FindByEmailAsync(adminEmail);
+
+                if (adminUser == null)
+                {
+                    adminUser = new User
+                    {
+                        UserName       = adminEmail,
+                        Email          = adminEmail,
+                        FullName       = "Super Admin",
+                        Role           = "Admin",
+                        EmailConfirmed = true,
+                        CreatedAt      = DateTime.UtcNow
+                    };
+                    await userManager.CreateAsync(adminUser, "Admin@123");
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                }
+                else
+                {
+                    // Fix role if admin was created with wrong role
+                    if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+                        await userManager.AddToRoleAsync(adminUser, "Admin");
+
+                    if (adminUser.Role != "Admin")
+                    {
+                        adminUser.Role = "Admin";
+                        await userManager.UpdateAsync(adminUser);
+                    }
+                }
+            }
+
+            // -------------------------
+            // Seed dummy data (runs once per business, skips if already seeded)
+            // -------------------------
+            await DataSeeder.SeedAllAsync(app.Services);
+
+            // -------------------------
+            // 9) Swagger (all environments)
+            // -------------------------
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Digital Employee API v1");
+                c.RoutePrefix = "swagger";
+            });
 
             // -------------------------
             // 10) Middlewares
             // -------------------------
-            app.UseHttpsRedirection();
+            app.UseCors("AllowAll");
+            // Note: HTTPS redirection is handled by Render's load balancer
             app.UseAuthentication();
             app.UseAuthorization();
 

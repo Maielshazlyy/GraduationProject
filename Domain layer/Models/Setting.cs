@@ -22,6 +22,17 @@ namespace Domain_layer.Models
         public string ChatbotWelcomeMessage { get; set; } = "Welcome! How can I help you?";
         public string ChatbotPersonality { get; set; } = "Friendly";
 
+        // AI Agent Voice Settings
+        public string AgentVoice { get; set; } = "default"; // e.g., "male", "female", "neutral", "ar-SA-ZariyahNeural", "en-US-JennyNeural"
+        public string AgentVoiceProvider { get; set; } = "azure"; // e.g., "azure", "google", "aws", "elevenlabs"
+        public double AgentVoiceSpeed { get; set; } = 1.0; // 0.5 to 2.0 (default 1.0)
+        public double AgentVoicePitch { get; set; } = 1.0; // 0.5 to 2.0 (default 1.0)
+        public string AgentVoiceLanguage { get; set; } = "en-US"; // e.g., "en-US", "ar-SA", "fr-FR"
+
+        // Custom AI Prompts (Optional)
+        public string? CustomSystemPrompt { get; set; } // Custom system prompt for AI agent
+        public string? CustomGreetingTemplate { get; set; } // Template for greeting messages
+
         // Notification channels
         public bool EmailNotifications { get; set; } = true;
         public bool SmsNotifications { get; set; } = false;

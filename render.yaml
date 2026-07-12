@@ -1,0 +1,41 @@
+version: "1"
+
+services:
+  - type: web
+    name: digital-employee-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free          # change to "starter" for always-on
+
+    # Health check – Render will poll this to confirm the service is up
+    healthCheckPath: /swagger
+
+    envVars:
+      # ── ASP.NET Core ──────────────────────────────────────────────────
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+
+      # ── SQL Server connection string ──────────────────────────────────
+      # Set this in the Render dashboard → Environment tab.
+      # Example (Azure SQL):
+      #   Server=tcp:<server>.database.windows.net,1433;
+      #   Initial Catalog=DigitalEmployeeDB;
+      #   Persist Security Info=False;
+      #   User ID=<user>;Password=<password>;
+      #   MultipleActiveResultSets=False;
+      #   Encrypt=True;TrustServerCertificate=False;
+      #   Connection Timeout=30;
+      - key: ConnectionStrings__DefaultConnection
+        sync: false     # secret – never committed to repo
+
+      # ── JWT ───────────────────────────────────────────────────────────
+      - key: JWT__Key
+        sync: false     # secret – use a long random string in production
+      - key: JWT__Issuer
+        sync: false     # e.g. https://digital-employee-api.onrender.com
+      - key: JWT__Audience
+        sync: false     # e.g. https://digital-employee-api.onrender.com
+
+      # ── Google OAuth ──────────────────────────────────────────────────
+      - key: Google__ClientId
+        sync: false

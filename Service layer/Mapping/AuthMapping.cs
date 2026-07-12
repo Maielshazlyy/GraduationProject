@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain_layer.Constants;
 using Domain_layer.Models;
 using Service_layer.DTOS.Auth;
 
@@ -14,15 +15,24 @@ namespace Service_layer.Mapping
         {
             return new User
             {
-                // في Identity، الـ UserName ضروري جداً
                 UserName = dto.Email,
                 Email = dto.Email,
                 FullName = dto.FullName,
-
-                // الـ BusinessId بيجي string من الـ DTO
                 BusinessId = dto.BusinessId,
+                Role = Roles.Agent,
+                CreatedAt = DateTime.UtcNow
+            };
+        }
 
-                Role = dto.Role,
+        public static User ToEntity(this RegisterBootstrapDTO dto)
+        {
+            return new User
+            {
+                UserName = dto.Email,
+                Email = dto.Email,
+                FullName = dto.FullName,
+                BusinessId = null,
+                Role = Roles.Agent,
                 CreatedAt = DateTime.UtcNow
             };
         }

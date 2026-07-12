@@ -1,0 +1,758 @@
+{
+    "info": {
+        "_postman_id": "ai-endpoints-collection",
+        "name": "AI Endpoints Collection",
+        "description": "Postman Collection for testing AI-related endpoints (Chat, Voice, Sentiment Analysis)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Register New User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.environment.set(\"jwtToken\", jsonData.token);",
+                                    "    pm.environment.set(\"userId\", jsonData.userId);",
+                                    "    pm.environment.set(\"businessId\", jsonData.businessId || \"\");",
+                                    "    console.log(\"Token saved to environment\");",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"fullName\": \"Test User\",\n    \"email\": \"{{testOwnerEmail}}\",\n    \"password\": \"{{testOwnerPassword}}\",\n    \"businessId\": null\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/Auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "Auth",
+                                "register"
+                            ]
+                        },
+                        "description": "Register a new user and automatically save token to environment"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login - Admin",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.environment.set(\"adminToken\", jsonData.token);",
+                                    "    pm.environment.set(\"jwtToken\", jsonData.token);",
+                                    "    pm.environment.set(\"userId\", jsonData.userId);",
+                                    "    pm.environment.set(\"businessId\", jsonData.businessId || \"\");",
+                                    "    console.log(\"Admin token saved\");",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"{{testAdminEmail}}\",\n    \"password\": \"{{testAdminPassword}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/Auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "Auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Login as Admin and automatically save token"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login - Owner",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.environment.set(\"ownerToken\", jsonData.token);",
+                                    "    pm.environment.set(\"jwtToken\", jsonData.token);",
+                                    "    pm.environment.set(\"userId\", jsonData.userId);",
+                                    "    pm.environment.set(\"businessId\", jsonData.businessId || \"\");",
+                                    "    console.log(\"Owner token saved\");",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"{{testOwnerEmail}}\",\n    \"password\": \"{{testOwnerPassword}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/Auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "Auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Login as Owner and automatically save token"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login - Agent",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.environment.set(\"agentToken\", jsonData.token);",
+                                    "    pm.environment.set(\"jwtToken\", jsonData.token);",
+                                    "    pm.environment.set(\"userId\", jsonData.userId);",
+                                    "    pm.environment.set(\"businessId\", jsonData.businessId || \"\");",
+                                    "    console.log(\"Agent token saved\");",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"{{testAgentEmail}}\",\n    \"password\": \"{{testAgentPassword}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/Auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "Auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Login as Agent and automatically save token"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Authentication endpoints - Login/Register and auto-save tokens"
+        },
+        {
+            "name": "Customer Chat",
+            "item": [
+                {
+                    "name": "Get Capabilities",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerChat/capabilities/{{businessId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerChat",
+                                "capabilities",
+                                "{{businessId}}"
+                            ]
+                        },
+                        "description": "Get available communication capabilities (Chat, Voice) for a business"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send Chat Message (Arabic)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"businessId\": \"{{businessId}}\",\n    \"customerId\": \"{{customerId}}\",\n    \"interactionId\": null,\n    \"channel\": \"WebChat\",\n    \"message\": \"عايز أطلب برجر\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerChat/message",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerChat",
+                                "message"
+                            ]
+                        },
+                        "description": "Send a text message in Arabic (Create Order intent)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send Chat Message (English)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"businessId\": \"{{businessId}}\",\n    \"customerId\": \"{{customerId}}\",\n    \"interactionId\": null,\n    \"channel\": \"WebChat\",\n    \"message\": \"I want to order a burger\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerChat/message",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerChat",
+                                "message"
+                            ]
+                        },
+                        "description": "Send a text message in English (Create Order intent)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send Chat Message - Ask Order Status (Arabic)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"businessId\": \"{{businessId}}\",\n    \"customerId\": \"{{customerId}}\",\n    \"interactionId\": \"{{interactionId}}\",\n    \"channel\": \"WebChat\",\n    \"message\": \"عايز أعرف حالة الطلب\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerChat/message",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerChat",
+                                "message"
+                            ]
+                        },
+                        "description": "Ask about order status in Arabic"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send Chat Message - Complaint (Arabic)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"businessId\": \"{{businessId}}\",\n    \"customerId\": \"{{customerId}}\",\n    \"interactionId\": \"{{interactionId}}\",\n    \"channel\": \"WebChat\",\n    \"message\": \"مش عاجبني الطلب\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerChat/message",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerChat",
+                                "message"
+                            ]
+                        },
+                        "description": "Send a complaint message in Arabic"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send Chat Message - Request Human Agent (Arabic)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"businessId\": \"{{businessId}}\",\n    \"customerId\": \"{{customerId}}\",\n    \"interactionId\": \"{{interactionId}}\",\n    \"channel\": \"WebChat\",\n    \"message\": \"عايز أتكلم مع موظف بشري\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerChat/message",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerChat",
+                                "message"
+                            ]
+                        },
+                        "description": "Request human agent in Arabic (should trigger escalation)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send Chat Message - Ask About Products (Arabic)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"businessId\": \"{{businessId}}\",\n    \"customerId\": \"{{customerId}}\",\n    \"interactionId\": \"{{interactionId}}\",\n    \"channel\": \"WebChat\",\n    \"message\": \"عايز أشوف المنيو\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerChat/message",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerChat",
+                                "message"
+                            ]
+                        },
+                        "description": "Ask about products/menu in Arabic"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Order Recommendations",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"businessId\": \"{{businessId}}\",\n    \"mainMenuItemId\": \"{{menuItemId}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerChat/recommendations",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerChat",
+                                "recommendations"
+                            ]
+                        },
+                        "description": "Get backend-driven recommendations for a main menu item"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Customer-facing text chat API endpoints"
+        },
+        {
+            "name": "Customer Voice",
+            "item": [
+                {
+                    "name": "Initialize Voice Session",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"businessId\": \"{{businessId}}\",\n    \"customerId\": \"{{customerId}}\",\n    \"callSessionId\": \"call-session-{{$timestamp}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerVoice/session/initialize",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerVoice",
+                                "session",
+                                "initialize"
+                            ]
+                        },
+                        "description": "Initialize a new voice call session"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send Voice Message (Text)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"businessId\": \"{{businessId}}\",\n    \"customerId\": \"{{customerId}}\",\n    \"interactionId\": \"{{interactionId}}\",\n    \"channel\": \"Voice\",\n    \"callSessionId\": \"{{callSessionId}}\",\n    \"message\": \"عايز أطلب برجر\",\n    \"audioData\": null,\n    \"audioFormat\": null\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerVoice/message",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerVoice",
+                                "message"
+                            ]
+                        },
+                        "description": "Send a voice message (using text for testing - audio conversion is placeholder)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send Voice Message (English)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"businessId\": \"{{businessId}}\",\n    \"customerId\": \"{{customerId}}\",\n    \"interactionId\": \"{{interactionId}}\",\n    \"channel\": \"Voice\",\n    \"callSessionId\": \"{{callSessionId}}\",\n    \"message\": \"I want to order a pizza\",\n    \"audioData\": null,\n    \"audioFormat\": null\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerVoice/message",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerVoice",
+                                "message"
+                            ]
+                        },
+                        "description": "Send a voice message in English"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Mark Interaction Interrupted",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerVoice/interaction/{{interactionId}}/interrupt",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerVoice",
+                                "interaction",
+                                "{{interactionId}}",
+                                "interrupt"
+                            ]
+                        },
+                        "description": "Mark an interaction as interrupted (call dropped)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit Voice Feedback",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"interactionId\": \"{{interactionId}}\",\n    \"rating\": 5,\n    \"comment\": \"ممتاز\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerVoice/feedback",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerVoice",
+                                "feedback"
+                            ]
+                        },
+                        "description": "Submit feedback at end of voice call"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Voice Settings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/CustomerVoice/settings/{{businessId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "CustomerVoice",
+                                "settings",
+                                "{{businessId}}"
+                            ]
+                        },
+                        "description": "Get voice settings for a business (for TTS configuration)"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Customer-facing voice call API endpoints"
+        },
+        {
+            "name": "Sentiment Analysis",
+            "item": [
+                {
+                    "name": "Get All Sentiments",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwtToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/Sentiment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "Sentiment"
+                            ]
+                        },
+                        "description": "Get all sentiment analyses (requires Agent/Owner/Admin authentication)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Sentiment by Message ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwtToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/Sentiment/message/{{messageId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "Sentiment",
+                                "message",
+                                "{{messageId}}"
+                            ]
+                        },
+                        "description": "Get sentiment analysis for a specific message"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Sentiments by Business ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwtToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/Sentiment/business/{{businessId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "Sentiment",
+                                "business",
+                                "{{businessId}}"
+                            ]
+                        },
+                        "description": "Get all sentiment analyses for a business (requires Owner/Admin authentication)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Sentiment by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwtToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/Sentiment/{{sentimentId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "Sentiment",
+                                "{{sentimentId}}"
+                            ]
+                        },
+                        "description": "Get a specific sentiment analysis by ID"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Sentiment Analysis API endpoints (requires authentication)"
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "https://localhost:7000",
+            "type": "string"
+        },
+        {
+            "key": "businessId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "customerId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "interactionId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "messageId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "sentimentId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "menuItemId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "callSessionId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "jwtToken",
+            "value": "",
+            "type": "string",
+            "description": "JWT token for authenticated endpoints (Agent/Owner/Admin)"
+        }
+    ]
+}

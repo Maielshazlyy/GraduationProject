@@ -11,6 +11,7 @@ namespace Service_layer.DTOS.Feedback
         public string FeedbackId { get; set; }
         public string? TicketId { get; set; }
         public string TickerSubject { get; set; }
+        public string? InteractionId { get; set; }
         public string CustomerId { get; set; }
 
         public string CustomerName { get; set; }

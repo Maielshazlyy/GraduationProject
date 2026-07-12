@@ -23,7 +23,8 @@ namespace Service_layer.Mapping
                 CustomerName = f.Customer?.FullName ?? "",
 
                 TicketId = f.TicketId,
-                TickerSubject = f.Ticket?.Subject ?? ""
+                TickerSubject = f.Ticket?.Subject ?? "",
+                InteractionId = f.InteractionId
             };
         }
 

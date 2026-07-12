@@ -19,6 +19,8 @@ namespace DAL.Context
        // public DbSet<User> Users { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<MenuItem> MenuItems { get; set; }
+        public DbSet<MenuCategory> MenuCategories { get; set; }
+        public DbSet<WorkingHours> WorkingHours { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
@@ -34,10 +36,39 @@ namespace DAL.Context
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<KnowledgeBase> KnowledgeBases { get; set; }
         public DbSet<Integration> Integrations { get; set; }
+        public DbSet<InteractionAnalysis> InteractionAnalyses { get; set; }
+        public DbSet<CallSummary> CallSummaries { get; set; }
+        public DbSet<OwnerChatMessage> OwnerChatMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // ---------------------------
+            // Primary Keys Configuration
+            // ---------------------------
+            modelBuilder.Entity<Business>().HasKey(b => b.Id);
+            modelBuilder.Entity<Customer>().HasKey(c => c.CustomerId);
+            modelBuilder.Entity<Order>().HasKey(o => o.OrderId);
+            modelBuilder.Entity<OrderItem>().HasKey(oi => oi.OrderItemId);
+            modelBuilder.Entity<Ticket>().HasKey(t => t.Id);
+            modelBuilder.Entity<Interaction>().HasKey(i => i.InteractionId);
+            modelBuilder.Entity<Message>().HasKey(m => m.MessageId);
+            modelBuilder.Entity<Notification>().HasKey(n => n.NotificationId);
+            modelBuilder.Entity<Report>().HasKey(r => r.Id);
+            modelBuilder.Entity<Feedback>().HasKey(f => f.FeedbackId);
+            modelBuilder.Entity<MenuItem>().HasKey(m => m.MenuItemId);
+            modelBuilder.Entity<MenuCategory>().HasKey(mc => mc.MenuCategoryId);
+            modelBuilder.Entity<WorkingHours>().HasKey(wh => wh.WorkingHoursId);
+            modelBuilder.Entity<Setting>().HasKey(s => s.SettingId);
+            modelBuilder.Entity<Subscription>().HasKey(s => s.Id);
+            modelBuilder.Entity<PaymentTransaction>().HasKey(pt => pt.Id);
+            modelBuilder.Entity<Integration>().HasKey(i => i.Id);
+            modelBuilder.Entity<AuditLog>().HasKey(a => a.AuditLogId);
+            modelBuilder.Entity<KnowledgeBase>().HasKey(k => k.KnowledgeBaseId);
+            modelBuilder.Entity<Sentiment>().HasKey(s => s.SentimentId);
+            modelBuilder.Entity<InteractionAnalysis>().HasKey(a => a.InteractionAnalysisId);
+            modelBuilder.Entity<CallSummary>().HasKey(c => c.Id);
 
             // ---------------------------
             // Business relations (1:M / 1:1)
@@ -46,6 +77,7 @@ namespace DAL.Context
                 .HasOne(u => u.Business)
                 .WithMany(b => b.Users)
                 .HasForeignKey(u => u.BusinessId)
+                .IsRequired(false) // جعل BusinessId اختياري
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Customer>()
@@ -59,6 +91,28 @@ namespace DAL.Context
                 .WithMany(b => b.MenuItems)
                 .HasForeignKey(m => m.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Business -> MenuCategories (1 : M)
+            modelBuilder.Entity<MenuCategory>()
+                .HasOne(mc => mc.Business)
+                .WithMany(b => b.MenuCategories)
+                .HasForeignKey(mc => mc.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Business -> WorkingHours (1 : M)
+            modelBuilder.Entity<WorkingHours>()
+                .HasOne(wh => wh.Business)
+                .WithMany(b => b.WorkingHours)
+                .HasForeignKey(wh => wh.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // MenuItem -> MenuCategory (M : 1)
+            modelBuilder.Entity<MenuItem>()
+                .HasOne(mi => mi.MenuCategory)
+                .WithMany(mc => mc.MenuItems)
+                .HasForeignKey(mi => mi.MenuCategoryId)
+                .IsRequired(false) // Optional - للتوافق مع البيانات القديمة
+                .OnDelete(DeleteBehavior.NoAction); // Changed to NoAction to avoid cascade path conflicts
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Business)
@@ -157,6 +211,20 @@ namespace DAL.Context
                 .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            modelBuilder.Entity<OwnerChatMessage>().HasKey(o => o.OwnerChatMessageId);
+
+            modelBuilder.Entity<OwnerChatMessage>()
+                .HasOne(o => o.Business)
+                .WithMany()
+                .HasForeignKey(o => o.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OwnerChatMessage>()
+                .HasOne(o => o.User)
+                .WithMany()
+                .HasForeignKey(o => o.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // ---------------------------
             // Customer relations
             // ---------------------------
@@ -216,6 +284,37 @@ namespace DAL.Context
                 .WithMany(i => i.Messages)
                 .HasForeignKey(m => m.InteractionId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // ---------------------------
+            // CallSummary
+            // ---------------------------
+            modelBuilder.Entity<CallSummary>()
+                .HasOne(cs => cs.Interaction)
+                .WithMany()
+                .HasForeignKey(cs => cs.InteractionId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<CallSummary>()
+                .HasOne(cs => cs.Business)
+                .WithMany()
+                .HasForeignKey(cs => cs.BusinessId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // ---------------------------
+            // InteractionAnalysis (1:1 with Interaction)
+            // ---------------------------
+            modelBuilder.Entity<InteractionAnalysis>()
+                .HasOne(a => a.Interaction)
+                .WithOne()
+                .HasForeignKey<InteractionAnalysis>(a => a.InteractionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<InteractionAnalysis>()
+                .HasOne(a => a.Business)
+                .WithMany()
+                .HasForeignKey(a => a.BusinessId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // ---------------------------
             // Message <-> Sentiment (1:1)

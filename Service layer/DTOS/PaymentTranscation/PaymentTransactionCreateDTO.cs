@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Service_layer.DTOS.Payment
+namespace Service_layer.DTOS.PaymentTranscation
 {
     public class PaymentTransactionCreateDTO
     {

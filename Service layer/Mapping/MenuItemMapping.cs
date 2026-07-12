@@ -18,7 +18,8 @@ namespace Service_layer.Mapping
                 Name = m.Name,
                 Description = m.Description,
                 Price = m.Price,
-                Category = m.Category,
+                MenuCategoryId = m.MenuCategoryId,
+                MenuCategoryName = m.MenuCategory?.Name,
                 IsAvailable = m.IsAvailable,
 
                 BusinessId = m.BusinessId,

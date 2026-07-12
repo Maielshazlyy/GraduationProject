@@ -1,0 +1,43 @@
+## Build outputs
+**/bin/
+**/obj/
+
+## Visual Studio
+**/.vs/
+**/*.user
+**/*.suo
+**/*.userosscache
+**/*.sln.docstates
+
+## Git
+.git/
+.gitignore
+
+## Secrets / local config
+**/appsettings.Development.json
+
+## Documentation & test data (not needed in image)
+*.md
+*.http
+*.json.bak
+AI_*.md
+BACKEND_*.md
+FRONTEND_*.md
+*_README.md
+*_GUIDE.md
+*_SUMMARY.md
+*_SPEC.md
+*_FLOW.md
+*_CONTRACT.md
+*_CHECKLIST.md
+TEST_*.md
+TESTING_*.md
+VOICE_*.md
+CRUD_*.md
+PROJECT_*.md
+QUICK_*.md
+POSTMAN_*.md
+AGENTIC_*.md
+*_Postman_Collection.json
+Postman_Environment.json
+TEST_DATA_EXAMPLES.json

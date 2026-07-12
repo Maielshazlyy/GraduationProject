@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentValidation;
-using Service_layer.DTOS.Reports;
+using Service_layer.DTOS.Report;
 
 namespace Service_layer.Validators.Report
 {

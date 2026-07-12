@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>digital_employee</RootNamespace>
+    <AssemblyName>digital_employee</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
